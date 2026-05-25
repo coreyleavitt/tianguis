@@ -22,10 +22,7 @@ jobs:
         with:
           repository: coreyleavitt/milpa
           ssh-key: ${{ secrets.MILPA_READ_DEPLOY_KEY }}
-          path: ../milpa-checkout
-
-      - name: Move milpa to expected sibling path
-        run: mv ../milpa-checkout ../milpa
+          path: .milpa-tool
 
       - name: Set up Nim
         uses: jiro4989/setup-nim-action@v2
@@ -38,11 +35,11 @@ jobs:
           enable-cache: true
 
       - name: Install milpa deps
-        working-directory: ../milpa
+        working-directory: .milpa-tool
         run: uv sync
 
       - name: Fetch deps via milpa
-        run: uv run --project ../milpa python -m milpa fetch
+        run: uv run --project .milpa-tool python -m milpa fetch
 
       - name: Build tianguis CLI
         run: nim c -d:release -o:tianguis src/tianguis_cli.nim
