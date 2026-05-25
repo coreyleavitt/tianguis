@@ -1,0 +1,11 @@
+name "tianguis"
+kind "library"
+src_dir "src"
+
+cas {
+    dir ".milpa/cas"
+}
+
+deps {
+    kdl git=(url)"ssh://git@github.com/coreyleavitt/nimkdl.git" ref="main"
+}
