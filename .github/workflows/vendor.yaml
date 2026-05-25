@@ -13,7 +13,7 @@ jobs:
   vendor:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Rewrite every github.com URL form to authenticated https using a
       # fine-grained PAT scoped to milpa + nimkdl read-only. This applies
