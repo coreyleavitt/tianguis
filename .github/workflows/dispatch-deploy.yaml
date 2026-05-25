@@ -19,7 +19,7 @@ jobs:
         working-directory: dispatch
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.24"
           # go.sum lives in the dispatch/ subdirectory, not at repo root.
