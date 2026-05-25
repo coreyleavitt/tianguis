@@ -28,11 +28,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # milpa is private; checkout via ssh-key deploy key (read-only,
-      # scoped to coreyleavitt/milpa via the tianguis-read deploy key).
-      # Checked into a workspace-local path (actions/checkout refuses
-      # paths outside the workspace) — that path becomes our --project
-      # arg to uv below.
+      # Load read deploy keys for both private repos we'll touch:
+      #  - milpa: this workflow's tooling
+      #  - nimkdl: pulled transitively by milpa fetch
+      # ssh-agent persists across subsequent steps, so milpa's own git
+      # clones (run from `python -m milpa fetch`) pick the keys up too.
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: |
+            ${{ secrets.MILPA_READ_DEPLOY_KEY }}
+            ${{ secrets.NIMKDL_READ_DEPLOY_KEY }}
+
       - name: Check out milpa
         uses: actions/checkout@v4
         with:
@@ -40,7 +47,6 @@ jobs:
           ref: main              # explicit ref skips the default-branch REST API
                                  # call, which would use GITHUB_TOKEN (no scope
                                  # for the private milpa repo) and fail
-          ssh-key: ${{ secrets.MILPA_READ_DEPLOY_KEY }}
           path: .milpa-tool
 
       - name: Set up Nim
