@@ -16,21 +16,70 @@ import ./model
 # .isOk / .get accessors without needing a separate `import kdl`.
 export kdl
 
+# ---------------------------------------------------------------------------
+# Encode
+# ---------------------------------------------------------------------------
+
+proc versionToJson(v: Version): JsonNode =
+  %*{
+    "version":      v.version,
+    "content_hash": v.contentHash,
+    "attestation":  v.attestation,
+    "signed_by":    v.signedBy,
+    "published_at": v.publishedAt,
+  }
+
+proc packageToJson(pkg: Package): JsonNode =
+  let versions = newJArray()
+  for v in pkg.versions:
+    versions.add(versionToJson(v))
+  %*{
+    "name":      pkg.name,
+    "namespace": pkg.namespace,
+    "upstream":  pkg.upstream,
+    "versions":  versions,
+  }
+
 proc formatJson*(idx: Index): string =
-  ## Emit canonical JSON for an Index. Keys appear in schema-canonical
-  ## order (schema_version, packages); arrays are sorted by their
-  ## natural model-level ordering (packages alphabetical, etc. — none
-  ## of which apply at the empty-index stage).
+  ## Emit canonical JSON for an Index.
+  let pkgs = newJArray()
+  for pkg in idx.packages:
+    pkgs.add(packageToJson(pkg))
   let node = %*{
     "schema_version": idx.schemaVersion,
-    "packages": newJArray(),
+    "packages":       pkgs,
   }
   $node
 
+# ---------------------------------------------------------------------------
+# Decode
+# ---------------------------------------------------------------------------
+
+proc versionFromJson(node: JsonNode): Version =
+  Version(
+    version:     node{"version"}.getStr(""),
+    contentHash: node{"content_hash"}.getStr(""),
+    attestation: node{"attestation"}.getStr(""),
+    signedBy:    node{"signed_by"}.getStr(""),
+    publishedAt: node{"published_at"}.getStr(""),
+  )
+
+proc packageFromJson(node: JsonNode): Package =
+  var versions: seq[Version] = @[]
+  let vNode = node{"versions"}
+  if vNode != nil and vNode.kind == JArray:
+    for item in vNode:
+      versions.add(versionFromJson(item))
+  Package(
+    name:      node{"name"}.getStr(""),
+    namespace: node{"namespace"}.getStr(""),
+    upstream:  node{"upstream"}.getStr(""),
+    versions:  versions,
+  )
+
 proc parseJson*(s: string): Result[Index, string] =
   ## Parse canonical JSON into an Index. Returns an Err with a
-  ## human-readable description on any failure (malformed JSON,
-  ## wrong root shape, missing required keys).
+  ## human-readable description on any failure.
   let node = try:
     stdjson.parseJson(s)
   except JsonParsingError as e:
@@ -40,4 +89,9 @@ proc parseJson*(s: string): Result[Index, string] =
       "root must be a JSON object, got " & $node.kind
     )
   let sv = node{"schema_version"}.getInt(0)
-  ok[Index, string](Index(schemaVersion: sv, packages: @[]))
+  var packages: seq[Package] = @[]
+  let pkgsNode = node{"packages"}
+  if pkgsNode != nil and pkgsNode.kind == JArray:
+    for item in pkgsNode:
+      packages.add(packageFromJson(item))
+  ok[Index, string](Index(schemaVersion: sv, packages: packages))

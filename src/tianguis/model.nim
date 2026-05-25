@@ -4,14 +4,20 @@
 ## the model is the canonical artifact, both serializations are derivable.
 
 type
+  Version* = object
+    version*:     string         ## semver-shaped version identifier
+    contentHash*: string         ## multihash: "sha256:<hex>"
+    attestation*: string         ## "milpa-vendored" | "author-signed"
+    signedBy*:    string         ## URI identifying the signer
+    publishedAt*: string         ## ISO 8601 UTC timestamp
+
   Package* = object
-    ## Placeholder for now — versions/namespace/upstream land in upcoming
-    ## tracer cycles. Kept as an empty-equivalent record so `Index` with
-    ## `packages: @[]` round-trips cleanly today and the field can grow
-    ## without API churn.
-    name*: string
+    name*:      string
+    namespace*: string           ## OCI/GH namespace owning this name
+    upstream*:  string           ## Upstream source URL (for human reference + link)
+    versions*:  seq[Version]
 
   Index* = object
     ## Top-level index document.
     schemaVersion*: int
-    packages*: seq[Package]
+    packages*:      seq[Package]
