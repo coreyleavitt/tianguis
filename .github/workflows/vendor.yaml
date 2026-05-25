@@ -15,25 +15,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Load read deploy keys for both private repos we'll touch:
-      #  - milpa: this workflow's tooling
-      #  - nimkdl: pulled transitively by milpa fetch
-      # ssh-agent persists across subsequent steps so milpa's own git
-      # clones (run from `python -m milpa fetch`) pick the keys up too.
-      - name: Set up SSH agent
-        uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: |
-            ${{ secrets.MILPA_READ_DEPLOY_KEY }}
-            ${{ secrets.NIMKDL_READ_DEPLOY_KEY }}
+      # Rewrite every github.com URL form to authenticated https using a
+      # fine-grained PAT scoped to milpa + nimkdl read-only. This applies
+      # globally for this job, so both this step's explicit clone of milpa
+      # AND milpa's subprocess clones (which fetch nimkdl) inherit auth
+      # transparently — no per-clone token interpolation, no ssh-agent.
+      - name: Configure git auth for private deps
+        env:
+          PAT: ${{ secrets.TIANGUIS_GIT_READ_PAT }}
+        run: |
+          # insteadOf is multi-valued; --add to avoid overwriting previous.
+          git config --global url."https://x-access-token:${PAT}@github.com/".insteadOf "https://github.com/"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "ssh://git@github.com/"
 
-      - name: Clone milpa via ssh-agent
-        # plain git clone picks up the ssh-agent-loaded MILPA_READ_DEPLOY_KEY
-        # automatically. actions/checkout's defaults fight us here: with
-        # ssh-key it writes a per-step config that doesn't persist to
-        # milpa's subprocess git clones; without ssh-key it falls back to
-        # https + GITHUB_TOKEN (no scope for private milpa).
-        run: git clone --depth 1 git@github.com:coreyleavitt/milpa.git .milpa-tool
+      - name: Clone milpa
+        run: git clone --depth 1 https://github.com/coreyleavitt/milpa.git .milpa-tool
 
       - name: Set up Nim
         uses: jiro4989/setup-nim-action@v2
