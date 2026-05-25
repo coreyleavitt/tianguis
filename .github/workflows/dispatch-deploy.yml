@@ -82,17 +82,26 @@ jobs:
       - name: Package + deploy function
         run: |
           set -euo pipefail
-          # Scaleway expects a zip of the function source (excluding test files
-          # because the runtime build doesn't strip them and they pull go-jose
-          # transient deps that aren't needed at runtime).
+          fn=${{ steps.function.outputs.function_id }}
+
+          # Zip the function source. Exclude tests (Scaleway doesn't strip
+          # them and they pull go-jose deps not needed at runtime), the
+          # local-dev cmd binary (package main, would conflict with
+          # Scaleway's generated wrapper), and CI / git metadata.
           zip -r /tmp/dispatch.zip . \
             -x '*_test.go' \
             -x '.git/*' \
             -x '.github/*' \
             -x 'cmd/*'
 
-          scw function function deploy ${{ steps.function.outputs.function_id }} \
-            zip-file=/tmp/dispatch.zip
+          # Scaleway upload protocol: request a presigned S3 URL sized to
+          # the exact zip byte length, PUT the zip, then trigger deploy.
+          size=$(stat -c '%s' /tmp/dispatch.zip)
+          upload_url=$(scw function function get-upload-url \
+            function-id=$fn content-length=$size -o json | jq -r .url)
+          curl -fsSL -X PUT --upload-file /tmp/dispatch.zip "$upload_url"
+
+          scw function function deploy function-id=$fn
 
       - name: Print endpoint URL
         run: |
