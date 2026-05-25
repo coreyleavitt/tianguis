@@ -16,3 +16,4 @@ nim.cfg
 nimcache/
 tests/test_*
 !tests/test_*.nim
+/tianguis     # cli binary

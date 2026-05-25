@@ -1,17 +1,17 @@
 ## KDL projection of the tianguis Index data model.
 ##
 ## Hand-rolled parse/format against the kdl library's AST primitives.
-## The library's deriveDecode/deriveEncode macros are an option for
-## later; for now the index grammar is small enough that explicit
-## traversal is clearer and easier to evolve as we grow the schema.
+## Strict schema: unknown nodes / properties raise typed errors with
+## stable IDX-* codes ([[error_catalog_discipline]]).
 
 import std/tables
 import kdl
 import ./model
+import ./errors
 
 # Re-export kdl so consumers calling parseKdl get access to Result's
 # .isOk / .get accessors without needing a separate `import kdl`.
-export kdl
+export kdl, errors
 
 # ---------------------------------------------------------------------------
 # Emit
@@ -66,12 +66,31 @@ proc formatKdl*(idx: Index): string =
     result.add(formatPackage(pkg))
 
 # ---------------------------------------------------------------------------
-# Parse
+# Parse — strict schema
 # ---------------------------------------------------------------------------
 
-proc parseProvenance(doc: KdlDoc, node: KdlNode): Provenance =
-  ## Parse a provenance block. The `kind` child determines the variant;
-  ## subsequent fields populate the appropriate branch.
+const
+  TopLevelNodes  = ["schema_version", "package"]
+  PackageChildren = ["namespace", "upstream", "version"]
+  VersionChildren = [
+    "content_hash", "requires", "provenance",
+    "attestation", "signed_by", "published_at",
+  ]
+  ProvenanceChildren = [
+    # union of all variant fields — strict-kind enforcement happens
+    # post-discrimination
+    "kind", "url", "ref", "commit_sha", "registry", "repository", "digest",
+  ]
+
+proc unknownNode(doc: KdlDoc, node: KdlNode, ctx: string): IdxError =
+  let name = doc.interner.lookup(node.name)
+  initIndexError(
+    iecUnknownNode,
+    "unknown node '" & name & "' in " & ctx,
+    line = node.span.start.line, col = node.span.start.col,
+  )
+
+proc parseProvenance(doc: KdlDoc, node: KdlNode): Result[Provenance, IdxError] =
   var kind = pkGit
   for child in node.children:
     if doc.interner.lookup(child.name) == "kind":
@@ -79,25 +98,33 @@ proc parseProvenance(doc: KdlDoc, node: KdlNode): Provenance =
       case kindStr
       of "git": kind = pkGit
       of "oci": kind = pkOci
-      else: kind = pkGit  # strict-schema rejection lands in later cycle
+      else:
+        return err[Provenance, IdxError](initIndexError(
+          iecBadType,
+          "unknown provenance kind '" & kindStr & "'",
+          line = child.span.start.line, col = child.span.start.col,
+        ))
       break
-  result = Provenance(kind: kind)
+  var prov = Provenance(kind: kind)
   for child in node.children:
     let childName = doc.interner.lookup(child.name)
-    let value = child.entries[0].argValue.strVal
+    if childName notin ProvenanceChildren:
+      return err[Provenance, IdxError](unknownNode(doc, child, "provenance"))
+    let value = if child.entries.len > 0: child.entries[0].argValue.strVal else: ""
     case kind
     of pkGit:
       case childName
-      of "url":        result.url       = value
-      of "ref":        result.gitRef    = value
-      of "commit_sha": result.commitSha = value
-      else: discard
+      of "url":        prov.url       = value
+      of "ref":        prov.gitRef    = value
+      of "commit_sha": prov.commitSha = value
+      else: discard  # kind already consumed; other kinds' fields ignored
     of pkOci:
       case childName
-      of "registry":   result.registry   = value
-      of "repository": result.repository = value
-      of "digest":     result.digest     = value
+      of "registry":   prov.registry   = value
+      of "repository": prov.repository = value
+      of "digest":     prov.digest     = value
       else: discard
+  ok[Provenance, IdxError](prov)
 
 proc parseRequires(doc: KdlDoc, node: KdlNode): OrderedTable[string, string] =
   result = initOrderedTable[string, string]()
@@ -106,48 +133,67 @@ proc parseRequires(doc: KdlDoc, node: KdlNode): OrderedTable[string, string] =
     if child.entries.len >= 1:
       result[name] = child.entries[0].argValue.strVal
 
-proc parseVersion(doc: KdlDoc, node: KdlNode): Version =
-  result = Version(
+proc parseVersion(doc: KdlDoc, node: KdlNode): Result[Version, IdxError] =
+  var v = Version(
     version: node.entries[0].argValue.strVal,
     requires: initOrderedTable[string, string](),
   )
   for child in node.children:
     let childName = doc.interner.lookup(child.name)
+    if childName notin VersionChildren:
+      return err[Version, IdxError](unknownNode(doc, child, "version"))
     case childName
-    of "content_hash": result.contentHash = child.entries[0].argValue.strVal
-    of "attestation":  result.attestation = child.entries[0].argValue.strVal
-    of "signed_by":    result.signedBy    = child.entries[0].argValue.strVal
-    of "published_at": result.publishedAt = child.entries[0].argValue.strVal
-    of "provenance":   result.provenances.add(parseProvenance(doc, child))
-    of "requires":     result.requires    = parseRequires(doc, child)
-    else: discard
+    of "content_hash": v.contentHash = child.entries[0].argValue.strVal
+    of "attestation":  v.attestation = child.entries[0].argValue.strVal
+    of "signed_by":    v.signedBy    = child.entries[0].argValue.strVal
+    of "published_at": v.publishedAt = child.entries[0].argValue.strVal
+    of "provenance":
+      let pr = parseProvenance(doc, child)
+      if pr.isErr: return err[Version, IdxError](pr.getErr)
+      v.provenances.add(pr.get)
+    of "requires":     v.requires    = parseRequires(doc, child)
+    else: discard  # caught by `notin` check above
+  ok[Version, IdxError](v)
 
-proc parsePackage(doc: KdlDoc, node: KdlNode): Package =
-  result = Package(name: node.entries[0].argValue.strVal)
+proc parsePackage(doc: KdlDoc, node: KdlNode): Result[Package, IdxError] =
+  var pkg = Package(name: node.entries[0].argValue.strVal)
   for child in node.children:
     let childName = doc.interner.lookup(child.name)
+    if childName notin PackageChildren:
+      return err[Package, IdxError](unknownNode(doc, child, "package"))
     case childName
-    of "namespace": result.namespace = child.entries[0].argValue.strVal
-    of "upstream":  result.upstream  = child.entries[0].argValue.strVal
-    of "version":   result.versions.add(parseVersion(doc, child))
-    else: discard
+    of "namespace": pkg.namespace = child.entries[0].argValue.strVal
+    of "upstream":  pkg.upstream  = child.entries[0].argValue.strVal
+    of "version":
+      let vr = parseVersion(doc, child)
+      if vr.isErr: return err[Package, IdxError](vr.getErr)
+      pkg.versions.add(vr.get)
+    else: discard  # caught by `notin` above
+  ok[Package, IdxError](pkg)
 
-proc parseKdl*(s: string): Result[Index, ParseError] =
-  ## Parse canonical KDL into an Index. Unknown top-level nodes are
-  ## currently tolerated; strict-schema enforcement lands in a later
-  ## cycle alongside the IDX-* error catalog.
+proc parseKdl*(s: string): Result[Index, IdxError] =
+  ## Parse canonical KDL into an Index. Strict schema: any node or
+  ## property not in the allowed set raises IDX-NODE-UNKNOWN.
   let doc = parse(s)
   if doc.isErr:
-    return err[Index, ParseError](doc.getErr)
+    let pe = doc.getErr
+    return err[Index, IdxError](initIndexError(
+      iecKdlParse, "KDL parse error",
+      line = pe.span.start.line, col = pe.span.start.col,
+    ))
 
   var idx = Index(schemaVersion: 0, packages: @[])
   let parsed = doc.get
   for node in parsed.nodes:
     let name = parsed.interner.lookup(node.name)
+    if name notin TopLevelNodes:
+      return err[Index, IdxError](unknownNode(parsed, node, "top-level"))
     case name
     of "schema_version":
       idx.schemaVersion = node.entries[0].argValue.intVal.int
     of "package":
-      idx.packages.add(parsePackage(parsed, node))
-    else: discard
-  ok[Index, ParseError](idx)
+      let pr = parsePackage(parsed, node)
+      if pr.isErr: return err[Index, IdxError](pr.getErr)
+      idx.packages.add(pr.get)
+    else: discard  # caught by `notin` above
+  ok[Index, IdxError](idx)

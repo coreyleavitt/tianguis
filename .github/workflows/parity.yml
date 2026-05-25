@@ -1,0 +1,45 @@
+name: parity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: "2.2.0"
+
+      - name: Set up uv (for milpa)
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Clone milpa (dep manager)
+        run: git clone --depth 1 https://github.com/coreyleavitt/milpa.git ../milpa
+
+      - name: Install milpa deps
+        working-directory: ../milpa
+        run: uv sync
+
+      - name: Fetch deps via milpa
+        run: uv run --project ../milpa python -m milpa fetch
+
+      - name: Run unit tests
+        run: |
+          for f in tests/test_*.nim; do
+            echo "::group::$f"
+            nim c -r --hints:off "$f"
+            echo "::endgroup::"
+          done
+
+      - name: Assert index.kdl / index.json parity
+        run: |
+          nim c -d:release -o:tianguis src/tianguis_cli.nim
+          ./tianguis project --check

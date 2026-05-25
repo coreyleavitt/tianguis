@@ -12,10 +12,11 @@ import std/json as stdjson
 import std/tables
 import kdl
 import ./model
+import ./errors
 
-# Re-export kdl so consumers calling parseJson get access to Result's
-# .isOk / .get accessors without needing a separate `import kdl`.
-export kdl
+# Re-export kdl + errors so consumers calling parseJson get access to
+# Result's .isOk / .get accessors and IDX-* codes without separate imports.
+export kdl, errors
 
 # ---------------------------------------------------------------------------
 # Encode
@@ -135,21 +136,32 @@ proc packageFromJson(node: JsonNode): Package =
     versions:  versions,
   )
 
-proc parseJson*(s: string): Result[Index, string] =
-  ## Parse canonical JSON into an Index. Returns an Err with a
-  ## human-readable description on any failure.
+const TopLevelKeys = ["schema_version", "packages"]
+
+proc parseJson*(s: string): Result[Index, IdxError] =
+  ## Parse canonical JSON into an Index. Strict-schema: unknown keys
+  ## at the root produce IDX-NODE-UNKNOWN. Nested strict-schema for
+  ## package/version/provenance lands when the JSON path catches up to
+  ## the KDL path.
   let node = try:
     stdjson.parseJson(s)
   except JsonParsingError as e:
-    return err[Index, string]("malformed JSON: " & e.msg)
+    return err[Index, IdxError](initIndexError(
+      iecJsonParse, "malformed JSON: " & e.msg
+    ))
   if node.kind != JObject:
-    return err[Index, string](
-      "root must be a JSON object, got " & $node.kind
-    )
+    return err[Index, IdxError](initIndexError(
+      iecBadType, "root must be a JSON object, got " & $node.kind
+    ))
+  for k, _ in node:
+    if k notin TopLevelKeys:
+      return err[Index, IdxError](initIndexError(
+        iecUnknownNode, "unknown top-level key '" & k & "'"
+      ))
   let sv = node{"schema_version"}.getInt(0)
   var packages: seq[Package] = @[]
   let pkgsNode = node{"packages"}
   if pkgsNode != nil and pkgsNode.kind == JArray:
     for item in pkgsNode:
       packages.add(packageFromJson(item))
-  ok[Index, string](Index(schemaVersion: sv, packages: packages))
+  ok[Index, IdxError](Index(schemaVersion: sv, packages: packages))
