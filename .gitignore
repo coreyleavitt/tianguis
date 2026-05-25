@@ -20,3 +20,4 @@ tests/test_*
 
 # go build artifacts
 dispatch/server   # local-dev binary if built without -o
+/dispatch/dispatch
