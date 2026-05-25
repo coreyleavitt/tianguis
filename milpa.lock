@@ -14,3 +14,16 @@ dep "kdl" {
         commit_sha "52fce191ed535eb817788c5444d19f66a768e12b"
     }
 }
+
+dep "nimcrypto" {
+    identity "sha256:03ace9e6188964bae4d2408275f472603cf862a6fc0ce7ac2c1d213e10047590"
+    version "0.0.1"
+    src_dir ""
+    requires
+    provenance {
+        kind "git"
+        url "https://github.com/cheatfate/nimcrypto.git"
+        ref "master"
+        commit_sha "423ea4fed8de6f4544b7e3b30d868f527ed3b947"
+    }
+}
