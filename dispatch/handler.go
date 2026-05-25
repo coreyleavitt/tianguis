@@ -14,16 +14,32 @@ type PublishRequest struct {
 	RepoURL  string `json:"repo_url"`  // URL of the source repo making the request
 }
 
-// NewRouter returns an http.Handler routing /v1/publish (POST) and
-// /healthz (GET). The verifier is invoked for /v1/publish.
+// Dependencies bundles the injectable collaborators of the publish handler.
+// Grows as R3c lands more verification primitives (Rekor attester, GitHub
+// API client). One struct keeps signatures stable as fields are added.
+type Dependencies struct {
+	OIDC   OIDCVerifier
+	Cosign CosignVerifier
+}
+
+// NewRouter — R3a-era constructor. Wraps NewRouterWithDeps with a Dependencies
+// that has only OIDC (no cosign, no Rekor, no GitHub API). Kept for the
+// existing tests that don't exercise the post-OIDC pipeline.
 func NewRouter(verifier OIDCVerifier) http.Handler {
+	return NewRouterWithDeps(Dependencies{OIDC: verifier})
+}
+
+// NewRouterWithDeps wires the full publish pipeline. Each Dependency may
+// be nil; the handler skips the corresponding step when so. Tests use this
+// to inject a fake CosignVerifier (etc.) and exercise the verified path.
+func NewRouterWithDeps(deps Dependencies) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /v1/publish", publishHandler(verifier))
+	mux.HandleFunc("POST /v1/publish", publishHandler(deps))
 	mux.HandleFunc("GET /healthz", healthHandler)
 	return mux
 }
 
-func publishHandler(verifier OIDCVerifier) http.HandlerFunc {
+func publishHandler(deps Dependencies) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token, err := extractBearer(r.Header.Get("Authorization"))
 		if err != nil {
@@ -31,7 +47,7 @@ func publishHandler(verifier OIDCVerifier) http.HandlerFunc {
 			return
 		}
 
-		claims, err := verifier.Verify(r.Context(), token)
+		claims, err := deps.OIDC.Verify(r.Context(), token)
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid_token", err.Error())
 			return
@@ -43,16 +59,11 @@ func publishHandler(verifier OIDCVerifier) http.HandlerFunc {
 			return
 		}
 
-		// Field-presence validation. Per-field error for actionable diagnostics.
 		for _, missing := range missingFields(&req) {
 			writeError(w, http.StatusBadRequest, "missing_field", "required field: "+missing)
 			return
 		}
 
-		// Identity cross-check: the OIDC token's repo identity must match
-		// the body's declared RepoURL. Without this, an attacker with a
-		// valid OIDC token for their own repo could publish entries
-		// naming someone else's repo.
 		if expected, ok := identityMatchesRepoURL(claims, req.RepoURL); !ok {
 			writeError(w, http.StatusForbidden, "identity_mismatch",
 				"OIDC token attests repo "+expected+
@@ -60,8 +71,25 @@ func publishHandler(verifier OIDCVerifier) http.HandlerFunc {
 			return
 		}
 
-		// R3a + identity-match stop here. Cosign verify + Rekor attest +
-		// workflow_dispatch land in subsequent cycles.
+		// Cosign verify (when injected). Verifies the OCI artifact has a
+		// cosign signature; signer identity must be prefix-matched against
+		// the verified OIDC identity to prevent cross-identity publishing.
+		if deps.Cosign != nil {
+			cv, err := deps.Cosign.Verify(r.Context(), req.OciRef)
+			if err != nil {
+				writeError(w, http.StatusUnprocessableEntity, "cosign_verify_failed", err.Error())
+				return
+			}
+			expected, _ := identityMatchesRepoURL(claims, req.RepoURL)
+			if !strings.HasPrefix(cv.SignerIdentity, expected) {
+				writeError(w, http.StatusUnprocessableEntity, "signer_mismatch",
+					"cosign signer identity "+cv.SignerIdentity+
+						" does not match the verified OIDC repo "+expected)
+				return
+			}
+		}
+
+		// Rekor attest + workflow_dispatch land in cycles 6-8.
 		writeJSON(w, http.StatusOK, map[string]string{"status": "accepted"})
 	}
 }
@@ -70,12 +98,23 @@ func publishHandler(verifier OIDCVerifier) http.HandlerFunc {
 // to and compares it to the body's declared RepoURL.
 // Returns (expectedRepoURL, match).
 //
-// Per-provider claim extraction lives here. Cycle 1 implements GitHub
-// (uses the `repository` claim of form "owner/name"). Cycle 2 generalizes
-// to GitLab (`project_path`) and any future issuer.
+// Per-provider claim extraction:
+//   - GitHub Actions: `repository` claim = "owner/name" → https://github.com/owner/name
+//   - GitLab CI:      `project_path`     = "group/.../proj" → https://gitlab.com/group/.../proj
+//
+// Adding a new provider = adding one more case here. Failing closed when
+// no recognized claim is present is intentional — an OIDC issuer that
+// doesn't bind tokens to a specific source repo can't be trusted for
+// repo-scoped publish authorization.
 func identityMatchesRepoURL(c *Claims, repoURL string) (expected string, match bool) {
+	// GitHub Actions OIDC.
 	if repository, ok := c.IssuerSpecific["repository"].(string); ok && repository != "" {
 		expected = "https://github.com/" + repository
+		return expected, expected == repoURL
+	}
+	// GitLab CI OIDC.
+	if projectPath, ok := c.IssuerSpecific["project_path"].(string); ok && projectPath != "" {
+		expected = "https://gitlab.com/" + projectPath
 		return expected, expected == repoURL
 	}
 	// No recognized identity claim → fail closed.

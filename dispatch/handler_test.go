@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -363,5 +364,213 @@ func TestIdentityCrossCheck_Mismatch(t *testing.T) {
 	}
 	if !bytes.Contains(rec.Body.Bytes(), []byte("identity")) {
 		t.Fatalf("403 body should mention identity mismatch; got %s", rec.Body.String())
+	}
+}
+
+// ---------------------------------------------------------------------------
+// R3c cycle 2 — per-provider claim extraction
+//
+// GitHub tokens carry `repository` ("owner/name"). GitLab tokens carry
+// `project_path` ("group/subgroup/project"). Each maps to a canonical
+// repo URL via its issuer's URL scheme.
+// ---------------------------------------------------------------------------
+
+// signTokenWithCustomClaims signs a token with arbitrary additional claims.
+func (ti *testIssuer) signTokenWithCustomClaims(t *testing.T, extra map[string]any) string {
+	t.Helper()
+	sk := jose.SigningKey{
+		Algorithm: jose.RS256,
+		Key:       jose.JSONWebKey{Key: ti.privateKey, KeyID: ti.keyID},
+	}
+	signer, _ := jose.NewSigner(sk, &jose.SignerOptions{})
+	tok, err := jwt.Signed(signer).
+		Claims(validClaims(ti)).
+		Claims(extra).
+		Serialize()
+	if err != nil {
+		t.Fatalf("sign: %v", err)
+	}
+	return tok
+}
+
+// freshVerifierAt — like freshVerifier but lets the test set the issuer URL.
+// GitLab tokens have iss=https://gitlab.com; the test issuer's URL changes
+// per case, so we configure the verifier to accept whatever the test mints.
+func freshVerifierAt(t *testing.T, ti *testIssuer) OIDCVerifier {
+	return NewMultiIssuerVerifier(context.Background(), []IssuerConfig{{
+		Name: "test", URL: ti.issuer,
+		JWKSURL:   ti.issuer + "/.well-known/jwks.json",
+		Audiences: []string{"sigstore"},
+	}})
+}
+
+func TestIdentityCrossCheck_GitLab_Match(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	tok := ti.signTokenWithCustomClaims(t, map[string]any{
+		"project_path": "mygroup/sub/myproj",
+	})
+	body, _ := json.Marshal(PublishRequest{
+		Name:     "sample",
+		OciRef:   "registry.gitlab.com/x/sample@sha256:abc",
+		Provider: "gitlab",
+		RepoURL:  "https://gitlab.com/mygroup/sub/myproj",
+	})
+	rec := doRequest(t, NewRouter(freshVerifierAt(t, ti)), body, "Bearer "+tok)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200 on GitLab identity match; got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestIdentityCrossCheck_GitLab_Mismatch(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	tok := ti.signTokenWithCustomClaims(t, map[string]any{
+		"project_path": "attacker/their-project",
+	})
+	body, _ := json.Marshal(PublishRequest{
+		Name:     "sample",
+		OciRef:   "registry.gitlab.com/x/sample@sha256:abc",
+		Provider: "gitlab",
+		RepoURL:  "https://gitlab.com/victim/their-project",
+	})
+	rec := doRequest(t, NewRouter(freshVerifierAt(t, ti)), body, "Bearer "+tok)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("want 403 on GitLab identity mismatch; got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+// TestIdentityCrossCheck_NoRecognizedClaim — token validates but has neither
+// `repository` (GitHub) nor `project_path` (GitLab) — must fail closed.
+func TestIdentityCrossCheck_NoRecognizedClaim(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	tok := ti.signToken(t, validClaims(ti))  // bare claims, no provider-specific
+	rec := doRequest(t, NewRouter(freshVerifier(t, ti)), validReqBody(), "Bearer "+tok)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("want 403 when no recognized identity claim; got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+// ---------------------------------------------------------------------------
+// R3c cycle 3 — cosign verify (happy path, injected verifier)
+//
+// After identity cross-check, dispatch must verify the OCI artifact is
+// cosign-signed before relaying. Injectable CosignVerifier interface
+// matches the OIDCVerifier pattern — production uses sigstore-go,
+// tests inject a fake.
+// ---------------------------------------------------------------------------
+
+type fakeCosign struct {
+	wantOciRef    string         // assertion: what we expect to receive
+	identity      string         // what the fake returns as the cosign signer's identity
+	verifyErr     error          // if non-nil, Verify returns this
+	callsReceived []string       // captured oci_refs across calls (for assertions)
+}
+
+func (f *fakeCosign) Verify(_ context.Context, ociRef string) (*CosignVerification, error) {
+	f.callsReceived = append(f.callsReceived, ociRef)
+	if f.verifyErr != nil {
+		return nil, f.verifyErr
+	}
+	return &CosignVerification{SignerIdentity: f.identity}, nil
+}
+
+func freshDeps(t *testing.T, ti *testIssuer, cosign CosignVerifier) Dependencies {
+	return Dependencies{
+		OIDC:   freshVerifier(t, ti),
+		Cosign: cosign,
+	}
+}
+
+// Default fake cosign that returns the OIDC identity we expect — so the
+// signer-identity-vs-OIDC check (cycle 5) passes for the happy path tests.
+// "https://github.com/coreyleavitt/sample" matches what signTokenWithRepository
+// translates to via the GitHub URL mapping.
+func okCosign() *fakeCosign {
+	return &fakeCosign{identity: "https://github.com/coreyleavitt/sample"}
+}
+
+func TestCosignVerify_HappyPath(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	cosign := okCosign()
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+	rec := doRequest(t,
+		NewRouterWithDeps(freshDeps(t, ti, cosign)),
+		bodyForRepo("https://github.com/coreyleavitt/sample"),
+		"Bearer "+tok)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200 when cosign verifies; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if len(cosign.callsReceived) != 1 {
+		t.Fatalf("cosign verifier should have been called exactly once; got %d", len(cosign.callsReceived))
+	}
+	if cosign.callsReceived[0] != "ghcr.io/x/sample@sha256:abc123" {
+		t.Fatalf("cosign should receive the body's oci_ref; got %q", cosign.callsReceived[0])
+	}
+}
+
+// --- R3c cycle 4 — cosign verify failure → 422 ---
+func TestCosignVerify_Failure_Returns422(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	cosign := &fakeCosign{verifyErr: errors.New("signature not found in Rekor")}
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+	rec := doRequest(t,
+		NewRouterWithDeps(freshDeps(t, ti, cosign)),
+		bodyForRepo("https://github.com/coreyleavitt/sample"),
+		"Bearer "+tok)
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("want 422 on cosign failure; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("cosign_verify_failed")) {
+		t.Fatalf("422 body should mention cosign_verify_failed; got %s", rec.Body.String())
+	}
+}
+
+// ---------------------------------------------------------------------------
+// R3c cycle 5 — anti-impersonation: cosign signer identity must match OIDC
+//
+// Without this check, an attacker who validly cosign-signed their own
+// artifact could trigger dispatch for it under a victim's repo (assuming
+// they could also forge the OIDC token, which they can't — but defense in
+// depth: even if OIDC verify is compromised, cosign-identity-vs-OIDC
+// catches the cross-identity case).
+//
+// cosign keyless identities for GH Actions look like:
+//   https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0
+// We accept a prefix match against the expected repo URL.
+// ---------------------------------------------------------------------------
+
+// TestCosignSigner_PrefixMatch — cosign identity starts with the verified
+// repo URL (workflow file + ref are appended) → passes.
+func TestCosignSigner_PrefixMatch(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	cosign := &fakeCosign{
+		identity: "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
+	}
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+	rec := doRequest(t,
+		NewRouterWithDeps(freshDeps(t, ti, cosign)),
+		bodyForRepo("https://github.com/coreyleavitt/sample"),
+		"Bearer "+tok)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200 on cosign identity prefix-match; got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+// TestCosignSigner_Mismatch — cosign identity belongs to a different repo
+// than the OIDC token attests to → 422.
+func TestCosignSigner_Mismatch(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	cosign := &fakeCosign{
+		identity: "https://github.com/attacker/their-repo/.github/workflows/x.yaml@refs/heads/main",
+	}
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+	rec := doRequest(t,
+		NewRouterWithDeps(freshDeps(t, ti, cosign)),
+		bodyForRepo("https://github.com/coreyleavitt/sample"),
+		"Bearer "+tok)
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("want 422 on cosign signer mismatch; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("signer_mismatch")) {
+		t.Fatalf("422 body should mention signer_mismatch; got %s", rec.Body.String())
 	}
 }
