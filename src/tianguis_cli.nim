@@ -8,10 +8,11 @@ import std/[os, parseopt]
 import tianguis/cli
 
 proc usage(): int =
-  echo "usage: tianguis project [--check]"
+  echo "usage: tianguis <command> [args]"
   echo ""
   echo "  project           regenerate index.json from index.kdl"
   echo "  project --check   verify index.json matches index.kdl; exit non-zero on drift"
+  echo "  vendor            run one vendor-en-absentia pass against nim-lang/packages.json"
   1
 
 proc main(): int =
@@ -38,6 +39,8 @@ proc main(): int =
   case args[0]
   of "project":
     return cmdProject(getCurrentDir(), check = check)
+  of "vendor":
+    return cmdVendor(getCurrentDir())
   else:
     stderr.writeLine("tianguis: unknown command '" & args[0] & "'")
     return usage()

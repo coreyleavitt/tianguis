@@ -1,0 +1,57 @@
+name: vendor
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # daily at 06:00 UTC
+  workflow_dispatch:       # manual trigger from the Actions tab
+
+permissions:
+  contents: write          # to commit + push updated index.kdl / alerts.kdl
+  id-token: write          # OIDC for future cosign signing (R2.5)
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: "2.2.0"
+
+      - name: Set up uv (for milpa)
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Clone milpa
+        run: git clone --depth 1 https://github.com/coreyleavitt/milpa.git ../milpa
+
+      - name: Install milpa deps
+        working-directory: ../milpa
+        run: uv sync
+
+      - name: Fetch deps via milpa
+        run: uv run --project ../milpa python -m milpa fetch
+
+      - name: Build tianguis CLI
+        run: nim c -d:release -o:tianguis src/tianguis_cli.nim
+
+      - name: Run vendor pass
+        run: ./tianguis vendor
+
+      - name: Keep index.json in parity
+        run: ./tianguis project
+
+      - name: Commit + push changes
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "no changes from this vendor pass"
+            exit 0
+          fi
+          git config user.name "milpa-bot"
+          git config user.email "milpa-bot@users.noreply.github.com"
+          git add index.kdl index.json alerts.kdl 2>/dev/null || true
+          git commit -m "chore(vendor): daily milpa-bot vendoring pass"
+          git push
