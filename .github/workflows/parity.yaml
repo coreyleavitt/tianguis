@@ -3,13 +3,42 @@ name: parity
 on:
   push:
     branches: [main]
+    paths:
+      - "index.kdl"
+      - "index.json"
+      - "src/**"
+      - "tests/**"
+      - "milpa.kdl"
+      - "milpa.lock"
+      - ".github/workflows/parity.yaml"
   pull_request:
+    paths:
+      - "index.kdl"
+      - "index.json"
+      - "src/**"
+      - "tests/**"
+      - "milpa.kdl"
+      - "milpa.lock"
+      - ".github/workflows/parity.yaml"
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # milpa is private; checkout via ssh-key deploy key (read-only,
+      # scoped to coreyleavitt/milpa via the tianguis-read deploy key).
+      - name: Check out milpa
+        uses: actions/checkout@v4
+        with:
+          repository: coreyleavitt/milpa
+          ssh-key: ${{ secrets.MILPA_READ_DEPLOY_KEY }}
+          path: ../milpa-checkout
+
+      - name: Move milpa to expected sibling path
+        run: mv ../milpa-checkout ../milpa
 
       - name: Set up Nim
         uses: jiro4989/setup-nim-action@v2
@@ -20,9 +49,6 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-
-      - name: Clone milpa (dep manager)
-        run: git clone --depth 1 https://github.com/coreyleavitt/milpa.git ../milpa
 
       - name: Install milpa deps
         working-directory: ../milpa
