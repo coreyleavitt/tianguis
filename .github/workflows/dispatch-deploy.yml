@@ -97,15 +97,15 @@ jobs:
           # Scaleway upload protocol: request a presigned S3 URL sized to
           # the exact zip byte length, PUT the zip, then trigger deploy.
           size=$(stat -c '%s' /tmp/dispatch.zip)
-          echo "zip is $size bytes"
-          upload_resp=$(scw function function get-upload-url \
-            function-id=$fn content-length=$size -o json)
-          echo "$upload_resp"
-          upload_url=$(echo "$upload_resp" | jq -r .url)
+          upload_url=$(scw function function get-upload-url \
+            function-id=$fn content-length=$size -o json | jq -r .url)
 
-          # Scaleway's presigned PUT requires the exact Content-Length we
-          # asked for. -T sets that automatically from the file size.
-          curl -fSL -X PUT -T /tmp/dispatch.zip "$upload_url" -v 2>&1 | tail -20
+          # The presigned URL signs Content-Type + Content-Length + Host;
+          # all three must be sent verbatim or S3 returns 403. -T provides
+          # content-length from file size; we set content-type explicitly.
+          curl -fsSL -X PUT -T /tmp/dispatch.zip \
+            -H "Content-Type: application/octet-stream" \
+            "$upload_url"
 
           scw function function deploy function-id=$fn
 
