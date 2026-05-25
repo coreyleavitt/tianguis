@@ -1,0 +1,98 @@
+name: dispatch-deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dispatch/**"
+      - ".github/workflows/dispatch-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dispatch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - run: go test ./...
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dispatch
+    env:
+      SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+      SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+      SCW_DEFAULT_ORGANIZATION_ID: ${{ vars.SCW_DEFAULT_ORGANIZATION_ID }}
+      SCW_DEFAULT_PROJECT_ID: ${{ vars.SCW_DEFAULT_PROJECT_ID }}
+      SCW_DEFAULT_REGION: ${{ vars.SCW_DEFAULT_REGION }}
+      NAMESPACE_ID: ${{ vars.SCW_FUNCTIONS_NAMESPACE_ID }}
+      FUNCTION_NAME: dispatch
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install scw CLI
+        run: |
+          curl -fsSL -o scw "https://github.com/scaleway/scaleway-cli/releases/latest/download/scaleway-cli_linux_amd64"
+          chmod +x scw
+          sudo mv scw /usr/local/bin/
+
+      - name: Find or create function
+        id: function
+        run: |
+          set -euo pipefail
+
+          # Check if a function with our name already exists in the namespace.
+          existing=$(scw function function list namespace-id=${NAMESPACE_ID} -o json \
+            | jq -r --arg name "$FUNCTION_NAME" '.[] | select(.name == $name) | .id' \
+            | head -n1)
+
+          if [[ -z "$existing" ]]; then
+            echo "Creating new function $FUNCTION_NAME"
+            id=$(scw function function create namespace-id=${NAMESPACE_ID} \
+              name=${FUNCTION_NAME} \
+              runtime=go124 \
+              handler=Handle \
+              memory-limit=256 \
+              min-scale=0 \
+              max-scale=3 \
+              timeout=30s \
+              privacy=public \
+              http-option=enabled \
+              -o json | jq -r '.id')
+          else
+            echo "Reusing existing function $existing"
+            id="$existing"
+          fi
+          echo "function_id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Package + deploy function
+        run: |
+          set -euo pipefail
+          # Scaleway expects a zip of the function source (excluding test files
+          # because the runtime build doesn't strip them and they pull go-jose
+          # transient deps that aren't needed at runtime).
+          zip -r /tmp/dispatch.zip . \
+            -x '*_test.go' \
+            -x '.git/*' \
+            -x '.github/*' \
+            -x 'cmd/*'
+
+          scw function function deploy ${{ steps.function.outputs.function_id }} \
+            zip-file=/tmp/dispatch.zip
+
+      - name: Print endpoint URL
+        run: |
+          scw function function get ${{ steps.function.outputs.function_id }} \
+            -o json | jq -r '.domain_name' \
+            | awk '{print "Dispatch endpoint: https://" $0}'

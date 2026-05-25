@@ -17,3 +17,6 @@ nimcache/
 tests/test_*
 !tests/test_*.nim
 /tianguis     # cli binary
+
+# go build artifacts
+dispatch/server   # local-dev binary if built without -o
