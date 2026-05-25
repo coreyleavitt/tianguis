@@ -574,3 +574,174 @@ func TestCosignSigner_Mismatch(t *testing.T) {
 		t.Fatalf("422 body should mention signer_mismatch; got %s", rec.Body.String())
 	}
 }
+
+// ---------------------------------------------------------------------------
+// R3c cycle 6 — Rekor attest before workflow_dispatch
+//
+// After all verifications pass, dispatch attests the verified publish event
+// to Rekor and gets back a UUID. The UUID propagates into the eventual
+// workflow_dispatch payload so the commit workflow can verify independently.
+// ---------------------------------------------------------------------------
+
+type fakeRekor struct {
+	captured  []AttestPayload
+	returnUUID string
+	returnErr  error
+}
+
+func (f *fakeRekor) Attest(_ context.Context, p AttestPayload) (string, error) {
+	f.captured = append(f.captured, p)
+	if f.returnErr != nil {
+		return "", f.returnErr
+	}
+	uuid := f.returnUUID
+	if uuid == "" {
+		uuid = "test-rekor-uuid-1234"
+	}
+	return uuid, nil
+}
+
+func happyDeps(t *testing.T, ti *testIssuer, rekor RekorAttester) Dependencies {
+	return Dependencies{
+		OIDC:   freshVerifier(t, ti),
+		Cosign: okCosign(),
+		Rekor:  rekor,
+	}
+}
+
+func TestRekorAttest_CalledWithVerifiedPayload(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	rekor := &fakeRekor{returnUUID: "uuid-abc-123"}
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+	rec := doRequest(t,
+		NewRouterWithDeps(happyDeps(t, ti, rekor)),
+		bodyForRepo("https://github.com/coreyleavitt/sample"),
+		"Bearer "+tok)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if len(rekor.captured) != 1 {
+		t.Fatalf("Rekor attester should be called exactly once; got %d", len(rekor.captured))
+	}
+	p := rekor.captured[0]
+	if p.Name != "sample" || p.OciRef != "ghcr.io/x/sample@sha256:abc123" {
+		t.Fatalf("attestation payload missing or wrong: %+v", p)
+	}
+	if p.RepoURL != "https://github.com/coreyleavitt/sample" {
+		t.Fatalf("payload RepoURL wrong: %q", p.RepoURL)
+	}
+	if p.SignerIdentity != "https://github.com/coreyleavitt/sample" {
+		t.Fatalf("payload SignerIdentity should be the cosign-verified identity; got %q", p.SignerIdentity)
+	}
+	if p.VerifiedAt.IsZero() {
+		t.Fatalf("payload VerifiedAt should be populated")
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("uuid-abc-123")) {
+		t.Fatalf("response body should include the Rekor UUID; got %s", rec.Body.String())
+	}
+}
+
+func TestRekorAttest_FailureFailsClosed(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	rekor := &fakeRekor{returnErr: errors.New("rekor upload timeout")}
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+	rec := doRequest(t,
+		NewRouterWithDeps(happyDeps(t, ti, rekor)),
+		bodyForRepo("https://github.com/coreyleavitt/sample"),
+		"Bearer "+tok)
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("want 503 when Rekor attest fails (fail-closed); got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("rekor_attest_failed")) {
+		t.Fatalf("503 body should mention rekor_attest_failed; got %s", rec.Body.String())
+	}
+}
+
+// ---------------------------------------------------------------------------
+// R3c cycles 7+8 — workflow_dispatch via GitHub App
+//
+// After all verification + Rekor attest, dispatch triggers commit-entry.yaml
+// on coreyleavitt/tianguis via a GH App installation token. The dispatched
+// payload carries everything the commit workflow needs to verify the Rekor
+// entry and merge the index entry.
+// ---------------------------------------------------------------------------
+
+type fakeGitHub struct {
+	calls     []ghCall
+	returnErr error
+}
+
+type ghCall struct {
+	owner, repo, workflowFile string
+	inputs                    map[string]string
+}
+
+func (f *fakeGitHub) DispatchWorkflow(_ context.Context, owner, repo, workflowFile string, inputs map[string]string) error {
+	f.calls = append(f.calls, ghCall{owner, repo, workflowFile, inputs})
+	return f.returnErr
+}
+
+func fullDeps(t *testing.T, ti *testIssuer, rekor RekorAttester, gh GitHubAPI) Dependencies {
+	return Dependencies{
+		OIDC:    freshVerifier(t, ti),
+		Cosign:  okCosign(),
+		Rekor:   rekor,
+		GitHub:  gh,
+		Now:     func() time.Time { return time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC) },
+	}
+}
+
+func TestWorkflowDispatch_CalledWithFullPayload(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	rekor := &fakeRekor{returnUUID: "rekor-uuid-xyz"}
+	gh := &fakeGitHub{}
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+	rec := doRequest(t,
+		NewRouterWithDeps(fullDeps(t, ti, rekor, gh)),
+		bodyForRepo("https://github.com/coreyleavitt/sample"),
+		"Bearer "+tok)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if len(gh.calls) != 1 {
+		t.Fatalf("GitHub API should be called exactly once; got %d", len(gh.calls))
+	}
+	c := gh.calls[0]
+	if c.owner != "coreyleavitt" || c.repo != "tianguis" {
+		t.Fatalf("dispatch target wrong: got %s/%s, want coreyleavitt/tianguis", c.owner, c.repo)
+	}
+	if c.workflowFile != "commit-entry.yaml" {
+		t.Fatalf("dispatch workflow wrong: got %q, want commit-entry.yaml", c.workflowFile)
+	}
+	want := map[string]string{
+		"name":         "sample",
+		"oci_ref":      "ghcr.io/x/sample@sha256:abc123",
+		"namespace":    "coreyleavitt",
+		"upstream":     "https://github.com/coreyleavitt/sample",
+		"signed_by":    "https://github.com/coreyleavitt/sample",
+		"published_at": "2026-06-01T12:00:00Z",
+		"rekor_uuid":   "rekor-uuid-xyz",
+	}
+	for k, v := range want {
+		if c.inputs[k] != v {
+			t.Errorf("inputs[%q] = %q; want %q", k, c.inputs[k], v)
+		}
+	}
+}
+
+func TestWorkflowDispatch_FailureFailsClosed(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	rekor := &fakeRekor{returnUUID: "uuid-1"}
+	gh := &fakeGitHub{returnErr: errors.New("github API 502")}
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+	rec := doRequest(t,
+		NewRouterWithDeps(fullDeps(t, ti, rekor, gh)),
+		bodyForRepo("https://github.com/coreyleavitt/sample"),
+		"Bearer "+tok)
+	if rec.Code != http.StatusBadGateway {
+		t.Fatalf("want 502 when workflow_dispatch fails; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("workflow_dispatch_failed")) {
+		t.Fatalf("502 body should mention workflow_dispatch_failed; got %s", rec.Body.String())
+	}
+}

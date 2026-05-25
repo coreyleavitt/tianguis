@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // PublishRequest is the JSON body of POST /v1/publish.
@@ -15,12 +16,24 @@ type PublishRequest struct {
 }
 
 // Dependencies bundles the injectable collaborators of the publish handler.
-// Grows as R3c lands more verification primitives (Rekor attester, GitHub
-// API client). One struct keeps signatures stable as fields are added.
+// Grows as R3c lands more verification primitives. One struct keeps
+// signatures stable as fields are added.
 type Dependencies struct {
 	OIDC   OIDCVerifier
 	Cosign CosignVerifier
+	Rekor  RekorAttester
+	GitHub GitHubAPI
+	Now    func() time.Time // injectable clock for deterministic attestation timestamps
 }
+
+// IndexRepo is where dispatch sends workflow_dispatch events. Constant
+// for now (the registry IS coreyleavitt/tianguis); could become a
+// Dependencies field if we ever support multiple index targets.
+const (
+	indexRepoOwner       = "coreyleavitt"
+	indexRepoName        = "tianguis"
+	commitEntryWorkflow  = "commit-entry.yaml"
+)
 
 // NewRouter — R3a-era constructor. Wraps NewRouterWithDeps with a Dependencies
 // that has only OIDC (no cosign, no Rekor, no GitHub API). Kept for the
@@ -74,6 +87,7 @@ func publishHandler(deps Dependencies) http.HandlerFunc {
 		// Cosign verify (when injected). Verifies the OCI artifact has a
 		// cosign signature; signer identity must be prefix-matched against
 		// the verified OIDC identity to prevent cross-identity publishing.
+		var signerIdentity string
 		if deps.Cosign != nil {
 			cv, err := deps.Cosign.Verify(r.Context(), req.OciRef)
 			if err != nil {
@@ -87,11 +101,83 @@ func publishHandler(deps Dependencies) http.HandlerFunc {
 						" does not match the verified OIDC repo "+expected)
 				return
 			}
+			signerIdentity = cv.SignerIdentity
 		}
 
-		// Rekor attest + workflow_dispatch land in cycles 6-8.
-		writeJSON(w, http.StatusOK, map[string]string{"status": "accepted"})
+		// Rekor attest the verified publish event (when injected). The
+		// commit workflow later re-fetches by UUID and verifies independently.
+		// Fail-closed: a Rekor failure means we cannot create the public
+		// audit trail this design relies on, so we refuse to proceed.
+		var rekorUUID string
+		if deps.Rekor != nil {
+			payload := AttestPayload{
+				Name:           req.Name,
+				OciRef:         req.OciRef,
+				RepoURL:        req.RepoURL,
+				SignerIdentity: signerIdentity,
+				VerifiedAt:     now(deps),
+			}
+			uuid, err := deps.Rekor.Attest(r.Context(), payload)
+			if err != nil {
+				writeError(w, http.StatusServiceUnavailable, "rekor_attest_failed", err.Error())
+				return
+			}
+			rekorUUID = uuid
+		}
+
+		// workflow_dispatch trigger (when injected). Carries the verified
+		// payload + Rekor UUID so the commit workflow can verify Rekor
+		// independently before committing. Fail-closed on API failure.
+		if deps.GitHub != nil {
+			inputs := map[string]string{
+				"name":         req.Name,
+				"oci_ref":      req.OciRef,
+				"namespace":    deriveNamespace(req.RepoURL),
+				"upstream":     req.RepoURL,
+				"signed_by":    signerIdentity,
+				"published_at": now(deps).Format(time.RFC3339),
+				"rekor_uuid":   rekorUUID,
+			}
+			if err := deps.GitHub.DispatchWorkflow(r.Context(),
+				indexRepoOwner, indexRepoName, commitEntryWorkflow, inputs); err != nil {
+				writeError(w, http.StatusBadGateway, "workflow_dispatch_failed", err.Error())
+				return
+			}
+		}
+
+		writeJSON(w, http.StatusOK, map[string]string{
+			"status":     "accepted",
+			"rekor_uuid": rekorUUID,
+		})
 	}
+}
+
+// deriveNamespace pulls the GitHub owner from a github.com URL.
+// "https://github.com/coreyleavitt/sample" → "coreyleavitt".
+// GitLab equivalent (and others) added when needed.
+func deriveNamespace(repoURL string) string {
+	const ghPrefix = "https://github.com/"
+	if strings.HasPrefix(repoURL, ghPrefix) {
+		tail := strings.TrimPrefix(repoURL, ghPrefix)
+		if i := strings.Index(tail, "/"); i > 0 {
+			return tail[:i]
+		}
+	}
+	const glPrefix = "https://gitlab.com/"
+	if strings.HasPrefix(repoURL, glPrefix) {
+		tail := strings.TrimPrefix(repoURL, glPrefix)
+		if i := strings.Index(tail, "/"); i > 0 {
+			return tail[:i]
+		}
+	}
+	return ""
+}
+
+func now(deps Dependencies) time.Time {
+	if deps.Now != nil {
+		return deps.Now()
+	}
+	return time.Now().UTC()
 }
 
 // identityMatchesRepoURL derives the repo identity the OIDC token attests
