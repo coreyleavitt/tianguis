@@ -21,6 +21,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: coreyleavitt/milpa
+          ref: main              # explicit ref skips the default-branch REST API
+                                 # call, which would use GITHUB_TOKEN (no scope
+                                 # for the private milpa repo) and fail
           ssh-key: ${{ secrets.MILPA_READ_DEPLOY_KEY }}
           path: .milpa-tool
 
