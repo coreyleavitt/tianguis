@@ -97,12 +97,10 @@ func TestTracer_ValidTokenAndBodyReturns200(t *testing.T) {
 		Audiences: []string{"sigstore"},
 	}})
 
-	token := ti.signToken(t, jwt.Claims{
-		Issuer:   ti.issuer,
-		Subject:  "repo:coreyleavitt/sample:ref:refs/tags/v1.0.0",
-		Audience: jwt.Audience{"sigstore"},
-		Expiry:   jwt.NewNumericDate(time.Now().Add(5 * time.Minute)),
-	})
+	// signTokenWithRepository carries the standard claims AND a GitHub-shape
+	// repository claim — matches what real GH Actions OIDC tokens carry,
+	// and matches the body's RepoURL so the R3c identity cross-check passes.
+	token := ti.signTokenWithRepository(t, "coreyleavitt/sample")
 
 	body, _ := json.Marshal(PublishRequest{
 		Name:     "sample",
@@ -294,5 +292,76 @@ func TestUnknownPath_Returns404(t *testing.T) {
 	NewRouter(freshVerifier(t, ti)).ServeHTTP(rec, req)
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("got %d, want 404; body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+// ---------------------------------------------------------------------------
+// R3c cycle 1 — identity cross-check
+//
+// The OIDC token attests "this workflow run is on repo X." The dispatch
+// body claims "publish for repo Y." These MUST match — otherwise an
+// attacker with a valid OIDC token for their own repo could publish
+// entries naming someone else's repo.
+// ---------------------------------------------------------------------------
+
+// signTokenWithRepository signs a token carrying the standard claims plus
+// a GitHub-Actions-shape "repository" claim (e.g. "owner/name").
+func (ti *testIssuer) signTokenWithRepository(t *testing.T, repository string) string {
+	t.Helper()
+	type ghClaims struct {
+		Repository string `json:"repository"`
+	}
+	sk := jose.SigningKey{
+		Algorithm: jose.RS256,
+		Key:       jose.JSONWebKey{Key: ti.privateKey, KeyID: ti.keyID},
+	}
+	signer, _ := jose.NewSigner(sk, &jose.SignerOptions{})
+	tok, err := jwt.Signed(signer).
+		Claims(validClaims(ti)).
+		Claims(ghClaims{Repository: repository}).
+		Serialize()
+	if err != nil {
+		t.Fatalf("sign: %v", err)
+	}
+	return tok
+}
+
+func bodyForRepo(repoURL string) []byte {
+	body, _ := json.Marshal(PublishRequest{
+		Name:     "sample",
+		OciRef:   "ghcr.io/x/sample@sha256:abc123",
+		Provider: "github",
+		RepoURL:  repoURL,
+	})
+	return body
+}
+
+// TestIdentityCrossCheck_Match — token's repository claim corresponds to
+// the body's RepoURL → endpoint accepts (200 today; will become "proceed
+// to cosign verify" in cycle 3).
+func TestIdentityCrossCheck_Match(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+	rec := doRequest(t, NewRouter(freshVerifier(t, ti)),
+		bodyForRepo("https://github.com/coreyleavitt/sample"),
+		"Bearer "+tok)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200 on identity match; got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+// TestIdentityCrossCheck_Mismatch — token attests one repo, body claims
+// another. Anti-impersonation guard: reject with 403.
+func TestIdentityCrossCheck_Mismatch(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	tok := ti.signTokenWithRepository(t, "attacker/their-repo")
+	rec := doRequest(t, NewRouter(freshVerifier(t, ti)),
+		bodyForRepo("https://github.com/victim/their-package"),
+		"Bearer "+tok)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("want 403 on identity mismatch; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("identity")) {
+		t.Fatalf("403 body should mention identity mismatch; got %s", rec.Body.String())
 	}
 }

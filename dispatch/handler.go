@@ -31,7 +31,7 @@ func publishHandler(verifier OIDCVerifier) http.HandlerFunc {
 			return
 		}
 
-		_, err = verifier.Verify(r.Context(), token)
+		claims, err := verifier.Verify(r.Context(), token)
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid_token", err.Error())
 			return
@@ -44,16 +44,42 @@ func publishHandler(verifier OIDCVerifier) http.HandlerFunc {
 		}
 
 		// Field-presence validation. Per-field error for actionable diagnostics.
-		// #5 will add deeper semantic validation (well-formed OCI ref, etc.).
 		for _, missing := range missingFields(&req) {
 			writeError(w, http.StatusBadRequest, "missing_field", "required field: "+missing)
 			return
 		}
 
-		// #3 stops here — token verified, body parsed, request accepted.
-		// #5 adds cosign verify + identity cross-check + index merge + push.
+		// Identity cross-check: the OIDC token's repo identity must match
+		// the body's declared RepoURL. Without this, an attacker with a
+		// valid OIDC token for their own repo could publish entries
+		// naming someone else's repo.
+		if expected, ok := identityMatchesRepoURL(claims, req.RepoURL); !ok {
+			writeError(w, http.StatusForbidden, "identity_mismatch",
+				"OIDC token attests repo "+expected+
+					" but publish request claims "+req.RepoURL)
+			return
+		}
+
+		// R3a + identity-match stop here. Cosign verify + Rekor attest +
+		// workflow_dispatch land in subsequent cycles.
 		writeJSON(w, http.StatusOK, map[string]string{"status": "accepted"})
 	}
+}
+
+// identityMatchesRepoURL derives the repo identity the OIDC token attests
+// to and compares it to the body's declared RepoURL.
+// Returns (expectedRepoURL, match).
+//
+// Per-provider claim extraction lives here. Cycle 1 implements GitHub
+// (uses the `repository` claim of form "owner/name"). Cycle 2 generalizes
+// to GitLab (`project_path`) and any future issuer.
+func identityMatchesRepoURL(c *Claims, repoURL string) (expected string, match bool) {
+	if repository, ok := c.IssuerSpecific["repository"].(string); ok && repository != "" {
+		expected = "https://github.com/" + repository
+		return expected, expected == repoURL
+	}
+	// No recognized identity claim → fail closed.
+	return "", false
 }
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
