@@ -1,0 +1,41 @@
+# Dependabot — keep GitHub Actions and Go modules current.
+# Reference: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+#
+# Grouping policy: bundle minor + patch updates per ecosystem so we
+# don't get a flood of one-action-at-a-time PRs. Majors arrive
+# individually because they may need code changes; we want to read
+# the release notes deliberately.
+
+version: 2
+updates:
+  # GitHub Actions used in workflows under .github/workflows/
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "ci"
+    groups:
+      actions-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Go module: the tianguis-dispatch HTTPS endpoint
+  - package-ecosystem: "gomod"
+    directory: "/dispatch"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(dispatch)"
+    labels:
+      - "dependencies"
+      - "go"
+    groups:
+      gomod-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
