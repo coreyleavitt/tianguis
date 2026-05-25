@@ -43,9 +43,12 @@ jobs:
 
       - name: Install scw CLI
         run: |
-          curl -fsSL -o scw "https://github.com/scaleway/scaleway-cli/releases/latest/download/scaleway-cli_linux_amd64"
+          set -euo pipefail
+          version=$(curl -fsSL https://api.github.com/repos/scaleway/scaleway-cli/releases/latest | jq -r .tag_name | sed 's/^v//')
+          curl -fsSL -o scw "https://github.com/scaleway/scaleway-cli/releases/download/v${version}/scaleway-cli_${version}_linux_amd64"
           chmod +x scw
           sudo mv scw /usr/local/bin/
+          scw version
 
       - name: Find or create function
         id: function
