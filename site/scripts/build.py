@@ -166,24 +166,36 @@ def render_version_block(ver: dict, pkg: dict) -> str:
     content_hash_h = html.escape(content_hash)
     attestation = html.escape(ver.get("attestation", "unknown"))
     att_class = attestation_class(attestation)
-    signed_by = html.escape(ver.get("signed_by", ""))
+    signed_by_raw = ver.get("signed_by", "")
+    signed_by = html.escape(signed_by_raw)
     published_at = html.escape(ver.get("published_at", ""))
 
-    # Sigstore signed the OCI artifact (by its manifest digest), not
-    # tianguis's content_hash (which is computed post-unpack). Link
-    # Rekor search by the OCI digest so users can actually find the
-    # signature entry.
     provs = ver.get("provenances", [])
-    oci_digest = next(
-        (p.get("digest", "") for p in provs if p.get("kind") == "oci" and p.get("digest")),
-        "",
-    )
-    rekor_link = (
-        f' · <a href="{REKOR_SEARCH}{html.escape(oci_digest)}" rel="noopener">search Rekor</a>'
-        if oci_digest else ""
-    )
-
+    oci_provs = [p for p in provs if p.get("kind") == "oci" and p.get("digest")]
     prov_html = "\n".join(render_provenance(p) for p in provs) or "<em>no provenance</em>"
+
+    # Verification snippet — `cosign verify` against the OCI artifact.
+    # Rekor entries are indexed by signature-object SHA (not artifact
+    # digest), so there's no direct "open this artifact's Rekor entry"
+    # link a human can construct. Cosign does the lookup internally via
+    # the .sig tag in the OCI registry.
+    verify_block = ""
+    if oci_provs and signed_by_raw:
+        op = oci_provs[0]
+        oci_ref = f'{op["registry"]}/{op["repository"]}@{op["digest"]}'
+        # GH Actions reusable-workflow identity has a stable prefix; use
+        # regexp form so it matches across the ref portion (refs/heads,
+        # refs/tags, SHA).
+        identity_pattern = signed_by_raw + "@.*"
+        verify_block = f"""\
+  <dt>verify</dt>
+  <dd>
+    <pre><code>cosign verify \\
+  --certificate-identity-regexp '{html.escape(identity_pattern)}' \\
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \\
+  {html.escape(oci_ref)}</code></pre>
+    <span class="hash-hint">runs cosign locally; finds the Rekor entry via the OCI .sig tag</span>
+  </dd>"""
 
     return f"""\
 <section class="version">
@@ -198,7 +210,8 @@ def render_version_block(ver: dict, pkg: dict) -> str:
     <dt>signed_by</dt>
     <dd><code>{signed_by}</code></dd>
     <dt>provenance</dt>
-    <dd>{prov_html}{rekor_link}</dd>
+    <dd>{prov_html}</dd>
+{verify_block}
   </dl>
 </section>"""
 
