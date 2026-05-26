@@ -20,7 +20,9 @@ from __future__ import annotations
 
 import html
 import json
+import os
 import shutil
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,8 +32,12 @@ REPO = Path(__file__).resolve().parents[2]
 SITE = Path(__file__).resolve().parents[1]
 BUILD = SITE / "_build"
 TEMPLATES = SITE / "templates"
+CACHE = SITE / "_cache"
 
-REKOR_SEARCH = "https://search.sigstore.dev/?hash="
+# search.sigstore.dev accepts a direct logIndex query that opens the
+# specific Rekor entry — far better UX than the artifact-hash search
+# which doesn't index by what users have on hand (the OCI digest).
+REKOR_URL_BY_INDEX = "https://search.sigstore.dev/?logIndex="
 
 
 def fmt_iso(ts: str) -> str:
@@ -48,6 +54,74 @@ def attestation_class(attestation: str) -> str:
 def pkg_url(pkg: dict) -> str:
     """Canonical site path for a package."""
     return f"/p/{pkg.get('namespace','')}/{pkg.get('name','')}.html"
+
+
+# ---------------------------------------------------------------------------
+# Rekor logIndex lookup — runs `cosign verify` once per author-signed OCI
+# artifact, extracts the bundle's logIndex, caches it in site/_cache/.
+#
+# logIndex is immutable per signature (Rekor is append-only with monotonic
+# indexes), so the cache is permanently valid for any OCI digest we've
+# already seen. The cache file is committed to the repo so subsequent
+# builds (and offline rebuilds) don't need to re-verify.
+# ---------------------------------------------------------------------------
+
+
+CACHE_FILE = CACHE / "rekor-logindex.json"
+
+
+def load_rekor_cache() -> dict[str, int]:
+    if CACHE_FILE.exists():
+        try:
+            return json.loads(CACHE_FILE.read_text())
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def save_rekor_cache(cache: dict[str, int]) -> None:
+    CACHE.mkdir(parents=True, exist_ok=True)
+    CACHE_FILE.write_text(json.dumps(cache, indent=2, sort_keys=True) + "\n")
+
+
+def lookup_logindex(
+    oci_ref: str,
+    signed_by_pattern: str,
+    cache: dict[str, int],
+) -> int | None:
+    """Return the Rekor logIndex for `oci_ref`, consulting cache first.
+
+    Returns None if cosign isn't available, the verify fails, or the
+    output doesn't include a logIndex (any of which mean we render the
+    page without a Rekor link rather than failing the build).
+    """
+    if oci_ref in cache:
+        return cache[oci_ref]
+    if not shutil.which("cosign"):
+        return None
+    try:
+        result = subprocess.run(
+            [
+                "cosign", "verify",
+                "--certificate-identity-regexp", signed_by_pattern,
+                "--certificate-oidc-issuer", "https://token.actions.githubusercontent.com",
+                oci_ref,
+            ],
+            capture_output=True, timeout=60,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if result.returncode != 0:
+        return None
+    try:
+        payload = json.loads(result.stdout.decode("utf-8", "replace"))
+        # cosign verify emits an array of signatures; take the first
+        # entry's bundle's logIndex.
+        log_index = int(payload[0]["optional"]["Bundle"]["Payload"]["logIndex"])
+    except (json.JSONDecodeError, KeyError, IndexError, ValueError, TypeError):
+        return None
+    cache[oci_ref] = log_index
+    return log_index
 
 
 # ---------------------------------------------------------------------------
@@ -160,7 +234,7 @@ def render_provenance(prov: dict) -> str:
         return f'<div class="prov"><span class="prov-kind">{html.escape(kind)}</span></div>'
 
 
-def render_version_block(ver: dict, pkg: dict) -> str:
+def render_version_block(ver: dict, pkg: dict, rekor_cache: dict[str, int]) -> str:
     ver_str = html.escape(ver.get("version", ""))
     content_hash = ver.get("content_hash", "")
     content_hash_h = html.escape(content_hash)
@@ -174,27 +248,30 @@ def render_version_block(ver: dict, pkg: dict) -> str:
     oci_provs = [p for p in provs if p.get("kind") == "oci" and p.get("digest")]
     prov_html = "\n".join(render_provenance(p) for p in provs) or "<em>no provenance</em>"
 
-    # Verification snippet — `cosign verify` against the OCI artifact.
-    # Rekor entries are indexed by signature-object SHA (not artifact
-    # digest), so there's no direct "open this artifact's Rekor entry"
-    # link a human can construct. Cosign does the lookup internally via
-    # the .sig tag in the OCI registry.
+    # Verification: link to the Rekor entry (resolved at build time via
+    # cosign verify, cached by OCI digest) + a copy-paste `cosign verify`
+    # snippet for users who want to run the math themselves.
     verify_block = ""
     if oci_provs and signed_by_raw:
         op = oci_provs[0]
         oci_ref = f'{op["registry"]}/{op["repository"]}@{op["digest"]}'
-        # GH Actions reusable-workflow identity has a stable prefix; use
-        # regexp form so it matches across the ref portion (refs/heads,
-        # refs/tags, SHA).
         identity_pattern = signed_by_raw + "@.*"
+        log_index = lookup_logindex(oci_ref, identity_pattern, rekor_cache)
+        rekor_link = ""
+        if log_index is not None:
+            rekor_link = (
+                f' · <a href="{REKOR_URL_BY_INDEX}{log_index}" rel="noopener">view in Rekor</a>'
+            )
         verify_block = f"""\
   <dt>verify</dt>
   <dd>
-    <pre><code>cosign verify \\
+    <details>
+      <summary>cosign verify command{rekor_link}</summary>
+      <pre><code>cosign verify \\
   --certificate-identity-regexp '{html.escape(identity_pattern)}' \\
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \\
   {html.escape(oci_ref)}</code></pre>
-    <span class="hash-hint">runs cosign locally; finds the Rekor entry via the OCI .sig tag</span>
+    </details>
   </dd>"""
 
     return f"""\
@@ -216,7 +293,7 @@ def render_version_block(ver: dict, pkg: dict) -> str:
 </section>"""
 
 
-def render_package_page(pkg: dict) -> str:
+def render_package_page(pkg: dict, rekor_cache: dict[str, int]) -> str:
     namespace = html.escape(pkg.get("namespace", ""))
     name = html.escape(pkg.get("name", ""))
     upstream = html.escape(pkg.get("upstream", ""))
@@ -227,7 +304,7 @@ def render_package_page(pkg: dict) -> str:
     if latest:
         install_snippet = f'{name} >= {html.escape(latest.get("version",""))}'
 
-    versions_html = "\n".join(render_version_block(v, pkg) for v in versions)
+    versions_html = "\n".join(render_version_block(v, pkg, rekor_cache) for v in versions)
 
     tmpl = (TEMPLATES / "package.html").read_text()
     return (
@@ -270,6 +347,9 @@ def build() -> None:
     import os
     commit_sha = os.environ.get("GITHUB_SHA", data.get("generated_at", "local"))
 
+    rekor_cache = load_rekor_cache()
+    initial_cache_size = len(rekor_cache)
+
     if BUILD.exists():
         shutil.rmtree(BUILD)
     BUILD.mkdir(parents=True)
@@ -286,7 +366,11 @@ def build() -> None:
             continue
         out_dir = pkg_root / ns
         out_dir.mkdir(parents=True, exist_ok=True)
-        (out_dir / f"{nm}.html").write_text(render_package_page(pkg))
+        (out_dir / f"{nm}.html").write_text(render_package_page(pkg, rekor_cache))
+
+    if len(rekor_cache) > initial_cache_size:
+        save_rekor_cache(rekor_cache)
+        print(f"  rekor cache: {len(rekor_cache) - initial_cache_size} new entries → {CACHE_FILE.relative_to(REPO)}")
 
     # Static content pages
     for tmpl, dest in [

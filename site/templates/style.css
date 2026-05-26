@@ -353,6 +353,31 @@ h3 {
   font-style: italic;
 }
 
+.version-meta details {
+  margin: 0;
+}
+.version-meta details > summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--fg-muted);
+  padding: 0.15rem 0;
+  list-style: none;
+}
+.version-meta details > summary::-webkit-details-marker { display: none; }
+.version-meta details > summary::before {
+  content: "▸ ";
+  display: inline-block;
+  width: 0.9em;
+  color: var(--fg-faint);
+}
+.version-meta details[open] > summary::before { content: "▾ "; }
+.version-meta details > summary a {
+  font-weight: 500;
+}
+.version-meta details pre {
+  margin: 0.5rem 0 0;
+}
+
 .prov {
   font-size: 0.9rem;
   margin: 0.15rem 0;
