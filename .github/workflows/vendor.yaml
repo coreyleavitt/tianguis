@@ -78,7 +78,14 @@ jobs:
           git add index.kdl index.json
           [ -f alerts.kdl ] && git add alerts.kdl || true
           git commit -m "chore(vendor): daily milpa-bot vendoring pass"
-          git push
+          # A vendor pass can take >1h, during which other commits may
+          # have landed on main. Rebase before push so we don't lose the
+          # work. Retry a few times in case of rapid contention.
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break
+            echo "push attempt $i failed; will retry"
+            sleep $((i * 2))
+          done
           echo "changed=true" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 

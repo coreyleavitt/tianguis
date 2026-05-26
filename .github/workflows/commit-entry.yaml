@@ -176,4 +176,10 @@ jobs:
           git config user.email "tianguis-bot@users.noreply.github.com"
           git add index.kdl index.json
           git commit -m "publish: ${{ steps.payload.outputs.name }} ${{ steps.payload.outputs.version }} (run:${{ github.run_id }})"
-          git push
+          # Rebase before push — another commit (vendor pass, parallel
+          # publish, etc.) may have landed during this workflow.
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break
+            echo "push attempt $i failed; will retry"
+            sleep $((i * 2))
+          done
