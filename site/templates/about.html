@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>about — tianguis</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a href="/" class="brand">
+      <h1>tianguis</h1>
+      <p class="tagline">an open-air market for Nim packages</p>
+    </a>
+    <nav class="topnav">
+      <a href="/about.html" class="active">about</a>
+      <a href="/adoption.html">publish</a>
+      <a href="/spec.html">spec</a>
+      <a href="https://github.com/coreyleavitt/tianguis">source</a>
+    </nav>
+  </div>
+</header>
+
+<main class="prose">
+
+<h2>what tianguis is</h2>
+
+<p>
+  tianguis is a Nim package registry. it indexes the canonical name → source mapping for the Nim
+  ecosystem, with three commitments that distinguish it from nimble + nim-lang/packages:
+</p>
+
+<h3>content-addressed identity</h3>
+
+<p>
+  every version in tianguis carries a <code>sha256</code> of its source tree, computed by a
+  deterministic algorithm (sorted entries, zero mtime, executable-bit-preserving). fetch a
+  package, recompute the hash, compare. mismatch = tampered bytes.
+</p>
+
+<p>
+  this matters because URL-based registries (nim-lang/packages, today's pypi pre-PEP 740,
+  pre-Sigstore-NPM) trust that the bytes at <code>https://github.com/x/y</code> at tag
+  <code>v1.0</code> are the same bytes everyone else saw. force-pushes, mirror compromises,
+  upstream account takeovers all silently substitute content. content-addressed identity makes
+  that detectable.
+</p>
+
+<h3>Sigstore attestation</h3>
+
+<p>
+  every entry in tianguis is signed via <a href="https://sigstore.dev">Sigstore</a> (keyless
+  cosign via OIDC). attestations land in <a href="https://search.sigstore.dev">Rekor</a>'s
+  transparency log under one of two identities:
+</p>
+
+<ul>
+  <li><strong>author-signed</strong> — the package author published via <code>milpa publish</code>
+    from their own CI. Sigstore cert subject = their workflow identity.</li>
+  <li><strong>milpa-vendored</strong> — the vendor-en-absentia bot mirrored a nim-lang/packages
+    entry on the author's behalf. cert subject = the milpa-bot workflow identity.</li>
+</ul>
+
+<p>
+  consumers can require a minimum attestation level via
+  <code>verification { min_attestation "author-signed" }</code> in milpa.kdl, refusing vendored
+  entries for security-sensitive deps.
+</p>
+
+<h3>no human merges on the publishing path</h3>
+
+<p>
+  the publishing flow is entirely automated. an author tags a release in their repo →
+  <code>milpa publish</code> packs source, pushes OCI, cosign-signs, POSTs the tianguis
+  dispatch endpoint → a workflow on the tianguis repo verifies + commits the index entry.
+  end-to-end: ~60 seconds. zero human review steps. zero curation latency.
+</p>
+
+<p>
+  nim-lang/packages routinely sits with PRs open for days or weeks. tianguis eliminates that
+  channel by inverting the trust model: rather than humans gatekeeping submissions, machines
+  verify cryptographic attestations.
+</p>
+
+<h2>what tianguis is not</h2>
+
+<ul>
+  <li><strong>not a dep resolver</strong>. that's <a href="https://github.com/coreyleavitt/milpa">milpa</a>.
+    tianguis just provides the name → version → bytes mapping milpa consumes.</li>
+  <li><strong>not a backend service</strong>. the registry is a static GH Pages site;
+    <code>index.kdl</code> + <code>index.json</code> served as files. the dispatch endpoint
+    exists only to gate publish events, never to serve package data.</li>
+  <li><strong>not a fork of nim-lang/packages</strong>. tianguis is a different model entirely.
+    it does, however, vendor-en-absentia from nim-lang/packages so the existing ecosystem is
+    immediately usable.</li>
+</ul>
+
+<h2>federation</h2>
+
+<p>
+  tianguis is one possible registry, not the only one. consumers can configure milpa with a
+  list of index URLs via <code>MILPA_INDEX_URLS</code> or a manifest setting. an organization
+  can run its own private registry by hosting an index.kdl on any HTTP server.
+</p>
+
+<p>
+  the index format is specified in <a href="/spec.html">spec</a>. nothing about milpa requires
+  tianguis specifically — it's the default, not the law.
+</p>
+
+</main>
+
+<footer>
+  <p>
+    <a href="/">← back to registry</a>
+  </p>
+</footer>
+</body>
+</html>

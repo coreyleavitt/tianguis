@@ -9,42 +9,55 @@
 </head>
 <body>
 <header>
-  <h1>tianguis</h1>
-  <p class="tagline">an open-air market for Nim packages — content-addressed, attestation-bearing, fork-resistant</p>
+  <div class="header-inner">
+    <a href="/" class="brand">
+      <h1>tianguis</h1>
+      <p class="tagline">an open-air market for Nim packages</p>
+    </a>
+    <nav class="topnav">
+      <a href="/about.html">about</a>
+      <a href="/adoption.html">publish</a>
+      <a href="/spec.html">spec</a>
+      <a href="https://github.com/coreyleavitt/tianguis">source</a>
+    </nav>
+  </div>
 </header>
 
 <main>
 
-<section class="intro">
-  <p>
-    tianguis is a Nim package registry built on three commitments:
-  </p>
-  <ul>
-    <li><strong>content addressing.</strong> every package version has a <code>sha256</code> of its source tree. fetch + recompute = verify.</li>
-    <li><strong>Sigstore attestation.</strong> every entry is signed (cosign keyless via Sigstore). <a href="https://search.sigstore.dev/">searchable in Rekor</a>.</li>
-    <li><strong>no human merges.</strong> publishing is automated via a stateless dispatch endpoint. tag-push to installable in ~60 seconds.</li>
-  </ul>
-  <p>
-    works with <a href="https://github.com/coreyleavitt/milpa">milpa</a>, the Nim resolver that replaces nimble's SAT solver.
-  </p>
+<section class="hero">
+  <h2>Content-addressed Nim packages. Sigstore-attested. No human merges.</h2>
+  <div class="hero-cta">
+    <pre><code>require "&lt;name&gt; &gt;= &lt;version&gt;"  <span class="cta-comment"># in milpa.kdl</span></code></pre>
+    <p class="hero-sub">tag-push to installable in ~60 seconds via <a href="/adoption.html">milpa publish</a>.</p>
+  </div>
 </section>
 
-<section class="status">
-  <h2>registry status</h2>
-  <p>
-    <strong>{{PACKAGE_COUNT}}</strong> packages indexed
-    · built {{BUILD_TIME}}
-  </p>
-  <p class="links">
-    <a href="/index.kdl">index.kdl</a> (canonical) ·
-    <a href="/index.json">index.json</a> (projection) ·
-    <a href="https://github.com/coreyleavitt/tianguis">source</a>
-  </p>
+<section class="stats">
+  <div class="stat">
+    <div class="stat-num">{{PACKAGE_COUNT}}</div>
+    <div class="stat-label">packages</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num att-author">{{N_AUTHOR}}</div>
+    <div class="stat-label">author-signed</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num att-vendored">{{N_VENDORED}}</div>
+    <div class="stat-label">milpa-vendored</div>
+  </div>
+</section>
+
+<section class="recent">
+  <h2>recent activity</h2>
+  <ul class="recent-list">
+{{RECENT}}
+  </ul>
 </section>
 
 <section class="packages">
-  <h2>packages</h2>
-  <input type="search" id="filter" placeholder="filter by name…" autocomplete="off">
+  <h2>all packages</h2>
+  <input type="search" id="filter" placeholder="filter by name…" autocomplete="off" autofocus>
   <ul class="pkg-list">
 {{PACKAGES}}
   </ul>
@@ -54,14 +67,18 @@
 
 <footer>
   <p>
-    tianguis publishes static index data via GitHub Pages. there is no backend service.
-    a small <a href="https://dispatch.tianguis.dev/healthz">dispatch endpoint</a> exists to accept author publish events,
-    but it never serves package data.
+    static site, no backend. raw data:
+    <a href="/index.kdl">index.kdl</a> (canonical),
+    <a href="/index.json">index.json</a> (projection).
+    rebuilt {{BUILD_TIME}} from <code>{{COMMIT_SHA}}</code>.
+  </p>
+  <p>
+    a small <a href="https://dispatch.tianguis.dev/healthz">dispatch endpoint</a> accepts publish events;
+    never serves package data.
   </p>
 </footer>
 
 <script>
-// Tiny client-side filter — no framework, no build step.
 const input = document.getElementById('filter');
 const items = document.querySelectorAll('.pkg');
 input.addEventListener('input', () => {

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{{NAMESPACE}}/{{NAME}} — tianguis</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a href="/" class="brand">
+      <h1>tianguis</h1>
+      <p class="tagline">an open-air market for Nim packages</p>
+    </a>
+    <nav class="topnav">
+      <a href="/about.html">about</a>
+      <a href="/adoption.html">publish</a>
+      <a href="/spec.html">spec</a>
+      <a href="https://github.com/coreyleavitt/tianguis">source</a>
+    </nav>
+  </div>
+</header>
+
+<main class="pkg-detail">
+<nav class="crumb">
+  <a href="/">all packages</a> /
+</nav>
+
+<header class="detail-head">
+  <h2><span class="pkg-ns">{{NAMESPACE}}/</span>{{NAME}}</h2>
+  <p class="detail-upstream">
+    upstream: <a href="{{UPSTREAM}}">{{UPSTREAM}}</a>
+  </p>
+  <p class="detail-versions">{{VERSION_COUNT}} version(s) indexed</p>
+</header>
+
+<section class="install">
+  <h3>install</h3>
+  <p>add to <code>milpa.kdl</code>:</p>
+  <pre><code>require "{{INSTALL_SNIPPET}}"</code></pre>
+  <p class="install-hint">
+    or fetch ad-hoc: <code>milpa fetch {{NAME}}</code>
+  </p>
+</section>
+
+<section class="versions">
+  <h3>versions</h3>
+{{VERSIONS}}
+</section>
+
+</main>
+
+<footer>
+  <p>
+    every version in tianguis carries a content-addressed identity (sha256 of the source tree)
+    and a Sigstore attestation. <a href="/about.html">why it matters</a>.
+  </p>
+</footer>
+</body>
+</html>

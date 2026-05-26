@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>publish — tianguis</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a href="/" class="brand">
+      <h1>tianguis</h1>
+      <p class="tagline">an open-air market for Nim packages</p>
+    </a>
+    <nav class="topnav">
+      <a href="/about.html">about</a>
+      <a href="/adoption.html" class="active">publish</a>
+      <a href="/spec.html">spec</a>
+      <a href="https://github.com/coreyleavitt/tianguis">source</a>
+    </nav>
+  </div>
+</header>
+
+<main class="prose">
+
+<h2>publishing to tianguis</h2>
+
+<p>
+  publishing is automated via <code>milpa publish</code>, which packs your source, pushes
+  an OCI artifact, cosign-signs it, and POSTs to the dispatch endpoint. tianguis verifies
+  the signature and commits the new entry to the index.
+</p>
+
+<p>
+  end-to-end: tag-push to installable in ~60 seconds. no human review, no PR queue.
+</p>
+
+<h2>github actions (the easy path)</h2>
+
+<p>
+  drop this into <code>.github/workflows/publish.yaml</code> in your repo:
+</p>
+
+<pre><code>name: publish
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    uses: coreyleavitt/tianguis/.github/workflows/publish.yaml@v1
+    with:
+      name: my-package           # must match your milpa.kdl
+      version: ${{ github.ref_name }}
+    permissions:
+      id-token: write   # cosign keyless signing
+      contents: read    # checkout
+      packages: write   # push OCI artifact to GHCR
+</code></pre>
+
+<p>
+  push a tag (<code>git tag v1.0.0 &amp;&amp; git push origin v1.0.0</code>) and within ~60
+  seconds your version appears here. that's it.
+</p>
+
+<h3>optional inputs</h3>
+
+<ul>
+  <li><code>registry</code> — OCI registry ref (default: <code>ghcr.io/&lt;owner&gt;/&lt;repo&gt;:&lt;version&gt;</code>).
+    any OCI v2 endpoint works: ghcr, dockerhub, quay, lscr.io, Harbor, self-hosted Zot.</li>
+  <li><code>dispatch-url</code> — for staging/self-hosted dispatch endpoints (default
+    <code>https://dispatch.tianguis.dev</code>).</li>
+  <li><code>dry-run: true</code> — pack + push + sign without committing to the index.
+    use this once before going live to verify the OCI artifact + Rekor entry look right.</li>
+</ul>
+
+<h2>any other CI</h2>
+
+<p>
+  the publishing protocol is a four-step shell pipeline; any CI whose OIDC issuer is
+  <a href="https://github.com/sigstore/fulcio/tree/main/federation">trusted by Sigstore Fulcio</a>
+  can publish. confirmed working: GitLab CI, Codeberg/Forgejo/Woodpecker, Buildkite,
+  Google Cloud Build, CircleCI.
+</p>
+
+<p>
+  see the
+  <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/adoption/any-ci.md">
+    any-CI guide
+  </a>
+  for a worked GitLab CI example + the raw protocol you can wire into anything.
+</p>
+
+<h3>not currently supported</h3>
+
+<ul>
+  <li><strong>sourcehut builds</strong> — sourcehut's OIDC issuer isn't in Sigstore's federation
+    (yet). cosign keyless can't mint a signing certificate. revisit when upstream federation
+    expands.</li>
+</ul>
+
+<h2>what the trust chain looks like</h2>
+
+<ol>
+  <li>your CI: <code>milpa publish</code> packs source deterministically, pushes to OCI
+    registry, cosign-signs the artifact (signature lands in Rekor).</li>
+  <li>tianguis dispatch (Scaleway, stateless): verifies your CI's OIDC token. cross-checks
+    the identity claim against the declared repo URL. returns <code>workflow_dispatch</code>
+    to the tianguis commit pipeline. <strong>no cryptographic decisions here</strong> — the
+    serverless function is structurally not in Sigstore's trust set.</li>
+  <li>tianguis commit workflow (GitHub Actions): independently runs
+    <code>cosign verify-blob</code> on the OCI artifact, recomputes the content_hash, merges
+    the new entry into <code>index.kdl</code>, attests the commit decision to Rekor under its
+    own workflow identity, pushes.</li>
+  <li>this site rebuilds within seconds. your version is live.</li>
+</ol>
+
+<p>
+  third-party monitors can audit by comparing Rekor entries (queryable by workflow identity)
+  against the contents of <code>index.kdl</code> in the repo. divergence between the two is
+  a publicly-visible alarm.
+</p>
+
+</main>
+
+<footer>
+  <p><a href="/">← back to registry</a></p>
+</footer>
+</body>
+</html>

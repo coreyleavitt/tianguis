@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>spec — tianguis</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a href="/" class="brand">
+      <h1>tianguis</h1>
+      <p class="tagline">an open-air market for Nim packages</p>
+    </a>
+    <nav class="topnav">
+      <a href="/about.html">about</a>
+      <a href="/adoption.html">publish</a>
+      <a href="/spec.html" class="active">spec</a>
+      <a href="https://github.com/coreyleavitt/tianguis">source</a>
+    </nav>
+  </div>
+</header>
+
+<main class="prose">
+
+<h2>specifications</h2>
+
+<p>
+  tianguis is meant to be implemented by anyone — the index format, dispatch protocol, and
+  attestation model are specified in the repository's <code>docs/</code> directory. these are
+  the load-bearing documents:
+</p>
+
+<h3>format + transport</h3>
+
+<ul>
+  <li>
+    <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/spec/index-format.md"><code>index-format.md</code></a>
+    — the KDL grammar for <code>index.kdl</code>. canonical encoding rules. JSON projection
+    semantics. strict-schema validation.
+  </li>
+  <li>
+    <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/rfc-distribution-and-publishing.md"><code>rfc-distribution-and-publishing.md</code></a>
+    — why OCI artifacts. why cosign. why content addressing. trust model end-to-end.
+  </li>
+  <li>
+    <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/rfc-registry.md"><code>rfc-registry.md</code></a>
+    — the high-level registry design. why tianguis exists as separate from nim-lang/packages.
+  </li>
+</ul>
+
+<h3>adoption</h3>
+
+<ul>
+  <li>
+    <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/adoption/github.md"><code>adoption/github.md</code></a>
+    — copy-paste GH Actions setup
+  </li>
+  <li>
+    <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/adoption/any-ci.md"><code>adoption/any-ci.md</code></a>
+    — the four-step protocol for any Sigstore-federated CI
+  </li>
+</ul>
+
+<h3>endpoints</h3>
+
+<ul>
+  <li><code>https://tianguis.dev/index.kdl</code> — canonical index (KDL)</li>
+  <li><code>https://tianguis.dev/index.json</code> — JSON projection of the same data</li>
+  <li><code>https://dispatch.tianguis.dev/v1/publish</code> — author-side publish endpoint (POST + OIDC bearer)</li>
+  <li><code>https://dispatch.tianguis.dev/healthz</code> — liveness check</li>
+</ul>
+
+<h3>reference implementations</h3>
+
+<ul>
+  <li>
+    <strong>milpa</strong> — Python reference consumer. resolves named deps via tianguis, fetches
+    via OCI, verifies content_hash.
+    <a href="https://github.com/coreyleavitt/milpa">github.com/coreyleavitt/milpa</a>
+  </li>
+  <li>
+    <strong>tianguis</strong> — the registry itself. Go dispatch endpoint + Nim vendor-bot +
+    static site builder.
+    <a href="https://github.com/coreyleavitt/tianguis">github.com/coreyleavitt/tianguis</a>
+  </li>
+</ul>
+
+<h3>related</h3>
+
+<ul>
+  <li><a href="https://sigstore.dev">Sigstore</a> — the attestation substrate</li>
+  <li><a href="https://oras.land">oras</a> — the OCI artifact CLI tianguis uses for transport</li>
+  <li><a href="https://kdl.dev">KDL</a> — the canonical index encoding</li>
+</ul>
+
+</main>
+
+<footer>
+  <p><a href="/">← back to registry</a></p>
+</footer>
+</body>
+</html>
