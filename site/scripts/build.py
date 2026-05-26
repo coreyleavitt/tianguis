@@ -169,12 +169,20 @@ def render_version_block(ver: dict, pkg: dict) -> str:
     signed_by = html.escape(ver.get("signed_by", ""))
     published_at = html.escape(ver.get("published_at", ""))
 
+    # Sigstore signed the OCI artifact (by its manifest digest), not
+    # tianguis's content_hash (which is computed post-unpack). Link
+    # Rekor search by the OCI digest so users can actually find the
+    # signature entry.
+    provs = ver.get("provenances", [])
+    oci_digest = next(
+        (p.get("digest", "") for p in provs if p.get("kind") == "oci" and p.get("digest")),
+        "",
+    )
     rekor_link = (
-        f'<a href="{REKOR_SEARCH}{html.escape(content_hash)}" rel="noopener">search Rekor</a>'
-        if content_hash else ""
+        f' · <a href="{REKOR_SEARCH}{html.escape(oci_digest)}" rel="noopener">search Rekor</a>'
+        if oci_digest else ""
     )
 
-    provs = ver.get("provenances", [])
     prov_html = "\n".join(render_provenance(p) for p in provs) or "<em>no provenance</em>"
 
     return f"""\
@@ -186,11 +194,11 @@ def render_version_block(ver: dict, pkg: dict) -> str:
   </header>
   <dl class="version-meta">
     <dt>content_hash</dt>
-    <dd><code class="hash">{content_hash_h}</code> {rekor_link}</dd>
+    <dd><code class="hash">{content_hash_h}</code> <span class="hash-hint">milpa-computed; verify by fetching and rehashing</span></dd>
     <dt>signed_by</dt>
     <dd><code>{signed_by}</code></dd>
     <dt>provenance</dt>
-    <dd>{prov_html}</dd>
+    <dd>{prov_html}{rekor_link}</dd>
   </dl>
 </section>"""
 

@@ -347,6 +347,11 @@ h3 {
 .hash {
   font-size: 0.85rem;
 }
+.hash-hint {
+  font-size: 0.78rem;
+  color: var(--fg-faint);
+  font-style: italic;
+}
 
 .prov {
   font-size: 0.9rem;
