@@ -115,12 +115,12 @@ jobs:
           echo "registry=${ref}" >> "$GITHUB_OUTPUT"
 
           # cosign keyless signer identity = the workflow that actually
-          # RUNS `cosign sign`. For reusable workflows that's
-          # github.job_workflow_ref (this workflow's path), NOT
-          # github.workflow_ref (the caller's). They diverge when nimkdl's
-          # publish job calls this reusable workflow — cosign's Fulcio
-          # cert reflects the reusable workflow, so signed_by must match.
-          echo "signed_by=https://github.com/${{ github.job_workflow_ref }}" >> "$GITHUB_OUTPUT"
+          # runs `cosign sign`. For a reusable-workflow architecture
+          # that's the REUSABLE workflow's path, not the caller's. The
+          # @ref portion varies (refs/heads/main, refs/tags/v1, SHA),
+          # so we pass a known-good pattern; commit-entry.yaml uses
+          # cosign's --certificate-identity-regexp to match across refs.
+          echo "signed_by=https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml" >> "$GITHUB_OUTPUT"
 
       - name: milpa publish
         env:

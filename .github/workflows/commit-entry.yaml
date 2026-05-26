@@ -108,8 +108,10 @@ jobs:
           # issuer used by the author's CI. We require the GitHub Actions
           # issuer for now; multi-provider support is a followup once we
           # know which other issuers real authors will use.
+          # The reusable publish workflow lives at a stable path; refs
+          # vary (refs/heads/main, refs/tags/v1, SHAs). Match prefix.
           cosign verify \
-            --certificate-identity="${SIGNED_BY}" \
+            --certificate-identity-regexp="^${SIGNED_BY}@" \
             --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
             "${OCI_REF}"
 
