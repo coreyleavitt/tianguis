@@ -114,11 +114,13 @@ jobs:
           ref=$(echo "${ref}" | tr '[:upper:]' '[:lower:]')
           echo "registry=${ref}" >> "$GITHUB_OUTPUT"
 
-          # cosign keyless signer identity for GH Actions has the shape:
-          # https://github.com/<owner>/<repo>/.github/workflows/<file>@<ref>
-          # We use the CALLER workflow ref so the identity reflects who
-          # actually triggered the publish (per workflow_call attribution).
-          echo "signed_by=https://github.com/${{ github.workflow_ref }}" >> "$GITHUB_OUTPUT"
+          # cosign keyless signer identity = the workflow that actually
+          # RUNS `cosign sign`. For reusable workflows that's
+          # github.job_workflow_ref (this workflow's path), NOT
+          # github.workflow_ref (the caller's). They diverge when nimkdl's
+          # publish job calls this reusable workflow — cosign's Fulcio
+          # cert reflects the reusable workflow, so signed_by must match.
+          echo "signed_by=https://github.com/${{ github.job_workflow_ref }}" >> "$GITHUB_OUTPUT"
 
       - name: milpa publish
         env:
