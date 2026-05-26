@@ -1,37 +1,52 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 20">
   <!--
-    tianguis icon — flat tarp stretched across 4 poles, 3 stalls of
-    produce underneath. pixel-art style, pure rects, no diagonals.
-    palette matches the site's terracotta accent.
-
-    layout (16x16):
-      poles at cols 0, 5, 10, 15  → 3 stalls at cols 1-4, 6-9, 11-14
-      tarp rows 1-3, ground row 11
+    tianguis icon — bold vector pictogram.
+    Flat-topped tarp with three drape-sags (one per stall), four poles,
+    and a row of produce under each stall: corn / tomatillo / chile.
+    Designed to read clearly from 16px to 200px+.
   -->
 
-  <!-- tarp body (flat horizontal canvas, extends just past poles) -->
-  <rect x="0" y="1" width="16" height="2" fill="#d9622e"/>
-  <!-- tarp eaves shadow (drop-line under the tarp) -->
-  <rect x="0" y="3" width="16" height="1" fill="#a04518"/>
+  <!-- tarp: flat top, scalloped underside (3 sags = 3 stalls implied) -->
+  <path d="M 0 2
+           L 32 2
+           L 32 7
+           L 28 7
+           Q 24 11 20 7
+           Q 16 11 12 7
+           Q  8 11  4 7
+           L 0 7 Z"
+        fill="#d9622e"/>
 
-  <!-- 4 poles (dark wood) -->
-  <rect x="0"  y="4" width="1" height="7" fill="#4a3525"/>
-  <rect x="5"  y="4" width="1" height="7" fill="#4a3525"/>
-  <rect x="10" y="4" width="1" height="7" fill="#4a3525"/>
-  <rect x="15" y="4" width="1" height="7" fill="#4a3525"/>
-
-  <!-- stall 1: green produce (nopales / chiles / cilantro) -->
-  <rect x="1" y="7"  width="4" height="3" fill="#7a9b3e"/>
-  <rect x="1" y="10" width="4" height="1" fill="#5a7530"/>
-
-  <!-- stall 2: yellow produce (mango / maíz / papaya) -->
-  <rect x="6" y="7"  width="4" height="3" fill="#e8c547"/>
-  <rect x="6" y="10" width="4" height="1" fill="#b8a035"/>
-
-  <!-- stall 3: red produce (tomate / jamaica / fresa) -->
-  <rect x="11" y="7"  width="4" height="3" fill="#c93838"/>
-  <rect x="11" y="10" width="4" height="1" fill="#992828"/>
+  <!-- 4 poles: vertical structure under the tarp eaves -->
+  <rect x="3"  y="6" width="2" height="12" fill="#4a3525"/>
+  <rect x="11" y="6" width="2" height="12" fill="#4a3525"/>
+  <rect x="19" y="6" width="2" height="12" fill="#4a3525"/>
+  <rect x="27" y="6" width="2" height="12" fill="#4a3525"/>
 
   <!-- ground line -->
-  <rect x="0" y="11" width="16" height="1" fill="#4a3525"/>
+  <rect x="0" y="18" width="32" height="2" fill="#4a3525"/>
+
+  <!-- ─── stall 1: corn cobs (3 standing, varied heights) ─── -->
+  <rect x="5.8"  y="12" width="1.2" height="5" rx="0.6" fill="#e8c547"/>
+  <rect x="7.4"  y="10.5" width="1.2" height="6.5" rx="0.6" fill="#e8c547"/>
+  <rect x="9"    y="11.5" width="1.2" height="5.5" rx="0.6" fill="#e8c547"/>
+  <!-- subtle darker yellow at the base (kernel-band hint) -->
+  <rect x="5.8" y="15.5" width="1.2" height="1.5" fill="#b8a035" rx="0.3"/>
+  <rect x="7.4" y="15.5" width="1.2" height="1.5" fill="#b8a035" rx="0.3"/>
+  <rect x="9"   y="15.5" width="1.2" height="1.5" fill="#b8a035" rx="0.3"/>
+
+  <!-- ─── stall 2: tomatillo pile (5 in 3+2 stack) ─── -->
+  <circle cx="13.8" cy="15.5" r="1.1" fill="#a8c452"/>
+  <circle cx="16"   cy="15.5" r="1.1" fill="#a8c452"/>
+  <circle cx="18.2" cy="15.5" r="1.1" fill="#a8c452"/>
+  <circle cx="14.9" cy="13.5" r="1.1" fill="#a8c452"/>
+  <circle cx="17.1" cy="13.5" r="1.1" fill="#a8c452"/>
+
+  <!-- ─── stall 3: chiles (3, red body + tiny green stem) ─── -->
+  <rect x="22.2" y="12.5" width="1" height="4.5" rx="0.5" fill="#c93838"/>
+  <rect x="22.3" y="12"   width="0.8" height="0.8" fill="#3a7530"/>
+  <rect x="23.7" y="11.5" width="1" height="5.5" rx="0.5" fill="#c93838"/>
+  <rect x="23.8" y="11"   width="0.8" height="0.8" fill="#3a7530"/>
+  <rect x="25.2" y="13"   width="1" height="4" rx="0.5" fill="#c93838"/>
+  <rect x="25.3" y="12.5" width="0.8" height="0.8" fill="#3a7530"/>
 </svg>
