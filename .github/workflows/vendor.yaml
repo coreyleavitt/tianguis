@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write          # to commit + push updated index.kdl / alerts.kdl
-  id-token: write          # OIDC for future cosign signing (R2.5)
+  id-token: write          # cosign keyless: attest the vendor pass under workflow identity
 
 jobs:
   vendor:
@@ -52,6 +52,11 @@ jobs:
       - name: Build tianguis CLI
         run: nim c -d:release -o:tianguis src/tianguis_cli.nim
 
+      - name: Set up cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: "v2.4.0"
+
       - name: Run vendor pass
         run: ./tianguis vendor
 
@@ -59,9 +64,11 @@ jobs:
         run: ./tianguis project
 
       - name: Commit + push changes
+        id: commit
         run: |
           if [[ -z "$(git status --porcelain)" ]]; then
             echo "no changes from this vendor pass"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name "milpa-bot"
@@ -69,3 +76,32 @@ jobs:
           git add index.kdl index.json alerts.kdl 2>/dev/null || true
           git commit -m "chore(vendor): daily milpa-bot vendoring pass"
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # Attest the vendor pass to Rekor under milpa-bot's GH Actions OIDC
+      # identity. The signed blob is the post-vendor index.kdl; the
+      # predicate names this workflow run + the commit it produced. Third
+      # parties can correlate Rekor entries against tianguis git history
+      # to detect index entries that no workflow run actually produced.
+      - name: Cosign attest vendor pass
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          COMMIT_SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          cat > predicate.json <<EOF
+          {
+            "pass_kind": "vendor",
+            "tianguis_repo": "${{ github.repository }}",
+            "workflow_run": "${{ github.run_id }}",
+            "commit_sha": "${COMMIT_SHA}",
+            "vendored_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cosign attest-blob \
+            --yes \
+            --type custom \
+            --predicate predicate.json \
+            --bundle vendor-attest.bundle \
+            index.kdl
+          echo "Rekor bundle written to vendor-attest.bundle"

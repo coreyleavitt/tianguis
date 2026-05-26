@@ -1,13 +1,14 @@
 ## Subcommand: add a single author-signed entry to index.kdl from a
 ## dispatched payload. Invoked by .github/workflows/commit-entry.yaml
-## after the dispatch endpoint verifies a publish event.
+## after the dispatch endpoint verifies a publish event AND the
+## workflow itself cosign-verifies the author signature.
 ##
-## Per dispatch_security_architecture.md, this subcommand independently
-## verifies the Rekor entry referenced by the dispatched payload before
-## committing — so even a fully-compromised dispatch endpoint can't
-## inject entries without leaving a publicly-verifiable Rekor trail.
+## Per dispatch_security_architecture, trust authority lives in the
+## commit-entry.yaml workflow: it does `cosign verify` before invoking
+## this CLI. So by the time we run, the OCI artifact's author signature
+## has already been validated against Rekor — we just pull, hash, merge.
 
-import std/[os, options, strutils]
+import std/[os, options, strutils, times]
 import ../model
 import ../kdl_io
 import ./merge
@@ -19,30 +20,19 @@ type
     ociRef*:      string    ## <registry>/<repo>@sha256:<digest>
     namespace*:   string
     upstream*:    string
-    signedBy*:    string    ## OIDC identity (cosign signer)
-    publishedAt*: string    ## ISO 8601 UTC
-    rekorUuid*:   string    ## entry UUID dispatch attested to
-
-  ## AttestSubject is what we expect the Rekor entry to contain — used
-  ## by Driver.verifyRekor to cross-check that the dispatched payload
-  ## matches what the dispatch endpoint actually attested.
-  AttestSubject* = object
-    name*, ociRef*, repoUrl*, signerIdentity*: string
+    signedBy*:    string    ## OIDC identity that cosign-signed the artifact
+    publishedAt*: string    ## ISO 8601 UTC; empty → "now" (tianguis observed time)
 
   ## AddEntryDriver — injectable I/O for testability. Real impl pulls
-  ## the OCI artifact via oras, computes content_hash via the existing
-  ## identity algorithm, and verifies Rekor via sigstore-go.
+  ## the OCI artifact via oras and computes content_hash via the
+  ## existing identity algorithm. No crypto: the workflow does that.
   AddEntryDriver* = ref object of RootObj
-
-method verifyRekor*(d: AddEntryDriver, uuid: string, expected: AttestSubject): bool {.base.} =
-  raise newException(Defect, "abstract AddEntryDriver.verifyRekor called")
 
 method pullAndHash*(d: AddEntryDriver, ociRef: string): tuple[hash, sha: string] {.base.} =
   raise newException(Defect, "abstract AddEntryDriver.pullAndHash called")
 
 # ---------------------------------------------------------------------------
 # OCI ref parsing — '<registry>/<repo>@sha256:<digest>'
-# (declared before cmdAddEntry which uses them; Nim resolves top-to-bottom)
 # ---------------------------------------------------------------------------
 
 proc ociRegistry*(ociRef: string): string =
@@ -67,13 +57,12 @@ proc normalizeVersion*(v: string): string =
   else: v
 
 proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver): int =
-  ## Read index.kdl, verify Rekor entry independently, pull + hash the
-  ## OCI artifact, merge the author-signed entry, write back.
+  ## Read index.kdl, pull + hash the OCI artifact, merge the author-signed
+  ## entry, write back.
   ##
   ## Exit codes:
   ##   0 — entry added (or already present idempotently)
   ##   1 — index.kdl missing or malformed
-  ##   2 — Rekor verification failed (refuse to commit)
   ##   3 — OCI pull or hash failed
   let indexPath = projectDir / "index.kdl"
   if not fileExists(indexPath):
@@ -85,20 +74,6 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
     stderr.writeLine("tianguis: " & indexPath & ": " & $e.code & ": " & e.message)
     return 1
 
-  # Verify the Rekor entry matches the dispatched payload. Refuse to
-  # commit if the attestation doesn't independently verify — the
-  # entire defense-in-depth story rests on this check.
-  let expected = AttestSubject(
-    name:           args.name,
-    ociRef:         args.ociRef,
-    repoUrl:        args.upstream,
-    signerIdentity: args.signedBy,
-  )
-  if not driver.verifyRekor(args.rekorUuid, expected):
-    stderr.writeLine("tianguis: Rekor verification failed for " & args.rekorUuid)
-    return 2
-
-  # Pull + hash the OCI artifact.
   var pulled: tuple[hash, sha: string]
   try:
     pulled = driver.pullAndHash(args.ociRef)
@@ -106,8 +81,10 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
     stderr.writeLine("tianguis: pull+hash failed: " & e.msg)
     return 3
 
-  # Build the author-signed entry. Note this is structurally identical to
-  # R2's vendor entry except for attestation level + signedBy attribution.
+  let publishedAt =
+    if args.publishedAt.len > 0: args.publishedAt
+    else: now().utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
+
   let entry = VendoredEntry(
     package: Package(
       name: args.name,
@@ -119,7 +96,7 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
       contentHash: pulled.hash,
       attestation: "author-signed",
       signedBy:    args.signedBy,
-      publishedAt: args.publishedAt,
+      publishedAt: publishedAt,
       provenances: @[Provenance(
         kind:      pkOci,
         registry:  ociRegistry(args.ociRef),
@@ -130,12 +107,9 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
   )
 
   let outcome = mergeVendored(parsed.get, entry)
-  # Drift detection still fires for author-signed entries (same package,
-  # same version, different hash). The commit workflow logs but doesn't
-  # fail — the existing entry is retained, the new bytes are flagged.
-  # (Alert append handling lands in a later cycle if needed.)
+  # Drift (same package+version, different hash) is retained-not-overwritten
+  # — same policy as vendor merges. Alerting is a future cycle.
   discard outcome.drift
 
   writeFile(indexPath, formatKdl(outcome.index))
   0
-

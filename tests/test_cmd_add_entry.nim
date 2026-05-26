@@ -1,9 +1,8 @@
 ## CLI tests for `tianguis add-entry` — the subcommand the commit-entry.yaml
-## workflow runs after dispatch verifies a publish event. Takes the dispatched
-## payload as args, verifies Rekor, pulls + hashes the OCI artifact, merges
-## into index.kdl, writes back.
+## workflow runs after dispatch + cosign verify. Pulls + hashes the OCI
+## artifact, merges into index.kdl, writes back.
 
-import std/[unittest, options, os, tables, tempfiles]
+import std/[unittest, options, os, strutils, tables, tempfiles]
 import tianguis/[model, kdl_io]
 import tianguis/vendor/[merge, addentry]
 
@@ -21,27 +20,20 @@ type FakeAddDriver = ref object of AddEntryDriver
   contentHash:  string
   commitSha:    string
 
-method verifyRekor*(d: FakeAddDriver, uuid: string, expected: AttestSubject): bool =
-  # In tests we trust the injected verification — focus is on the merge logic.
-  # Real driver will use sigstore-go via subprocess.
-  true
-
 method pullAndHash*(d: FakeAddDriver, ociRef: string): tuple[hash, sha: string] =
   if ociRef != d.expectedRef:
     raise newException(ValueError, "FakeAddDriver received unexpected ref: " & ociRef)
   (d.contentHash, d.commitSha)
 
-# Subclass that rejects all Rekor verifications — used by cycle 10's
-# refuse-to-commit test. Module-level so the method() definition is legal.
-type RekorRejector = ref object of FakeAddDriver
+# Driver that always fails pull — used to confirm exit code 3 on I/O failure.
+type FailingPullDriver = ref object of AddEntryDriver
 
-method verifyRekor*(d: RekorRejector, uuid: string, expected: AttestSubject): bool =
-  false
+method pullAndHash*(d: FailingPullDriver, ociRef: string): tuple[hash, sha: string] =
+  raise newException(IOError, "simulated oras pull failure")
 
 suite "cli add-entry":
   test "adds an author-signed entry to an empty index":
     withTempProject(tmp):
-      # Bootstrap: empty index.kdl (schema_version 1 only).
       writeFile(tmp / "index.kdl", "schema_version 1\n")
 
       let driver = FakeAddDriver(
@@ -58,18 +50,13 @@ suite "cli add-entry":
           ociRef:      "ghcr.io/coreyleavitt/sample@sha256:abc123",
           namespace:   "coreyleavitt",
           upstream:    "https://github.com/coreyleavitt/sample",
-          signedBy:    "https://github.com/coreyleavitt/sample",
+          signedBy:    "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
           publishedAt: "2026-06-01T12:00:00Z",
-          rekorUuid:   "test-uuid-xyz",
         ),
         driver = driver,
       )
       check code == 0
-      # Author-supplied version normalizes v-prefix to bare numeric.
-      # (The cycle 1 round-trip already verifies pkg.versions[0].version
-      # against the value our test passes in.)
 
-      # Verify index.kdl now has the author-signed entry.
       let parsed = parseKdl(readFile(tmp / "index.kdl"))
       check parsed.isOk
       let idx = parsed.get
@@ -83,32 +70,48 @@ suite "cli add-entry":
       check v.version == "1.0.0"  # v-prefix stripped from passed "v1.0.0"
       check v.contentHash == "sha256:abcdef"
       check v.attestation == "author-signed"
-      check v.signedBy == "https://github.com/coreyleavitt/sample"
+      check v.signedBy == "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0"
       check v.publishedAt == "2026-06-01T12:00:00Z"
-      # Provenance carries the OCI ref's commit_sha hint (where applicable;
-      # for an OCI-published entry the commit_sha may be empty — covered later)
 
-  test "rekor verification failure refuses to commit (exit 2)":
+  test "publishedAt defaults to now when not supplied":
     withTempProject(tmp):
       writeFile(tmp / "index.kdl", "schema_version 1\n")
-      let originalBytes = readFile(tmp / "index.kdl")
-
-      let driver = RekorRejector(
-        expectedRef:  "ghcr.io/x/y@sha256:abc",
-        contentHash:  "sha256:never-written",
-        commitSha:    "irrelevant",
+      let driver = FakeAddDriver(
+        expectedRef: "ghcr.io/x/y@sha256:abc",
+        contentHash: "sha256:zzz",
+        commitSha:   "",
       )
       let code = cmdAddEntry(
         projectDir = tmp,
         args = AddEntryArgs(
-          name: "y", ociRef: "ghcr.io/x/y@sha256:abc",
+          name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
           namespace: "x", upstream: "https://github.com/x/y",
           signedBy: "https://github.com/x/y",
-          publishedAt: "2026-06-01T12:00:00Z",
-          rekorUuid: "fake-uuid",
+          # publishedAt deliberately omitted
         ),
         driver = driver,
       )
-      check code == 2
-      # Index UNCHANGED — refusing to commit is the entire point.
+      check code == 0
+      let parsed = parseKdl(readFile(tmp / "index.kdl"))
+      check parsed.isOk
+      let pa = parsed.get.packages[0].versions[0].publishedAt
+      # ISO 8601 UTC shape: YYYY-MM-DDTHH:MM:SSZ
+      check pa.len == 20
+      check pa.endsWith("Z")
+      check pa[4] == '-' and pa[7] == '-' and pa[10] == 'T'
+
+  test "pull failure refuses to commit (exit 3)":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
+          namespace: "x", upstream: "https://github.com/x/y",
+          signedBy: "https://github.com/x/y",
+        ),
+        driver = FailingPullDriver(),
+      )
+      check code == 3
       check readFile(tmp / "index.kdl") == originalBytes

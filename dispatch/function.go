@@ -10,6 +10,9 @@ package function
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -29,10 +32,44 @@ var (
 
 func scalewayHandler() http.Handler {
 	handlerOnce.Do(func() {
-		verifier := NewMultiIssuerVerifier(context.Background(), issuerConfigs())
-		handlerMu = NewRouter(verifier)
+		deps, err := buildDeps(os.Getenv)
+		if err != nil {
+			log.Fatalf("dispatch boot failed: %v", err)
+		}
+		handlerMu = NewRouterWithDeps(deps)
 	})
 	return handlerMu
+}
+
+// buildDeps reads required configuration from `env` and returns a wired
+// Dependencies struct. Fail-fast on missing or malformed config — a half-
+// configured dispatch is more dangerous than a non-running one.
+//
+// Separated from scalewayHandler so it's directly testable without
+// touching sync.Once or actually serving HTTP. See function_test.go.
+func buildDeps(env func(string) string) (Dependencies, error) {
+	appID := env("TIANGUIS_APP_ID")
+	if appID == "" {
+		return Dependencies{}, errors.New("TIANGUIS_APP_ID is required")
+	}
+	keyPEM := env("TIANGUIS_APP_PRIVATE_KEY")
+	if keyPEM == "" {
+		return Dependencies{}, errors.New("TIANGUIS_APP_PRIVATE_KEY is required")
+	}
+	block, _ := pem.Decode([]byte(keyPEM))
+	if block == nil {
+		return Dependencies{}, errors.New("TIANGUIS_APP_PRIVATE_KEY is not valid PEM")
+	}
+	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return Dependencies{}, errors.New("TIANGUIS_APP_PRIVATE_KEY parse failed: " + err.Error())
+	}
+
+	verifier := NewMultiIssuerVerifier(context.Background(), issuerConfigsFrom(env))
+	return Dependencies{
+		OIDC:   verifier,
+		GitHub: NewGitHubAppClient(appID, key),
+	}, nil
 }
 
 // NewLocalHandler is exported so cmd/server/main.go can run the same
@@ -50,7 +87,11 @@ func NewLocalHandler() http.Handler {
 // means adding to issuerCatalog and (in #5) any per-provider repo-
 // ownership-check logic.
 func issuerConfigs() []IssuerConfig {
-	names := os.Getenv("TIANGUIS_ISSUERS")
+	return issuerConfigsFrom(os.Getenv)
+}
+
+func issuerConfigsFrom(env func(string) string) []IssuerConfig {
+	names := env("TIANGUIS_ISSUERS")
 	if names == "" {
 		// Sensible default: trust GitHub Actions + GitLab CI out of the box.
 		names = "github,gitlab"

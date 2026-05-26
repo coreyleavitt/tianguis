@@ -16,7 +16,7 @@ proc usage(): int =
   echo "  project [--check]   regenerate index.json from index.kdl"
   echo "  vendor              run one vendor-en-absentia pass against nim-lang/packages.json"
   echo "  add-entry           add an author-signed entry; consumed from commit-entry.yaml"
-  echo "    --name --oci-ref --namespace --upstream --signed-by --published-at --rekor-uuid"
+  echo "    --name --version --oci-ref --namespace --upstream --signed-by [--published-at]"
   1
 
 proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
@@ -27,12 +27,12 @@ proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
     of cmdLongOption:
       case key
       of "name":         result.name = val
+      of "version":      result.version = val
       of "oci-ref":      result.ociRef = val
       of "namespace":    result.namespace = val
       of "upstream":     result.upstream = val
       of "signed-by":    result.signedBy = val
       of "published-at": result.publishedAt = val
-      of "rekor-uuid":   result.rekorUuid = val
       else:
         stderr.writeLine("tianguis add-entry: unknown option --" & key)
     of cmdShortOption: discard
