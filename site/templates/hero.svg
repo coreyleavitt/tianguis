@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150">
+  <!--
+    tianguis hero illustration — bigger sibling of /favicon.svg.
+    Same composition (flat tarp · 3 stalls · 4 poles) at 7.5× scale
+    so we can render the wooden crates, multiple pieces of produce,
+    and a few atmospheric details that would muddy the small icon.
+  -->
+
+  <!-- tarp body (flat top, scalloped underside, 3 sags) -->
+  <path d="M 0 10
+           L 240 10
+           L 240 50
+           L 205 50
+           Q 175 72 145 50
+           Q 115 72 85 50
+           Q 55 72 25 50
+           L 0 50 Z"
+        fill="#d9622e"/>
+
+  <!-- tarp seam stripe — horizontal sewn line, common on real tarps -->
+  <rect x="0" y="28" width="240" height="1.5" fill="#a04518" opacity="0.55"/>
+
+  <!-- 4 poles -->
+  <rect x="21"  y="48" width="8" height="92" fill="#4a3525"/>
+  <rect x="81"  y="48" width="8" height="92" fill="#4a3525"/>
+  <rect x="141" y="48" width="8" height="92" fill="#4a3525"/>
+  <rect x="201" y="48" width="8" height="92" fill="#4a3525"/>
+
+  <!-- ground bar -->
+  <rect x="0" y="140" width="240" height="6" fill="#4a3525"/>
+
+  <!-- ─────────────  stall 1: corn (5 cobs in a wooden crate)  ───────────── -->
+  <!-- crate face -->
+  <rect x="33" y="108" width="44" height="32" fill="#8b6f47"/>
+  <!-- crate slats: horizontal darker stripes -->
+  <rect x="33" y="116" width="44" height="2" fill="#6b4f37"/>
+  <rect x="33" y="124" width="44" height="2" fill="#6b4f37"/>
+  <rect x="33" y="132" width="44" height="2" fill="#6b4f37"/>
+  <!-- crate top rim (lighter wood edge) -->
+  <rect x="33" y="106" width="44" height="3" fill="#a88a5f"/>
+
+  <!-- corn cobs overflowing from the crate -->
+  <rect x="35" y="85" width="6" height="25" rx="3" fill="#e8c547"/>
+  <rect x="43" y="78" width="6" height="32" rx="3" fill="#e8c547"/>
+  <rect x="51" y="75" width="6" height="35" rx="3" fill="#e8c547"/>
+  <rect x="59" y="80" width="6" height="30" rx="3" fill="#e8c547"/>
+  <rect x="67" y="88" width="6" height="22" rx="3" fill="#e8c547"/>
+  <!-- subtle kernel-shadow band at the base of each cob -->
+  <rect x="35" y="100" width="6" height="10" rx="3" fill="#b8a035" opacity="0.4"/>
+  <rect x="43" y="100" width="6" height="10" rx="3" fill="#b8a035" opacity="0.4"/>
+  <rect x="51" y="100" width="6" height="10" rx="3" fill="#b8a035" opacity="0.4"/>
+  <rect x="59" y="100" width="6" height="10" rx="3" fill="#b8a035" opacity="0.4"/>
+  <rect x="67" y="100" width="6" height="10" rx="3" fill="#b8a035" opacity="0.4"/>
+
+  <!-- ─────────────  stall 2: tomatillo pile (10, pyramid)  ───────────── -->
+  <rect x="93"  y="108" width="44" height="32" fill="#8b6f47"/>
+  <rect x="93"  y="116" width="44" height="2"  fill="#6b4f37"/>
+  <rect x="93"  y="124" width="44" height="2"  fill="#6b4f37"/>
+  <rect x="93"  y="132" width="44" height="2"  fill="#6b4f37"/>
+  <rect x="93"  y="106" width="44" height="3"  fill="#a88a5f"/>
+
+  <!-- pyramid: 4 + 3 + 2 + 1 -->
+  <circle cx="100" cy="106" r="5" fill="#a8c452"/>
+  <circle cx="110" cy="106" r="5" fill="#a8c452"/>
+  <circle cx="120" cy="106" r="5" fill="#a8c452"/>
+  <circle cx="130" cy="106" r="5" fill="#a8c452"/>
+  <circle cx="105" cy="97"  r="5" fill="#a8c452"/>
+  <circle cx="115" cy="97"  r="5" fill="#a8c452"/>
+  <circle cx="125" cy="97"  r="5" fill="#a8c452"/>
+  <circle cx="110" cy="88"  r="5" fill="#a8c452"/>
+  <circle cx="120" cy="88"  r="5" fill="#a8c452"/>
+  <circle cx="115" cy="80"  r="5" fill="#a8c452"/>
+  <!-- tiny darker arc on the bottom-right of each — papery husk hint.
+       Skipping for clarity at this scale; can add per-piece detail later. -->
+
+  <!-- ─────────────  stall 3: chiles (6, varying heights, with stems)  ───────────── -->
+  <rect x="153" y="108" width="44" height="32" fill="#8b6f47"/>
+  <rect x="153" y="116" width="44" height="2"  fill="#6b4f37"/>
+  <rect x="153" y="124" width="44" height="2"  fill="#6b4f37"/>
+  <rect x="153" y="132" width="44" height="2"  fill="#6b4f37"/>
+  <rect x="153" y="106" width="44" height="3"  fill="#a88a5f"/>
+
+  <!-- chile pattern: body (rounded red) + stem (small green square on top) -->
+  <rect x="156"   y="88" width="5" height="22" rx="2.5" fill="#c93838"/>
+  <rect x="156.5" y="84" width="4" height="5"  fill="#3a7530"/>
+
+  <rect x="164"   y="83" width="5" height="27" rx="2.5" fill="#c93838"/>
+  <rect x="164.5" y="79" width="4" height="5"  fill="#3a7530"/>
+
+  <rect x="172"   y="80" width="5" height="30" rx="2.5" fill="#c93838"/>
+  <rect x="172.5" y="76" width="4" height="5"  fill="#3a7530"/>
+
+  <rect x="180"   y="86" width="5" height="24" rx="2.5" fill="#c93838"/>
+  <rect x="180.5" y="82" width="4" height="5"  fill="#3a7530"/>
+
+  <rect x="188"   y="90" width="5" height="20" rx="2.5" fill="#c93838"/>
+  <rect x="188.5" y="86" width="4" height="5"  fill="#3a7530"/>
+</svg>
