@@ -153,11 +153,18 @@ jobs:
         env:
           OCI_REF: ${{ steps.payload.outputs.oci_ref }}
         run: |
-          cosign attest \
+          # attest-blob (not `attest`) because the attestation lives in
+          # Rekor only — `cosign attest` tries to write an OCI sidecar
+          # alongside the author's artifact, which lives in a namespace
+          # tianguis doesn't have push access to. Rekor is the actual
+          # transparency layer we care about anyway.
+          cosign attest-blob \
             --yes \
             --type custom \
             --predicate "${{ steps.predicate.outputs.path }}" \
-            "${OCI_REF}"
+            --bundle commit-attest.bundle \
+            "${{ steps.predicate.outputs.path }}"
+          echo "Rekor bundle written to commit-attest.bundle (subject=predicate.json; predicate names oci_ref=${OCI_REF})"
 
       - name: Commit + push if changed
         run: |
