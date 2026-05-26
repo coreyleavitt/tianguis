@@ -1,0 +1,3 @@
+# Build-time deps for the static site.
+# Markdown rendering for the deep-dive docs the spec page links into.
+markdown==3.7

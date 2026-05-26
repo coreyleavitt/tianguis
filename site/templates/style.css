@@ -424,6 +424,135 @@ h3 {
   margin: 1rem 0;
 }
 
+/* ───── spec page narrative ───── */
+
+.spec-intro {
+  padding-top: 1.5rem;
+}
+
+.spec-toc {
+  list-style: none;
+  padding: 0;
+  margin: 1.2rem 0 0;
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+}
+.spec-toc li {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+.spec-layer {
+  border-top: 1px solid var(--border);
+  padding: 2.5rem 0 1.5rem;
+}
+
+.spec-layer h2 {
+  font-size: 1.6rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.layer-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.deepdive {
+  margin-top: 1.5rem;
+  padding: 0.7rem 1rem;
+  background: var(--code-bg);
+  border-left: 3px solid var(--accent);
+  font-size: 0.92rem;
+}
+.deepdive::before { content: ""; }
+
+.ascii-diagram {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem;
+}
+.ascii-diagram code {
+  background: none;
+  padding: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  white-space: pre;
+}
+
+.hash-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+.hash-table th, .hash-table td {
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.hash-table th {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-muted);
+  background: var(--bg-card);
+}
+.hash-table code { font-size: 0.82rem; }
+
+.impl-list dt {
+  margin-top: 1rem;
+  font-weight: 600;
+}
+.impl-list dt a { color: var(--fg); border-bottom: 1px dotted var(--accent); }
+.impl-list dd {
+  margin-left: 0;
+  margin-top: 0.2rem;
+  color: var(--fg-muted);
+  font-size: 0.95rem;
+}
+
+/* ───── markdown deep-dive doc pages ───── */
+
+.md-doc h1 {
+  font-size: 1.8rem;
+  margin-top: 0;
+}
+.md-doc h2 { font-size: 1.3rem; margin-top: 2rem; }
+.md-doc h3 { font-size: 1.05rem; margin-top: 1.5rem; }
+
+.md-doc table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+.md-doc th, .md-doc td {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+.md-doc th { background: var(--code-bg); font-weight: 600; }
+
+.md-source {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+}
+
 /* ───── footer ───── */
 
 footer {

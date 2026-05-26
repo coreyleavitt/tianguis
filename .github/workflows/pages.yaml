@@ -39,6 +39,9 @@ jobs:
         with:
           cosign-release: "v2.4.0"
 
+      - name: Install build deps
+        run: pip install -r site/scripts/requirements.txt
+
       - name: Build site
         run: python3 site/scripts/build.py
 

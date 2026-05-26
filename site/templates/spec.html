@@ -25,81 +25,349 @@
 
 <main class="prose">
 
-<h2>specifications</h2>
+<section class="spec-intro">
+  <h2>what tianguis specifies</h2>
+  <p>
+    tianguis is a Nim package registry, but more precisely it's <strong>three small specifications</strong>
+    layered to produce one cohesive trust model. each layer is independently implementable and
+    independently verifiable. nothing about the design requires the specific software running at
+    <code>tianguis.dev</code> — a conformant implementation in any language could host an
+    equivalent registry, and milpa would consume it the same way.
+  </p>
+  <p>
+    this page walks each layer in narrative form. the deep-dive references at the bottom of each
+    section have the normative grammars and error catalogs.
+  </p>
+  <ul class="spec-toc">
+    <li><a href="#data">1. the data format</a> — what an index file is</li>
+    <li><a href="#distribution">2. the distribution model</a> — how the index reaches consumers</li>
+    <li><a href="#attestation">3. the attestation model</a> — what makes any of it trustworthy</li>
+    <li><a href="#impls">reference implementations + tools</a></li>
+  </ul>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────── -->
+<section id="data" class="spec-layer">
+
+<h2><span class="layer-num">1</span> the data format</h2>
 
 <p>
-  tianguis is meant to be implemented by anyone — the index format, dispatch protocol, and
-  attestation model are specified in the repository's <code>docs/</code> directory. these are
-  the load-bearing documents:
+  the registry is one file: <code>index.kdl</code>. it's plain text, parseable in a few hundred
+  lines, hand-editable, strict-schema. every published version of every package is one node.
+  there is no database, no API, no caching layer between the index and its consumers.
 </p>
 
-<h3>format + transport</h3>
+<p>
+  every <code>index.kdl</code> has an auto-derived JSON projection (<code>index.json</code>)
+  emitted by the same tool. the two are bijective — semantic round-trip is enforced in CI via
+  <code>tianguis project --check</code>. consumers may parse either; KDL is canonical because
+  it's the human-editable form.
+</p>
+
+<h3>example</h3>
+
+<pre><code>schema_version 1
+package "nimkdl" {
+    namespace "coreyleavitt"
+    upstream (url)"https://github.com/coreyleavitt/nimkdl"
+    version "0.1.4" {
+        content_hash "sha256:1aaf2a95f53681c8…"
+        provenance {
+            kind "oci"
+            registry "ghcr.io"
+            repository "coreyleavitt/nimkdl"
+            digest "sha256:e51aab085ef4f58e…"
+        }
+        attestation "author-signed"
+        signed_by "https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml"
+        published_at "2026-05-26T04:49:44Z"
+    }
+}</code></pre>
+
+<p>
+  every field above is required (or deliberately optional with a documented default). unknown
+  nodes or properties are <strong>rejected</strong> with stable error codes from the
+  <code>IDX-*</code> catalog. that's an unusual choice — most registries lean permissive — but it
+  serves the multi-implementation goal: an implementer who emits a field tianguis-the-reference
+  doesn't recognize gets a loud error, not silent divergence.
+</p>
+
+<p>
+  canonical ordering is also part of the format, not the implementation: packages sort
+  alphabetically, versions sort descending-semver, requires keys sort alphabetically. this means
+  the rendered file diffs cleanly across vendor passes and author publishes regardless of which
+  tool produced the input.
+</p>
+
+<p class="deepdive">
+  → deep dive: <a href="/docs/spec/index-format.html"><code>index-format.md</code></a> — full
+  normative grammar, JSON projection rules, the strict-schema error catalog.
+</p>
+
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────── -->
+<section id="distribution" class="spec-layer">
+
+<h2><span class="layer-num">2</span> the distribution model</h2>
+
+<p>
+  there are two URLs anyone needs to know:
+</p>
+
+<pre><code>https://tianguis.dev/index.kdl       # canonical registry (this site serves it)
+https://dispatch.tianguis.dev/v1/publish   # author-side POST endpoint (Scaleway function)</code></pre>
+
+<p>
+  <code>tianguis.dev</code> is GitHub Pages serving static files generated from the index — no
+  backend, no database, no rate limiting beyond GH's edge cache. <code>dispatch.tianguis.dev</code>
+  exists only to accept publish events from authors' CI; it never serves package data and never
+  performs cryptographic decisions (more on that in layer 3).
+</p>
+
+<p>
+  consumers fetch <code>/index.kdl</code> over HTTPS, cache it locally with a configurable TTL,
+  and refresh on a stale-while-revalidate basis. that's the entire distribution protocol on the
+  consumer side. a private registry is a private GH Pages site (or any other static host)
+  serving an index.kdl of the same shape; milpa supports a list of registries via
+  <code>MILPA_INDEX_URLS</code> for federation.
+</p>
+
+<h3>the publish flow</h3>
+
+<pre class="ascii-diagram"><code>     ┌─────────────────────┐
+     │  author repo CI     │   tags v1.0.0 → publish workflow:
+     │  (GH, GitLab, etc.) │   pack source · push OCI · cosign sign
+     └──────────┬──────────┘
+                │  POST + OIDC bearer
+                ▼
+     ┌─────────────────────┐
+     │  dispatch endpoint  │   verify OIDC · identity cross-check
+     │  (Scaleway, Go)     │   → workflow_dispatch to commit-entry
+     └──────────┬──────────┘
+                │  GH App installation token
+                ▼
+     ┌─────────────────────┐
+     │  commit workflow    │   cosign verify · oras pull
+     │  (GH Actions, Nim)  │   tianguis add-entry · cosign attest
+     │                     │   git push to main
+     └──────────┬──────────┘
+                │
+                ▼
+     ┌─────────────────────┐
+     │   pages workflow    │   regenerate site + index.kdl/json
+     │   → tianguis.dev    │   live within seconds
+     └─────────────────────┘
+</code></pre>
+
+<p>
+  total latency: about a minute from tag push to live registry entry. no human review at any
+  point. the only humans involved are the author tagging their release and (later) consumers
+  fetching their package.
+</p>
+
+<p class="deepdive">
+  → deep dive: <a href="/docs/rfc-registry.html"><code>rfc-registry.md</code></a> — the high-level
+  registry design rationale. <a href="/adoption.html">/adoption.html</a> for the publish flow as a
+  copy-paste recipe.
+</p>
+
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────── -->
+<section id="attestation" class="spec-layer">
+
+<h2><span class="layer-num">3</span> the attestation model</h2>
+
+<p>
+  the data format is just bytes; the distribution model is just HTTP. neither tells you whether
+  to trust an entry. that's the third layer, and it's the most important.
+</p>
+
+<p>
+  every published version of every package has <strong>three different hashes</strong> involved
+  in its trust chain. they're not interchangeable; each answers a different question:
+</p>
+
+<table class="hash-table">
+<thead><tr><th>hash</th><th>example</th><th>what it's a SHA256 of</th><th>who computes it</th></tr></thead>
+<tbody>
+<tr>
+  <td><code>content_hash</code></td>
+  <td><code>sha256:1aaf2a95…</code></td>
+  <td>the unpacked source tree, by milpa's identity algorithm</td>
+  <td>milpa (publisher and consumer both)</td>
+</tr>
+<tr>
+  <td><code>OCI digest</code></td>
+  <td><code>sha256:e51aab08…</code></td>
+  <td>the OCI manifest JSON</td>
+  <td>the OCI registry</td>
+</tr>
+<tr>
+  <td><code>Rekor hash</code></td>
+  <td><code>sha256:a4ded9d7…</code></td>
+  <td>cosign's "claim" payload (which references the OCI digest)</td>
+  <td>cosign at sign time</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+  each is computed independently. each is verifiable independently. and they fit together such
+  that no single party — not the author, not tianguis, not the OCI registry, not Sigstore — can
+  silently substitute content without at least one of the three failing to verify.
+</p>
+
+<h3>the chain end-to-end</h3>
+
+<pre class="ascii-diagram"><code>author source tree
+    │
+    │  milpa publish: pack deterministically (sorted, zero mtime, .git excluded)
+    ▼
+deterministic tar.gz ── milpa computes content_hash (sha256:1aaf2a95…)
+    │
+    │  oras push → OCI registry
+    ▼
+OCI manifest ── registry computes OCI digest (sha256:e51aab08…)
+    │
+    │  cosign sign --yes &lt;oci_ref&gt;
+    │  • author's CI OIDC → Fulcio cert
+    │  • payload references OCI digest
+    │  • payload SHA → Rekor hash (sha256:a4ded9d7…)
+    ▼
+Rekor entry logIndex N  ←──── view in Rekor by logIndex
+    │
+    │  POST dispatch → commit workflow runs cosign verify against the OCI ref
+    │  • re-verifies signature ↔ Fulcio cert ↔ Rekor inclusion
+    │  • independently recomputes content_hash by unpacking the OCI artifact
+    ▼
+index.kdl entry committed (content_hash + OCI digest + signed_by + Rekor-attested)
+    │
+    │  consumer: milpa fetch
+    │  • pulls OCI artifact at the recorded digest
+    │  • recomputes content_hash from the unpacked tree
+    │  • compares to what tianguis recorded → match or refuse
+    ▼
+verified source tree on consumer machine
+</code></pre>
+
+<h3>what's trusted where</h3>
 
 <ul>
-  <li>
-    <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/spec/index-format.md"><code>index-format.md</code></a>
-    — the KDL grammar for <code>index.kdl</code>. canonical encoding rules. JSON projection
-    semantics. strict-schema validation.
-  </li>
-  <li>
-    <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/rfc-distribution-and-publishing.md"><code>rfc-distribution-and-publishing.md</code></a>
-    — why OCI artifacts. why cosign. why content addressing. trust model end-to-end.
-  </li>
-  <li>
-    <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/rfc-registry.md"><code>rfc-registry.md</code></a>
-    — the high-level registry design. why tianguis exists as separate from nim-lang/packages.
-  </li>
+  <li><strong>the author's CI OIDC identity</strong> is the bottom turtle. compromise of the
+    author's CI (or signing-key-equivalent) is indistinguishable from the author publishing.
+    no registry can mitigate this.</li>
+  <li><strong>cosign + Sigstore Fulcio + Rekor</strong> are the cryptographic substrate.
+    compromise of Sigstore is a global supply-chain event; we accept this dependency.</li>
+  <li><strong>tianguis dispatch</strong> is NOT in the trust chain. it only verifies the OIDC
+    token enough to filter spam and triggers the commit workflow. a fully-compromised dispatch
+    can spam workflow runs but cannot inject false entries (the commit workflow re-verifies
+    everything cryptographically).</li>
+  <li><strong>the OCI registry</strong> stores bytes. tampering is detected: the OCI digest is
+    pinned in the index, cosign's signature is over a payload that references that digest, and
+    milpa's content_hash recomputation catches any byte change.</li>
+  <li><strong>third-party verifiability</strong>: every index commit corresponds to a Rekor
+    attestation under the tianguis commit workflow's GH Actions identity. independent monitors
+    can compare what's in index.kdl against what Rekor records and flag divergence publicly.</li>
 </ul>
 
-<h3>adoption</h3>
+<h3>two attestation levels</h3>
+
+<p>
+  the <code>attestation</code> field in each version distinguishes how the entry got into the
+  index:
+</p>
 
 <ul>
-  <li>
-    <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/adoption/github.md"><code>adoption/github.md</code></a>
-    — copy-paste GH Actions setup
-  </li>
-  <li>
-    <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/adoption/any-ci.md"><code>adoption/any-ci.md</code></a>
-    — the four-step protocol for any Sigstore-federated CI
-  </li>
+  <li><code class="att-author">author-signed</code> — the author published via
+    <code>milpa publish</code>. cosign signer identity is their CI's workflow. strongest
+    attestation level; consumers who want maximum integrity can require it via
+    <code>verification { min_attestation "author-signed" }</code> in milpa.kdl.</li>
+  <li><code class="att-vendored">milpa-vendored</code> — the vendor-en-absentia bot mirrored a
+    nim-lang/packages entry on the author's behalf. cosign signer identity is the milpa-bot
+    workflow. weaker attestation (the author wasn't involved) but still cryptographically
+    attributable.</li>
 </ul>
 
-<h3>endpoints</h3>
+<p>
+  authors who later adopt <code>milpa publish</code> for a previously-vendored package get
+  precedence — new versions land as author-signed; vendor-bot stops contributing to that
+  package. old vendored entries remain resolvable so existing lockfiles don't break.
+</p>
+
+<p class="deepdive">
+  → deep dive: the
+  <a href="https://github.com/coreyleavitt/tianguis/blob/main/docs/rfc-distribution-and-publishing.md">distribution + publishing RFC</a>
+  (in-repo) covers the trust model in normative detail. for the live verification UI: every
+  per-version block on this site has a <code>view in Rekor</code> link + a copy-paste
+  <code>cosign verify</code> command.
+</p>
+
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────── -->
+<section id="impls" class="spec-layer">
+
+<h2>reference implementations + tools</h2>
+
+<p>
+  tianguis isn't a single piece of software — it's a small protocol with multiple cooperating
+  implementations. these are the load-bearing pieces today:
+</p>
+
+<dl class="impl-list">
+  <dt><a href="https://github.com/coreyleavitt/milpa">milpa</a></dt>
+  <dd>
+    the consumer-side resolver + fetcher. Python today (design vehicle); Rust + Nim ports
+    planned. consumes <code>index.kdl</code>, resolves named deps, pulls via OCI, verifies
+    <code>content_hash</code>. publishing via <code>milpa publish</code>.
+  </dd>
+
+  <dt><a href="https://github.com/coreyleavitt/tianguis">tianguis</a></dt>
+  <dd>
+    this registry. Go dispatch endpoint (Scaleway) + Nim vendor-bot + Python site builder
+    + GH Actions workflows for the commit + attestation pipeline.
+  </dd>
+
+  <dt><a href="https://github.com/sigstore/cosign">cosign</a></dt>
+  <dd>
+    Sigstore's CLI for keyless signing + verification. milpa publish shells to it; the commit
+    workflow shells to it. all crypto is delegated here — we don't reimplement.
+  </dd>
+
+  <dt><a href="https://oras.land">oras</a></dt>
+  <dd>
+    the OCI artifact CLI. used by milpa publish to push source tarballs, used by the commit
+    workflow to pull them back for verification.
+  </dd>
+
+  <dt><a href="https://kdl.dev">KDL</a></dt>
+  <dd>
+    the canonical encoding for <code>index.kdl</code> and <code>milpa.kdl</code>. v2 grammar;
+    we use the <a href="https://github.com/tabatkins/kdlpy">Python parser</a> and our own
+    <a href="https://github.com/coreyleavitt/nimkdl">Nim parser</a>.
+  </dd>
+</dl>
+
+<h3>endpoints (operational)</h3>
 
 <ul>
-  <li><code>https://tianguis.dev/index.kdl</code> — canonical index (KDL)</li>
-  <li><code>https://tianguis.dev/index.json</code> — JSON projection of the same data</li>
-  <li><code>https://dispatch.tianguis.dev/v1/publish</code> — author-side publish endpoint (POST + OIDC bearer)</li>
-  <li><code>https://dispatch.tianguis.dev/healthz</code> — liveness check</li>
+  <li><code><a href="/index.kdl">tianguis.dev/index.kdl</a></code> — canonical registry</li>
+  <li><code><a href="/index.json">tianguis.dev/index.json</a></code> — JSON projection</li>
+  <li><code>dispatch.tianguis.dev/v1/publish</code> — publish endpoint (POST, OIDC bearer)</li>
+  <li><code><a href="https://dispatch.tianguis.dev/healthz">dispatch.tianguis.dev/healthz</a></code> — liveness</li>
 </ul>
 
-<h3>reference implementations</h3>
-
-<ul>
-  <li>
-    <strong>milpa</strong> — Python reference consumer. resolves named deps via tianguis, fetches
-    via OCI, verifies content_hash.
-    <a href="https://github.com/coreyleavitt/milpa">github.com/coreyleavitt/milpa</a>
-  </li>
-  <li>
-    <strong>tianguis</strong> — the registry itself. Go dispatch endpoint + Nim vendor-bot +
-    static site builder.
-    <a href="https://github.com/coreyleavitt/tianguis">github.com/coreyleavitt/tianguis</a>
-  </li>
-</ul>
-
-<h3>related</h3>
-
-<ul>
-  <li><a href="https://sigstore.dev">Sigstore</a> — the attestation substrate</li>
-  <li><a href="https://oras.land">oras</a> — the OCI artifact CLI tianguis uses for transport</li>
-  <li><a href="https://kdl.dev">KDL</a> — the canonical index encoding</li>
-</ul>
+</section>
 
 </main>
 
 <footer>
-  <p><a href="/">← back to registry</a></p>
+  <p>
+    <a href="/">← back to registry</a>
+    &nbsp;·&nbsp; spec questions: <a href="https://github.com/coreyleavitt/tianguis/issues">file an issue</a>
+  </p>
 </footer>
 </body>
 </html>

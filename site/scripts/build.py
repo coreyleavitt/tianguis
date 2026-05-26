@@ -27,6 +27,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import markdown
+
+import markdown as md
+
 
 REPO = Path(__file__).resolve().parents[2]
 SITE = Path(__file__).resolve().parents[1]
@@ -328,6 +332,78 @@ def render_simple_page(template_name: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Markdown rendering — for the deep-dive docs the spec page links into.
+# Wraps the rendered HTML in our site chrome (header/footer/nav).
+# ---------------------------------------------------------------------------
+
+
+MD_DOC_WRAPPER = """\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{title} — tianguis</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a href="/" class="brand">
+      <h1>tianguis</h1>
+      <p class="tagline">an open-air market for Nim packages</p>
+    </a>
+    <nav class="topnav">
+      <a href="/about.html">about</a>
+      <a href="/adoption.html">publish</a>
+      <a href="/spec.html">spec</a>
+      <a href="https://github.com/coreyleavitt/tianguis">source</a>
+    </nav>
+  </div>
+</header>
+<main class="prose md-doc">
+<nav class="crumb"><a href="/spec.html">← spec</a></nav>
+{body}
+<hr>
+<p class="md-source">
+  view source: <a href="{source_url}"><code>{source_path}</code></a>
+</p>
+</main>
+<footer><p><a href="/">← back to registry</a></p></footer>
+</body>
+</html>
+"""
+
+
+def extract_title(md_text: str, fallback: str) -> str:
+    """Pull the first H1 from a markdown doc, or fall back to filename."""
+    for line in md_text.splitlines():
+        if line.startswith("# "):
+            return line[2:].strip()
+    return fallback
+
+
+def render_md_doc(src: Path, out: Path, repo_rel_path: str) -> None:
+    """Render a markdown file to HTML, wrapped in site chrome."""
+    md_text = src.read_text()
+    title = extract_title(md_text, src.stem)
+    body = markdown.markdown(
+        md_text,
+        extensions=["fenced_code", "tables", "toc", "attr_list"],
+        output_format="html5",
+    )
+    page = MD_DOC_WRAPPER.format(
+        title=html.escape(title),
+        body=body,
+        source_path=html.escape(repo_rel_path),
+        source_url=f"https://github.com/coreyleavitt/tianguis/blob/main/{repo_rel_path}",
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(page)
+
+
+# ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
 
@@ -381,6 +457,22 @@ def build() -> None:
         if (TEMPLATES / tmpl).exists():
             (BUILD / dest).write_text(render_simple_page(tmpl))
 
+    # Deep-dive docs (rendered from markdown sources, mirroring repo paths).
+    # The /spec.html narrative page links into these for normative detail.
+    md_docs = [
+        ("docs/spec/index-format.md", "docs/spec/index-format.html"),
+        ("docs/rfc-registry.md", "docs/rfc-registry.html"),
+        ("docs/adoption/github.md", "docs/adoption/github.html"),
+        ("docs/adoption/any-ci.md", "docs/adoption/any-ci.html"),
+    ]
+    rendered_docs = 0
+    for src_rel, out_rel in md_docs:
+        src = REPO / src_rel
+        if not src.exists():
+            continue
+        render_md_doc(src, BUILD / out_rel, src_rel)
+        rendered_docs += 1
+
     # Site assets
     shutil.copy(TEMPLATES / "style.css", BUILD / "style.css")
     shutil.copy(TEMPLATES / "robots.txt", BUILD / "robots.txt")
@@ -390,7 +482,7 @@ def build() -> None:
     shutil.copy(index_kdl, BUILD / "index.kdl")
     shutil.copy(index_json, BUILD / "index.json")
 
-    print(f"built {BUILD}/ — {len(packages)} packages, {len(packages)} detail pages")
+    print(f"built {BUILD}/ — {len(packages)} packages, {len(packages)} detail pages, {rendered_docs} md docs")
 
 
 if __name__ == "__main__":
