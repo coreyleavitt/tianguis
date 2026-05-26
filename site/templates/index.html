@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>tianguis — the Nim package registry</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>tianguis</h1>
+  <p class="tagline">an open-air market for Nim packages — content-addressed, attestation-bearing, fork-resistant</p>
+</header>
+
+<main>
+
+<section class="intro">
+  <p>
+    tianguis is a Nim package registry built on three commitments:
+  </p>
+  <ul>
+    <li><strong>content addressing.</strong> every package version has a <code>sha256</code> of its source tree. fetch + recompute = verify.</li>
+    <li><strong>Sigstore attestation.</strong> every entry is signed (cosign keyless via Sigstore). <a href="https://search.sigstore.dev/">searchable in Rekor</a>.</li>
+    <li><strong>no human merges.</strong> publishing is automated via a stateless dispatch endpoint. tag-push to installable in ~60 seconds.</li>
+  </ul>
+  <p>
+    works with <a href="https://github.com/coreyleavitt/milpa">milpa</a>, the Nim resolver that replaces nimble's SAT solver.
+  </p>
+</section>
+
+<section class="status">
+  <h2>registry status</h2>
+  <p>
+    <strong>{{PACKAGE_COUNT}}</strong> packages indexed
+    · built {{BUILD_TIME}}
+  </p>
+  <p class="links">
+    <a href="/index.kdl">index.kdl</a> (canonical) ·
+    <a href="/index.json">index.json</a> (projection) ·
+    <a href="https://github.com/coreyleavitt/tianguis">source</a>
+  </p>
+</section>
+
+<section class="packages">
+  <h2>packages</h2>
+  <input type="search" id="filter" placeholder="filter by name…" autocomplete="off">
+  <ul class="pkg-list">
+{{PACKAGES}}
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <p>
+    tianguis publishes static index data via GitHub Pages. there is no backend service.
+    a small <a href="https://dispatch.tianguis.dev/healthz">dispatch endpoint</a> exists to accept author publish events,
+    but it never serves package data.
+  </p>
+</footer>
+
+<script>
+// Tiny client-side filter — no framework, no build step.
+const input = document.getElementById('filter');
+const items = document.querySelectorAll('.pkg');
+input.addEventListener('input', () => {
+  const q = input.value.toLowerCase().trim();
+  for (const li of items) {
+    const name = (li.dataset.name + ' ' + li.dataset.namespace).toLowerCase();
+    li.style.display = !q || name.includes(q) ? '' : 'none';
+  }
+});
+</script>
+</body>
+</html>

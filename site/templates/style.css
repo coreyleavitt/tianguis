@@ -1,0 +1,142 @@
+/* Minimal styling — system fonts, single column, no JS framework. */
+
+:root {
+  --fg: #1a1a1a;
+  --fg-muted: #666;
+  --bg: #fafaf7;
+  --accent: #d9622e;     /* terracotta — milpa earth tones */
+  --accent-muted: #a55;
+  --vendored: #888;
+  --border: #ddd9d2;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+header {
+  padding: 2.5rem 1.5rem 1.5rem;
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+.tagline {
+  margin: 0.25rem 0 0;
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+main {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+section {
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+section h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.8rem;
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-muted);
+}
+
+ul { padding-left: 1.2rem; }
+li { margin: 0.3rem 0; }
+
+code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  padding: 0.1em 0.35em;
+  background: rgba(0,0,0,0.05);
+  border-radius: 3px;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.links a { margin-right: 0.5rem; }
+
+/* Filter input */
+#filter {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: white;
+  margin-bottom: 1rem;
+}
+#filter:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* Package list */
+.pkg-list { list-style: none; padding: 0; margin: 0; }
+
+.pkg {
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.pkg:last-child { border-bottom: none; }
+
+.pkg-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.pkg-ns {
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+}
+.pkg-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.pkg-ver {
+  margin-left: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.92rem;
+  color: var(--fg-muted);
+}
+
+.pkg-meta {
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  margin-top: 0.15rem;
+}
+
+.att-author {
+  color: var(--accent);
+  font-weight: 500;
+}
+.att-vendored { color: var(--vendored); }
+
+footer {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  border-top: 1px solid var(--border);
+}

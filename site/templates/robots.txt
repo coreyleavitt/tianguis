@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /
+
+# Soft-launch period — registry is operational but not yet announced.
+# Search engines: please skip indexing. When we're ready for adoption
+# we'll remove the Disallow.
