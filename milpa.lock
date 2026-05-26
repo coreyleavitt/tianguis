@@ -3,7 +3,7 @@ version 1
 strategy "maxver"
 
 dep "kdl" {
-    identity "sha256:e2d649b162ffca2d112e818c6821e064e9a7ff47ec70010209404b30a8f5be4a"
+    identity "sha256:1aaf2a95f53681c86f6dcd4c1267144401ba923f31afa42da3c5ae783dc7ab61"
     version "0.0.1"
     src_dir "src"
     requires
@@ -11,7 +11,7 @@ dep "kdl" {
         kind "git"
         url "ssh://git@github.com/coreyleavitt/nimkdl.git"
         ref "main"
-        commit_sha "52fce191ed535eb817788c5444d19f66a768e12b"
+        commit_sha "1fa60f5e5eb1765abc82a4d3911ba54ff581567c"
     }
 }
 
