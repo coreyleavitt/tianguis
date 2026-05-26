@@ -549,3 +549,63 @@ func TestWorkflowDispatch_FailureFailsClosed(t *testing.T) {
 		t.Fatalf("502 body should mention workflow_dispatch_failed; got %s", rec.Body.String())
 	}
 }
+
+
+// ---------------------------------------------------------------------------
+// --- Dry-run mode: client sets {"dry_run": true} in body; dispatch runs
+// the full verification chain (OIDC + identity) but skips the
+// workflow_dispatch and returns "accepted (dry-run)". Lets authors
+// smoke-test OIDC + identity flow without triggering a real index commit.
+// ---------------------------------------------------------------------------
+
+func TestDryRun_SkipsWorkflowDispatch(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	gh := &fakeGitHub{}
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+
+	body := []byte(`{
+		"name": "sample",
+		"version": "v1.0.0",
+		"oci_ref": "ghcr.io/x/sample@sha256:abc123",
+		"provider": "github",
+		"repo_url": "https://github.com/coreyleavitt/sample",
+		"signed_by": "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
+		"dry_run": true
+	}`)
+
+	rec := doRequest(t, NewRouterWithDeps(fullDeps(t, ti, gh)), body, "Bearer "+tok)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if len(gh.calls) != 0 {
+		t.Errorf("dry-run must NOT call workflow_dispatch; got %d calls", len(gh.calls))
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("dry-run")) {
+		t.Errorf("response should indicate dry-run; got %s", rec.Body.String())
+	}
+}
+
+func TestDryRun_StillEnforcesIdentityCheck(t *testing.T) {
+	// Dry-run must NOT be a backdoor around the OIDC identity check.
+	ti := newTestIssuer(t); defer ti.close()
+	gh := &fakeGitHub{}
+	tok := ti.signTokenWithRepository(t, "attacker/their-repo")
+
+	body := []byte(`{
+		"name": "sample",
+		"version": "v1.0.0",
+		"oci_ref": "ghcr.io/x/sample@sha256:abc",
+		"provider": "github",
+		"repo_url": "https://github.com/coreyleavitt/sample",
+		"signed_by": "https://github.com/coreyleavitt/sample/x",
+		"dry_run": true
+	}`)
+
+	rec := doRequest(t, NewRouterWithDeps(fullDeps(t, ti, gh)), body, "Bearer "+tok)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("dry-run must still enforce identity; want 403, got %d body=%s",
+			rec.Code, rec.Body.String())
+	}
+}

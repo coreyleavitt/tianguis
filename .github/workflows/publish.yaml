@@ -1,0 +1,135 @@
+name: tianguis-publish
+
+# Reusable workflow that author repos call to publish a Nim package to
+# the tianguis registry. Authors add one tiny job to their own repo:
+#
+#   jobs:
+#     publish:
+#       uses: coreyleavitt/tianguis/.github/workflows/publish.yaml@v1
+#       with:
+#         name: my-package
+#         version: ${{ github.ref_name }}
+#       permissions:
+#         id-token: write   # cosign keyless signing
+#         contents: read    # checkout
+#         packages: write   # push the OCI artifact to GHCR
+#
+# See docs/adoption/github.md for the full author-facing copy-paste.
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        description: "Package name (must match milpa.kdl)"
+        required: true
+        type: string
+      version:
+        description: "Semver tag (typically github.ref_name on a tag push)"
+        required: true
+        type: string
+      registry:
+        description: "OCI registry ref (default: ghcr.io/${owner}/${repo}:${version})"
+        required: false
+        type: string
+        default: ""
+      dispatch-url:
+        description: "tianguis dispatch endpoint (default: production)"
+        required: false
+        type: string
+        default: "https://dispatch.tianguis.dev"
+      dry-run:
+        description: "Pack + push + sign + POST dispatch with dry_run flag (skips index commit; for smoke testing)"
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      milpa-install-token:
+        description: |
+          Fine-grained PAT with read access to coreyleavitt/milpa.
+          Required while milpa is private. Once milpa is published to
+          PyPI / made public, this becomes unnecessary.
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # cosign keyless: fetch Fulcio cert
+      contents: read    # checkout
+      packages: write   # push to GHCR
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up oras
+        uses: oras-project/setup-oras@v1
+        with:
+          version: "1.2.0"
+
+      - name: Set up cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: "v2.4.0"
+
+      - name: Set up uv (Python runtime for milpa)
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install milpa CLI
+        env:
+          MILPA_TOKEN: ${{ secrets.milpa-install-token }}
+        run: |
+          # While milpa is private, prefix with the PAT so the git fetch
+          # succeeds. Once milpa goes public this whole branch collapses
+          # to the unauthenticated install.
+          if [[ -n "${MILPA_TOKEN}" ]]; then
+            uv tool install "git+https://x-access-token:${MILPA_TOKEN}@github.com/coreyleavitt/milpa.git@main"
+          else
+            uv tool install git+https://github.com/coreyleavitt/milpa.git@main
+          fi
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Log in to GHCR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "${GH_TOKEN}" | oras login ghcr.io \
+            --username "${{ github.actor }}" \
+            --password-stdin
+
+      - name: Compute registry ref + signer identity
+        id: vars
+        env:
+          INPUT_REGISTRY: ${{ inputs.registry }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          # Default registry: ghcr.io/<owner>/<repo>:<version>. Author can
+          # override with an explicit registry input.
+          if [[ -z "${INPUT_REGISTRY}" ]]; then
+            ref="ghcr.io/${{ github.repository }}:${INPUT_VERSION}"
+          else
+            ref="${INPUT_REGISTRY}"
+          fi
+          # Lowercase the registry ref — GHCR rejects uppercase paths.
+          ref=$(echo "${ref}" | tr '[:upper:]' '[:lower:]')
+          echo "registry=${ref}" >> "$GITHUB_OUTPUT"
+
+          # cosign keyless signer identity for GH Actions has the shape:
+          # https://github.com/<owner>/<repo>/.github/workflows/<file>@<ref>
+          # We use the CALLER workflow ref so the identity reflects who
+          # actually triggered the publish (per workflow_call attribution).
+          echo "signed_by=https://github.com/${{ github.workflow_ref }}" >> "$GITHUB_OUTPUT"
+
+      - name: milpa publish
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ github.token }}
+        run: |
+          milpa publish \
+            --name="${{ inputs.name }}" \
+            --version="${{ inputs.version }}" \
+            --registry="${{ steps.vars.outputs.registry }}" \
+            --provider=github \
+            --repo-url="https://github.com/${{ github.repository }}" \
+            --signed-by="${{ steps.vars.outputs.signed_by }}" \
+            --dispatch-url="${{ inputs.dispatch-url }}" \
+            ${{ inputs.dry-run && '--dry-run' || '' }}

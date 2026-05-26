@@ -27,6 +27,9 @@ type PublishRequest struct {
 	SignedBy string `json:"signed_by"` // OIDC identity that cosign-signed the artifact;
 	                                   // the commit workflow re-verifies this against
 	                                   // the actual cosign signature on the artifact
+	DryRun   bool   `json:"dry_run,omitempty"` // when true, run OIDC + identity checks
+	                                            // but skip the workflow_dispatch (used for
+	                                            // author-side smoke testing)
 }
 
 // Dependencies bundles the injectable collaborators of the publish handler.
@@ -90,6 +93,14 @@ func publishHandler(deps Dependencies) http.HandlerFunc {
 			writeError(w, http.StatusForbidden, "identity_mismatch",
 				"OIDC token attests repo "+expected+
 					" but publish request claims "+req.RepoURL)
+			return
+		}
+
+		// Dry-run: identity checks above already ran (so this isn't a
+		// backdoor); just don't trigger the commit workflow. Authors use
+		// this to verify their OIDC + identity setup before going live.
+		if req.DryRun {
+			writeJSON(w, http.StatusOK, map[string]string{"status": "accepted (dry-run)"})
 			return
 		}
 
