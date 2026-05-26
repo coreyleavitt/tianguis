@@ -77,7 +77,7 @@ jobs:
         run: uv run --project .milpa-tool python -m milpa fetch
 
       - name: Build tianguis CLI
-        run: nim c -d:release -o:tianguis src/tianguis_cli.nim
+        run: nim c -d:release -d:ssl -o:tianguis src/tianguis_cli.nim
 
       # Payload arrives via repository_dispatch (client_payload) or
       # workflow_dispatch (inputs). Normalize once.

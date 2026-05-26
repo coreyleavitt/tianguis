@@ -72,5 +72,5 @@ jobs:
 
       - name: Assert index.kdl / index.json parity
         run: |
-          nim c -d:release -o:tianguis src/tianguis_cli.nim
+          nim c -d:release -d:ssl -o:tianguis src/tianguis_cli.nim
           ./tianguis project --check
