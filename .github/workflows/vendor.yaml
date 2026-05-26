@@ -73,7 +73,10 @@ jobs:
           fi
           git config user.name "milpa-bot"
           git config user.email "milpa-bot@users.noreply.github.com"
-          git add index.kdl index.json alerts.kdl 2>/dev/null || true
+          # Stage each file separately so a missing alerts.kdl (no drift
+          # this pass) doesn't make the whole `git add` no-op the others.
+          git add index.kdl index.json
+          [ -f alerts.kdl ] && git add alerts.kdl || true
           git commit -m "chore(vendor): daily milpa-bot vendoring pass"
           git push
           echo "changed=true" >> "$GITHUB_OUTPUT"
