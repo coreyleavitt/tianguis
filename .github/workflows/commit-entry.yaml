@@ -1,0 +1,129 @@
+name: commit-entry
+
+# Triggered by the dispatch endpoint after it verifies an author publish event.
+# Also supports manual workflow_dispatch for testing + recovery.
+#
+# Per dispatch_security_architecture.md, this workflow is the LAST line of
+# defense in the transparency chain: it INDEPENDENTLY verifies the Rekor
+# entry referenced by the dispatched payload before committing. A
+# compromised dispatch endpoint cannot inject entries here without leaving
+# a publicly-verifiable Rekor trail that doesn't match what's committed.
+
+on:
+  repository_dispatch:
+    types: [tianguis-publish]
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Package name"
+        required: true
+      version:
+        description: "Semver-shaped version (v1.2.3 or 1.2.3)"
+        required: true
+      oci_ref:
+        description: "<registry>/<repo>@sha256:<digest>"
+        required: true
+      namespace:
+        description: "GH/GitLab namespace (owner)"
+        required: true
+      upstream:
+        description: "Upstream repo URL (https://...)"
+        required: true
+      signed_by:
+        description: "OIDC identity that cosign-signed the artifact"
+        required: true
+      published_at:
+        description: "ISO 8601 UTC timestamp"
+        required: true
+      rekor_uuid:
+        description: "Rekor entry UUID dispatch attested to"
+        required: true
+
+permissions:
+  contents: write  # commit the new entry to index.kdl + index.json
+
+jobs:
+  add-entry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure git auth for private deps (milpa + nimkdl reads)
+        env:
+          PAT: ${{ secrets.TIANGUIS_GIT_READ_PAT }}
+        run: |
+          git config --global url."https://x-access-token:${PAT}@github.com/".insteadOf "https://github.com/"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "ssh://git@github.com/"
+
+      - name: Clone milpa (build tool)
+        run: git clone --depth 1 https://github.com/coreyleavitt/milpa.git .milpa-tool
+
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: "2.2.0"
+
+      - name: Set up uv (for milpa)
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up oras (OCI artifact pull)
+        uses: oras-project/setup-oras@v1
+        with:
+          version: "1.2.0"
+
+      - name: Set up cosign (Rekor verification)
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: "v2.4.0"
+
+      - name: Fetch deps via milpa
+        run: uv run --project .milpa-tool python -m milpa fetch
+
+      - name: Build tianguis CLI
+        run: nim c -d:release -o:tianguis src/tianguis_cli.nim
+
+      # The payload comes from either repository_dispatch (client_payload)
+      # or workflow_dispatch (inputs). Normalize once.
+      - name: Pick payload source
+        id: payload
+        run: |
+          if [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
+            P='${{ toJson(github.event.client_payload) }}'
+          else
+            P='${{ toJson(github.event.inputs) }}'
+          fi
+          # Emit each field as a step output for downstream use.
+          for k in name version oci_ref namespace upstream signed_by published_at rekor_uuid; do
+            v=$(echo "$P" | jq -r --arg k "$k" '.[$k] // ""')
+            echo "${k}=${v}" >> "$GITHUB_OUTPUT"
+          done
+
+      - name: Add entry (verifies Rekor + pulls OCI + merges)
+        run: |
+          ./tianguis add-entry \
+            --name="${{ steps.payload.outputs.name }}" \
+            --version="${{ steps.payload.outputs.version }}" \
+            --oci-ref="${{ steps.payload.outputs.oci_ref }}" \
+            --namespace="${{ steps.payload.outputs.namespace }}" \
+            --upstream="${{ steps.payload.outputs.upstream }}" \
+            --signed-by="${{ steps.payload.outputs.signed_by }}" \
+            --published-at="${{ steps.payload.outputs.published_at }}" \
+            --rekor-uuid="${{ steps.payload.outputs.rekor_uuid }}"
+
+      - name: Regenerate index.json
+        run: ./tianguis project
+
+      - name: Commit + push if changed
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "no changes (already up-to-date)"
+            exit 0
+          fi
+          git config user.name "tianguis-bot"
+          git config user.email "tianguis-bot@users.noreply.github.com"
+          git add index.kdl index.json
+          git commit -m "publish: ${{ steps.payload.outputs.name }} ${{ steps.payload.outputs.version }} (rekor:${{ steps.payload.outputs.rekor_uuid }})"
+          git push
