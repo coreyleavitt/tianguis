@@ -10,6 +10,7 @@ import (
 // PublishRequest is the JSON body of POST /v1/publish.
 type PublishRequest struct {
 	Name     string `json:"name"`      // package name to publish under
+	Version  string `json:"version"`   // semver tag the author published (e.g. "v1.2.3" or "1.2.3")
 	OciRef   string `json:"oci_ref"`   // <registry>/<repo>@sha256:<digest>
 	Provider string `json:"provider"`  // "github" | "gitlab" | "codeberg" | ...
 	RepoURL  string `json:"repo_url"`  // URL of the source repo making the request
@@ -131,6 +132,7 @@ func publishHandler(deps Dependencies) http.HandlerFunc {
 		if deps.GitHub != nil {
 			inputs := map[string]string{
 				"name":         req.Name,
+				"version":      req.Version,
 				"oci_ref":      req.OciRef,
 				"namespace":    deriveNamespace(req.RepoURL),
 				"upstream":     req.RepoURL,
@@ -230,6 +232,9 @@ func missingFields(req *PublishRequest) []string {
 	var missing []string
 	if req.Name == "" {
 		missing = append(missing, "name")
+	}
+	if req.Version == "" {
+		missing = append(missing, "version")
 	}
 	if req.OciRef == "" {
 		missing = append(missing, "oci_ref")

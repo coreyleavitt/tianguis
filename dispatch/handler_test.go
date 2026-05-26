@@ -105,6 +105,7 @@ func TestTracer_ValidTokenAndBodyReturns200(t *testing.T) {
 
 	body, _ := json.Marshal(PublishRequest{
 		Name:     "sample",
+		Version:  "v1.0.0",
 		OciRef:   "ghcr.io/coreyleavitt/sample@sha256:abc123",
 		Provider: "github",
 		RepoURL:  "https://github.com/coreyleavitt/sample",
@@ -126,6 +127,7 @@ func TestTracer_ValidTokenAndBodyReturns200(t *testing.T) {
 func validReqBody() []byte {
 	body, _ := json.Marshal(PublishRequest{
 		Name:     "sample",
+		Version:  "v1.0.0",
 		OciRef:   "ghcr.io/coreyleavitt/sample@sha256:abc123",
 		Provider: "github",
 		RepoURL:  "https://github.com/coreyleavitt/sample",
@@ -258,10 +260,11 @@ func TestMissingRequiredField_Returns400(t *testing.T) {
 		name string
 		body map[string]string
 	}{
-		{"missing name", map[string]string{"oci_ref": "x", "provider": "github", "repo_url": "https://x"}},
-		{"missing oci_ref", map[string]string{"name": "x", "provider": "github", "repo_url": "https://x"}},
-		{"missing provider", map[string]string{"name": "x", "oci_ref": "x", "repo_url": "https://x"}},
-		{"missing repo_url", map[string]string{"name": "x", "oci_ref": "x", "provider": "github"}},
+		{"missing name", map[string]string{"version": "v1", "oci_ref": "x", "provider": "github", "repo_url": "https://x"}},
+		{"missing version", map[string]string{"name": "x", "oci_ref": "x", "provider": "github", "repo_url": "https://x"}},
+		{"missing oci_ref", map[string]string{"name": "x", "version": "v1", "provider": "github", "repo_url": "https://x"}},
+		{"missing provider", map[string]string{"name": "x", "version": "v1", "oci_ref": "x", "repo_url": "https://x"}},
+		{"missing repo_url", map[string]string{"name": "x", "version": "v1", "oci_ref": "x", "provider": "github"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -330,6 +333,7 @@ func (ti *testIssuer) signTokenWithRepository(t *testing.T, repository string) s
 func bodyForRepo(repoURL string) []byte {
 	body, _ := json.Marshal(PublishRequest{
 		Name:     "sample",
+		Version:  "v1.0.0",
 		OciRef:   "ghcr.io/x/sample@sha256:abc123",
 		Provider: "github",
 		RepoURL:  repoURL,
@@ -411,6 +415,7 @@ func TestIdentityCrossCheck_GitLab_Match(t *testing.T) {
 	})
 	body, _ := json.Marshal(PublishRequest{
 		Name:     "sample",
+		Version:  "v1.0.0",
 		OciRef:   "registry.gitlab.com/x/sample@sha256:abc",
 		Provider: "gitlab",
 		RepoURL:  "https://gitlab.com/mygroup/sub/myproj",
@@ -428,6 +433,7 @@ func TestIdentityCrossCheck_GitLab_Mismatch(t *testing.T) {
 	})
 	body, _ := json.Marshal(PublishRequest{
 		Name:     "sample",
+		Version:  "v1.0.0",
 		OciRef:   "registry.gitlab.com/x/sample@sha256:abc",
 		Provider: "gitlab",
 		RepoURL:  "https://gitlab.com/victim/their-project",

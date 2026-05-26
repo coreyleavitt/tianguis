@@ -15,6 +15,7 @@ import ./merge
 type
   AddEntryArgs* = object
     name*:        string
+    version*:     string    ## semver-shaped author-supplied version (e.g. v1.2.3)
     ociRef*:      string    ## <registry>/<repo>@sha256:<digest>
     namespace*:   string
     upstream*:    string
@@ -58,15 +59,12 @@ proc ociDigest*(ociRef: string): string =
   let atIdx = ociRef.find('@')
   if atIdx < 0: "" else: ociRef[atIdx + 1 .. ^1]
 
-# extractVersionFromOciRef — for OCI-published entries we don't get a
-# version string in the dispatched payload (we get a digest). For now,
-# use the digest's short form as the version identifier. R3c followup:
-# require authors to include a version tag in the dispatch payload, OR
-# read it from the OCI manifest's tag annotation.
-proc extractVersionFromOciRef*(ociRef: string): string =
-  let d = ociDigest(ociRef)
-  if d.startsWith("sha256:") and d.len >= 14: "0.0.0+" & d[7 .. 13]
-  else: "0.0.0"
+# normalizeVersion — author may pass either "v1.2.3" (canonical git tag form)
+# or bare "1.2.3". Strip the leading v so the stored version matches what
+# milpa's semver comparison expects (numeric-leading).
+proc normalizeVersion*(v: string): string =
+  if v.startsWith("v") and v.len > 1 and v[1] in '0'..'9': v[1 .. ^1]
+  else: v
 
 proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver): int =
   ## Read index.kdl, verify Rekor entry independently, pull + hash the
@@ -117,7 +115,7 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
       upstream: args.upstream,
     ),
     version: Version(
-      version:     extractVersionFromOciRef(args.ociRef),
+      version:     normalizeVersion(args.version),
       contentHash: pulled.hash,
       attestation: "author-signed",
       signedBy:    args.signedBy,

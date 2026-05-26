@@ -54,6 +54,7 @@ suite "cli add-entry":
         projectDir = tmp,
         args = AddEntryArgs(
           name:        "sample",
+          version:     "v1.0.0",
           ociRef:      "ghcr.io/coreyleavitt/sample@sha256:abc123",
           namespace:   "coreyleavitt",
           upstream:    "https://github.com/coreyleavitt/sample",
@@ -64,6 +65,9 @@ suite "cli add-entry":
         driver = driver,
       )
       check code == 0
+      # Author-supplied version normalizes v-prefix to bare numeric.
+      # (The cycle 1 round-trip already verifies pkg.versions[0].version
+      # against the value our test passes in.)
 
       # Verify index.kdl now has the author-signed entry.
       let parsed = parseKdl(readFile(tmp / "index.kdl"))
@@ -76,6 +80,7 @@ suite "cli add-entry":
       check pkg.upstream == "https://github.com/coreyleavitt/sample"
       check pkg.versions.len == 1
       let v = pkg.versions[0]
+      check v.version == "1.0.0"  # v-prefix stripped from passed "v1.0.0"
       check v.contentHash == "sha256:abcdef"
       check v.attestation == "author-signed"
       check v.signedBy == "https://github.com/coreyleavitt/sample"
