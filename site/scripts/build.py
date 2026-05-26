@@ -345,14 +345,18 @@ MD_DOC_WRAPPER = """\
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>{title} — tianguis</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <header>
   <div class="header-inner">
     <a href="/" class="brand">
-      <h1>tianguis</h1>
-      <p class="tagline">an open-air market for Nim packages</p>
+      <img src="/favicon.svg" alt="" class="brand-icon" width="48" height="48">
+      <div class="brand-text">
+        <h1>tianguis</h1>
+        <p class="tagline">an open-air market for Nim packages</p>
+      </div>
     </a>
     <nav class="topnav">
       <a href="/about.html">about</a>
@@ -477,6 +481,7 @@ def build() -> None:
     shutil.copy(TEMPLATES / "style.css", BUILD / "style.css")
     shutil.copy(TEMPLATES / "robots.txt", BUILD / "robots.txt")
     shutil.copy(TEMPLATES / "CNAME", BUILD / "CNAME")
+    shutil.copy(TEMPLATES / "icon.svg", BUILD / "favicon.svg")
 
     # Raw registry files at canonical URLs.
     shutil.copy(index_kdl, BUILD / "index.kdl")
