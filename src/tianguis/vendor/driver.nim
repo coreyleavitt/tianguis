@@ -67,13 +67,16 @@ method headSha*(d: RealDriver, url: string): string =
 method shallowCloneAndHash*(d: RealDriver, url, refName: string): CloneResult =
   let tmp = createTempDir("tianguis-clone-", "")
   defer: removeDir(tmp)
-  # `git clone --depth 1 --branch <refName> <url> <tmp>` works for
-  # both tag names and branch names; falls back to clone+checkout if
-  # the ref is a commit sha (rare in our case).
-  let (output, code) = execCmdEx(
-    "git clone --depth 1 --branch " & quoteShell(refName) & " " &
-    quoteShell(url) & " " & quoteShell(tmp)
-  )
+  # When refName is "HEAD" we want the upstream's default branch — git
+  # doesn't accept "HEAD" as a --branch value, so clone without --branch
+  # in that case. For real tag/branch names, --branch is precise.
+  let cloneCmd =
+    if refName == "HEAD":
+      "git clone --depth 1 " & quoteShell(url) & " " & quoteShell(tmp)
+    else:
+      "git clone --depth 1 --branch " & quoteShell(refName) & " " &
+        quoteShell(url) & " " & quoteShell(tmp)
+  let (output, code) = execCmdEx(cloneCmd)
   if code != 0:
     raise newException(IOError, "git clone failed: " & output)
   let sha = strip(gitOutput(["-C", quoteShell(tmp), "rev-parse", "HEAD"]))

@@ -70,21 +70,29 @@ proc runVendor*(
       # fetcher lands; skip silently for now.
       continue
 
-    let tags = driver.listTags(pkg.url)
-    let head = driver.headSha(pkg.url)
-    let sel = selectTag(tags, head)
-    let refName = if sel.tag.len > 0: sel.tag else: "HEAD"
-    let clone = driver.shallowCloneAndHash(pkg.url, refName)
+    # Per-package isolation: a single bad upstream (deleted repo, network
+    # blip, weird git state) must not abort the entire vendor pass. We
+    # log + skip + continue, leaving the rest of the catalog to vendor.
+    try:
+      let tags = driver.listTags(pkg.url)
+      let head = driver.headSha(pkg.url)
+      let sel = selectTag(tags, head)
+      let refName = if sel.tag.len > 0: sel.tag else: "HEAD"
+      let clone = driver.shallowCloneAndHash(pkg.url, refName)
 
-    let entry = buildVendoredEntry(
-      pkg, sel,
-      contentHash = clone.contentHash,
-      commitSha   = clone.commitSha,
-      publishedAt = nowIso,
-    )
-    let outcome = mergeVendored(idx, entry)
-    idx = outcome.index
-    if outcome.drift.isSome:
-      alerts = appendAlert(alerts, outcome.drift.get, detectedAt = nowIso)
+      let entry = buildVendoredEntry(
+        pkg, sel,
+        contentHash = clone.contentHash,
+        commitSha   = clone.commitSha,
+        publishedAt = nowIso,
+      )
+      let outcome = mergeVendored(idx, entry)
+      idx = outcome.index
+      if outcome.drift.isSome:
+        alerts = appendAlert(alerts, outcome.drift.get, detectedAt = nowIso)
+    except CatchableError as e:
+      stderr.writeLine("tianguis: vendor: " & pkg.name & " skipped: " & e.msg)
+      skipped.add(pkg.name)
+      continue
 
   VendorRunResult(index: idx, alerts: alerts, skipped: skipped)
