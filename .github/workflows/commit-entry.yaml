@@ -64,7 +64,7 @@ jobs:
           enable-cache: true
 
       - name: Set up oras (OCI artifact pull)
-        uses: oras-project/setup-oras@v1
+        uses: oras-project/setup-oras@v2
         with:
           version: "1.2.0"
 
