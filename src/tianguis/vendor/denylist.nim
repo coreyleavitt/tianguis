@@ -10,8 +10,8 @@
 ##       reason "<human-readable explanation>"
 ##   }
 
-import std/[sets, tables]
-import kdl
+import std/[options, sets, tables]
+import nkdl
 import ../errors
 
 export errors
@@ -29,8 +29,9 @@ proc parseDenylist*(text: string): Denylist =
   let doc = parse(text)
   if doc.isErr: return  # malformed denylist treated as empty (defensive)
   for node in doc.get.nodes:
-    if doc.get.interner.lookup(node.name) == "package" and node.entries.len > 0:
-      result.names.incl(node.entries[0].argValue.strVal)
+    if node.name == "package":
+      let v = node.argStr(0)
+      if v.isSome: result.names.incl(v.get)
 
 proc contains*(dl: Denylist, packageName: string): bool =
   packageName in dl.names

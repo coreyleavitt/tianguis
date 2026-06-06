@@ -10,13 +10,13 @@
 
 import std/json as stdjson
 import std/tables
-import kdl
+import nkdl   # Result / ok / err (re-exported from nkdl/spans)
 import ./model
 import ./errors
 
-# Re-export kdl + errors so consumers calling parseJson get access to
+# Re-export nkdl + errors so consumers calling parseJson get access to
 # Result's .isOk / .get accessors and IDX-* codes without separate imports.
-export kdl, errors
+export nkdl, errors
 
 # ---------------------------------------------------------------------------
 # Encode

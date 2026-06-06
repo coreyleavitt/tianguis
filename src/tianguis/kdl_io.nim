@@ -4,14 +4,14 @@
 ## Strict schema: unknown nodes / properties raise typed errors with
 ## stable IDX-* codes ([[error_catalog_discipline]]).
 
-import std/tables
-import kdl
+import std/[options, tables]
+import nkdl
 import ./model
 import ./errors
 
-# Re-export kdl so consumers calling parseKdl get access to Result's
-# .isOk / .get accessors without needing a separate `import kdl`.
-export kdl, errors
+# Re-export nkdl so consumers calling parseKdl get access to Result's
+# .isOk / .get accessors without needing a separate `import nkdl`.
+export nkdl, errors
 
 # ---------------------------------------------------------------------------
 # Emit
@@ -82,88 +82,95 @@ const
     "kind", "url", "ref", "commit_sha", "registry", "repository", "digest",
   ]
 
+# Bridge helpers — the canonical typed↔DOM escape-hatch pattern. The
+# schema is "scalar as named child node" (`name "value"`); these read the
+# single positional arg of a node, tolerating absence with "" (the lenient
+# default the prior interned-AST path also produced).
+proc argText(n: KdlNode, i = 0): string =
+  ## Positional arg `i` as a string, or "" if the node/arg is absent or
+  ## non-string.
+  if n.isNil: "" else: n.argStr(i).get("")
+
+proc childText(n: KdlNode, name: string): string =
+  ## Scalar-child accessor: the first arg of the `name "value"` child, or "".
+  n.child(name).argText
+
 proc unknownNode(doc: KdlDoc, node: KdlNode, ctx: string): IdxError =
-  let name = doc.interner.lookup(node.name)
+  let (line, col) = doc.lineMap.lineColOf(node.span.offset)
   initIndexError(
     iecUnknownNode,
-    "unknown node '" & name & "' in " & ctx,
-    line = node.span.start.line, col = node.span.start.col,
+    "unknown node '" & node.name & "' in " & ctx,
+    line = line, col = col,
   )
 
 proc parseProvenance(doc: KdlDoc, node: KdlNode): Result[Provenance, IdxError] =
-  var kind = pkGit
+  # Strict membership first (union of all variant fields); kind-specific
+  # enforcement is post-discrimination, matching the prior behavior.
   for child in node.children:
-    if doc.interner.lookup(child.name) == "kind":
-      let kindStr = child.entries[0].argValue.strVal
-      case kindStr
-      of "git": kind = pkGit
-      of "oci": kind = pkOci
-      else:
-        return err[Provenance, IdxError](initIndexError(
-          iecBadType,
-          "unknown provenance kind '" & kindStr & "'",
-          line = child.span.start.line, col = child.span.start.col,
-        ))
-      break
-  var prov = Provenance(kind: kind)
-  for child in node.children:
-    let childName = doc.interner.lookup(child.name)
-    if childName notin ProvenanceChildren:
+    if child.name notin ProvenanceChildren:
       return err[Provenance, IdxError](unknownNode(doc, child, "provenance"))
-    let value = if child.entries.len > 0: child.entries[0].argValue.strVal else: ""
-    case kind
-    of pkGit:
-      case childName
-      of "url":        prov.url       = value
-      of "ref":        prov.gitRef    = value
-      of "commit_sha": prov.commitSha = value
-      else: discard  # kind already consumed; other kinds' fields ignored
-    of pkOci:
-      case childName
-      of "registry":   prov.registry   = value
-      of "repository": prov.repository = value
-      of "digest":     prov.digest     = value
-      else: discard
-  ok[Provenance, IdxError](prov)
+  case node.childText("kind")
+  of "git", "":   # absent `kind` defaults to git (prior behavior)
+    ok[Provenance, IdxError](Provenance(
+      kind:      pkGit,
+      url:       node.childText("url"),
+      gitRef:    node.childText("ref"),
+      commitSha: node.childText("commit_sha"),
+    ))
+  of "oci":
+    ok[Provenance, IdxError](Provenance(
+      kind:       pkOci,
+      registry:   node.childText("registry"),
+      repository: node.childText("repository"),
+      digest:     node.childText("digest"),
+    ))
+  else:
+    let anchor = node.child("kind")
+    let (line, col) = doc.lineMap.lineColOf(
+      (if anchor.isNil: node else: anchor).span.offset)
+    err[Provenance, IdxError](initIndexError(
+      iecBadType,
+      "unknown provenance kind '" & node.childText("kind") & "'",
+      line = line, col = col,
+    ))
 
-proc parseRequires(doc: KdlDoc, node: KdlNode): OrderedTable[string, string] =
+proc parseRequires(node: KdlNode): OrderedTable[string, string] =
+  ## A `requires` block: each child is `<dep-name> "<constraint>"` — the
+  ## node name is the map key (dynamic-name map shape).
   result = initOrderedTable[string, string]()
   for child in node.children:
-    let name = doc.interner.lookup(child.name)
-    if child.entries.len >= 1:
-      result[name] = child.entries[0].argValue.strVal
+    let v = child.argStr(0)
+    if v.isSome: result[child.name] = v.get
 
 proc parseVersion(doc: KdlDoc, node: KdlNode): Result[Version, IdxError] =
   var v = Version(
-    version: node.entries[0].argValue.strVal,
+    version: node.argText,
     requires: initOrderedTable[string, string](),
   )
   for child in node.children:
-    let childName = doc.interner.lookup(child.name)
-    if childName notin VersionChildren:
+    if child.name notin VersionChildren:
       return err[Version, IdxError](unknownNode(doc, child, "version"))
-    case childName
-    of "content_hash": v.contentHash = child.entries[0].argValue.strVal
-    of "attestation":  v.attestation = child.entries[0].argValue.strVal
-    of "signed_by":    v.signedBy    = child.entries[0].argValue.strVal
-    of "published_at": v.publishedAt = child.entries[0].argValue.strVal
+    case child.name
+    of "content_hash": v.contentHash = child.argText
+    of "attestation":  v.attestation = child.argText
+    of "signed_by":    v.signedBy    = child.argText
+    of "published_at": v.publishedAt = child.argText
     of "provenance":
       let pr = parseProvenance(doc, child)
       if pr.isErr: return err[Version, IdxError](pr.getErr)
       v.provenances.add(pr.get)
-    of "requires":     v.requires    = parseRequires(doc, child)
+    of "requires":     v.requires    = parseRequires(child)
     else: discard  # caught by `notin` check above
   ok[Version, IdxError](v)
 
 proc parsePackage(doc: KdlDoc, node: KdlNode): Result[Package, IdxError] =
-  var pkg = Package(name: node.entries[0].argValue.strVal)
+  var pkg = Package(name: node.argText)
   for child in node.children:
-    let childName = doc.interner.lookup(child.name)
-    if childName notin PackageChildren:
+    if child.name notin PackageChildren:
       return err[Package, IdxError](unknownNode(doc, child, "package"))
-    case childName
-    of "namespace": pkg.namespace = child.entries[0].argValue.strVal
-    of "upstream":  pkg.upstream  = child.entries[0].argValue.strVal
+    case child.name
+    of "namespace": pkg.namespace = child.argText
+    of "upstream":  pkg.upstream  = child.argText
     of "version":
       let vr = parseVersion(doc, child)
       if vr.isErr: return err[Package, IdxError](vr.getErr)
@@ -172,27 +179,26 @@ proc parsePackage(doc: KdlDoc, node: KdlNode): Result[Package, IdxError] =
   ok[Package, IdxError](pkg)
 
 proc parseKdl*(s: string): Result[Index, IdxError] =
-  ## Parse canonical KDL into an Index. Strict schema: any node or
-  ## property not in the allowed set raises IDX-NODE-UNKNOWN.
-  let doc = parse(s)
-  if doc.isErr:
-    let pe = doc.getErr
+  ## Parse canonical KDL into an Index. Strict schema: any node not in the
+  ## allowed set raises IDX-NODE-UNKNOWN.
+  let parsed = parse(s)
+  if parsed.isErr:
+    let pe = parsed.getErr.enriched(s, "<input>")
     return err[Index, IdxError](initIndexError(
       iecKdlParse, "KDL parse error",
-      line = pe.span.start.line, col = pe.span.start.col,
+      line = pe.line, col = pe.col,
     ))
 
+  let doc = parsed.get
   var idx = Index(schemaVersion: 0, packages: @[])
-  let parsed = doc.get
-  for node in parsed.nodes:
-    let name = parsed.interner.lookup(node.name)
-    if name notin TopLevelNodes:
-      return err[Index, IdxError](unknownNode(parsed, node, "top-level"))
-    case name
+  for node in doc.nodes:
+    if node.name notin TopLevelNodes:
+      return err[Index, IdxError](unknownNode(doc, node, "top-level"))
+    case node.name
     of "schema_version":
-      idx.schemaVersion = node.entries[0].argValue.intVal.int
+      idx.schemaVersion = node.argInt(0).get(0).int
     of "package":
-      let pr = parsePackage(parsed, node)
+      let pr = parsePackage(doc, node)
       if pr.isErr: return err[Index, IdxError](pr.getErr)
       idx.packages.add(pr.get)
     else: discard  # caught by `notin` above

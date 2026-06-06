@@ -6,10 +6,10 @@
 ## we need for vendoring (name + url + method); the rest are ignored.
 
 import std/json
-import kdl  # for Result, ok, err
+import nkdl  # for Result, ok, err (re-exported from nkdl/spans)
 import ../errors
 
-export kdl, errors
+export nkdl, errors
 
 type
   UpstreamPackage* = object

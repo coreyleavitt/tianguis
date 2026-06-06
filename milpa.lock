@@ -2,19 +2,6 @@
 version 1
 strategy "maxver"
 
-dep "kdl" {
-    identity "sha256:1aaf2a95f53681c86f6dcd4c1267144401ba923f31afa42da3c5ae783dc7ab61"
-    version "0.0.1"
-    src_dir "src"
-    requires
-    provenance {
-        kind "git"
-        url "ssh://git@github.com/coreyleavitt/nimkdl.git"
-        ref "main"
-        commit_sha "1fa60f5e5eb1765abc82a4d3911ba54ff581567c"
-    }
-}
-
 dep "nimcrypto" {
     identity "sha256:03ace9e6188964bae4d2408275f472603cf862a6fc0ce7ac2c1d213e10047590"
     version "0.0.1"
@@ -25,5 +12,18 @@ dep "nimcrypto" {
         url "https://github.com/cheatfate/nimcrypto.git"
         ref "master"
         commit_sha "423ea4fed8de6f4544b7e3b30d868f527ed3b947"
+    }
+}
+
+dep "nkdl" {
+    identity "sha256:c8ee4804c71d404260926fc44c4a2555e9af701e64d80b41dfd59afa7ca217c0"
+    version "0.0.1"
+    src_dir "src"
+    requires
+    provenance {
+        kind "git"
+        url "ssh://git@github.com/coreyleavitt/nkdl.git"
+        ref "main"
+        commit_sha "f3ce655254e6bdeba9c215e4a88fe39703eac11e"
     }
 }

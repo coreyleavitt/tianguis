@@ -7,6 +7,6 @@ cas {
 }
 
 deps {
-    kdl git=(url)"ssh://git@github.com/coreyleavitt/nimkdl.git" ref="main"
+    nkdl git=(url)"ssh://git@github.com/coreyleavitt/nkdl.git" ref="main"
     nimcrypto git=(url)"https://github.com/cheatfate/nimcrypto.git" ref="master"
 }
