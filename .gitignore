@@ -26,3 +26,6 @@ dispatch/server   # local-dev binary if built without -o
 /.milpa-tool/
 *.pem
 site/_build/
+
+# one-time #32 migration local recovery aid (not a repo artifact)
+index.kdl.bak
