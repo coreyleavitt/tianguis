@@ -1,0 +1,201 @@
+[
+  {
+    "_comment": "--- github.com: HTTPS, case-fold ---",
+    "input_url": "https://github.com/coreyleavitt/nimkdl",
+    "expected_namespace": "github.com/coreyleavitt"
+  },
+  {
+    "input_url": "https://github.com/greenm01/nimkdl",
+    "expected_namespace": "github.com/greenm01"
+  },
+  {
+    "_comment": "greenm01 vs coreyleavitt — same leaf, DISTINCT namespaces (the #32 collision proof)",
+    "input_url": "https://github.com/coreyleavitt/nimkdl",
+    "expected_namespace": "github.com/coreyleavitt"
+  },
+  {
+    "_comment": "github org case-fold: MyOrg → myorg",
+    "input_url": "https://github.com/MyOrg/repo",
+    "expected_namespace": "github.com/myorg"
+  },
+  {
+    "_comment": "github org case-fold: myorg → myorg (already lowercase)",
+    "input_url": "https://github.com/myorg/repo",
+    "expected_namespace": "github.com/myorg"
+  },
+  {
+    "_comment": "MyOrg and myorg BOTH produce github.com/myorg — collision proof",
+    "input_url": "https://github.com/MYORG/repo",
+    "expected_namespace": "github.com/myorg"
+  },
+  {
+    "_comment": "www.github.com host normalized to github.com",
+    "input_url": "https://www.github.com/coreyleavitt/repo",
+    "expected_namespace": "github.com/coreyleavitt"
+  },
+  {
+    "_comment": "trailing .git stripped from repo segment",
+    "input_url": "https://github.com/coreyleavitt/nimkdl.git",
+    "expected_namespace": "github.com/coreyleavitt"
+  },
+  {
+    "_comment": "double-slash in path collapses (empty segment dropped)",
+    "input_url": "https://github.com/coreyleavitt//nimkdl",
+    "expected_namespace": "github.com/coreyleavitt"
+  },
+  {
+    "_comment": "SSH short form git@host:org/repo.git",
+    "input_url": "git@github.com:coreyleavitt/nimkdl.git",
+    "expected_namespace": "github.com/coreyleavitt"
+  },
+  {
+    "_comment": "ssh://git@github.com — git@ residue stripped, host is github.com",
+    "input_url": "ssh://git@github.com/coreyleavitt/repo",
+    "expected_namespace": "github.com/coreyleavitt"
+  },
+  {
+    "_comment": "http:// scheme accepted",
+    "input_url": "http://github.com/coreyleavitt/repo",
+    "expected_namespace": "github.com/coreyleavitt"
+  },
+  {
+    "_comment": "git:// scheme accepted",
+    "input_url": "git://github.com/coreyleavitt/repo",
+    "expected_namespace": "github.com/coreyleavitt"
+  },
+  {
+    "_comment": "percent-encoded org segment is decoded (%6F = 'o', so %6Frg = 'org')",
+    "input_url": "https://github.com/%6Frg/repo",
+    "expected_namespace": "github.com/org"
+  },
+  {
+    "_comment": "--- gitlab.com: depth-2 ok, case-fold ---",
+    "input_url": "https://gitlab.com/nim-lang/nimble",
+    "expected_namespace": "gitlab.com/nim-lang"
+  },
+  {
+    "_comment": "gitlab org case-folded",
+    "input_url": "https://gitlab.com/Nim-Lang/nimble",
+    "expected_namespace": "gitlab.com/nim-lang"
+  },
+  {
+    "_comment": "gitlab nested group depth > 2 → derrGitlabNestedGroup",
+    "input_url": "https://gitlab.com/group/subgroup/project",
+    "expected_error": "derrGitlabNestedGroup"
+  },
+  {
+    "_comment": "gitlab depth exactly 2 is fine (org + repo)",
+    "input_url": "https://gitlab.com/mygroup/myrepo",
+    "expected_namespace": "gitlab.com/mygroup"
+  },
+  {
+    "_comment": "--- bitbucket.org: case-fold ---",
+    "input_url": "https://bitbucket.org/MyOrg/repo",
+    "expected_namespace": "bitbucket.org/myorg"
+  },
+  {
+    "_comment": "bitbucket lowercase already",
+    "input_url": "https://bitbucket.org/myorg/repo",
+    "expected_namespace": "bitbucket.org/myorg"
+  },
+  {
+    "_comment": "--- codeberg.org: case-PRESERVE ---",
+    "input_url": "https://codeberg.org/SomeUser/repo",
+    "expected_namespace": "codeberg.org/SomeUser"
+  },
+  {
+    "_comment": "codeberg Foo → codeberg.org/Foo (preserved)",
+    "input_url": "https://codeberg.org/Foo/repo",
+    "expected_namespace": "codeberg.org/Foo"
+  },
+  {
+    "_comment": "codeberg foo → codeberg.org/foo (different from Foo — preserve semantics)",
+    "input_url": "https://codeberg.org/foo/repo",
+    "expected_namespace": "codeberg.org/foo"
+  },
+  {
+    "_comment": "codeberg ~ prefix preserved verbatim",
+    "input_url": "https://codeberg.org/~User/repo",
+    "expected_namespace": "codeberg.org/~User"
+  },
+  {
+    "_comment": "--- git.sr.ht: ~User preserved (case-sensitive) ---",
+    "input_url": "https://git.sr.ht/~SomeUser/repo",
+    "expected_namespace": "git.sr.ht/~SomeUser"
+  },
+  {
+    "_comment": "git.sr.ht ~User vs ~user → DIFFERENT (preserve)",
+    "input_url": "https://git.sr.ht/~User/repo",
+    "expected_namespace": "git.sr.ht/~User"
+  },
+  {
+    "_comment": "git.sr.ht ~user (lowercase) preserved as-is",
+    "input_url": "https://git.sr.ht/~user/repo",
+    "expected_namespace": "git.sr.ht/~user"
+  },
+  {
+    "_comment": "--- fallback unknown host: case-preserve ---",
+    "input_url": "https://git.example.com/MyOrg/repo",
+    "expected_namespace": "git.example.com/MyOrg"
+  },
+  {
+    "_comment": "fallback preserves case (unknown forge semantics → safest)",
+    "input_url": "https://git.example.com/myorg/repo",
+    "expected_namespace": "git.example.com/myorg"
+  },
+  {
+    "_comment": "--- error cases ---",
+    "input_url": "https://github.com",
+    "expected_error": "derrNoOrg"
+  },
+  {
+    "_comment": "bare host with trailing slash → derrNoOrg",
+    "input_url": "https://github.com/",
+    "expected_error": "derrNoOrg"
+  },
+  {
+    "_comment": "no-scheme, no-@ input → derrUnparseable",
+    "input_url": "not-a-url-at-all",
+    "expected_error": "derrUnparseable"
+  },
+  {
+    "_comment": "empty string → derrUnparseable",
+    "input_url": "",
+    "expected_error": "derrUnparseable"
+  },
+  {
+    "_comment": "bare host no path, no org → derrNoOrg",
+    "input_url": "https://example.com",
+    "expected_error": "derrNoOrg"
+  },
+  {
+    "_comment": "--- host normalization: www. stripped ---",
+    "input_url": "https://www.github.com/myorg/repo",
+    "expected_namespace": "github.com/myorg"
+  },
+  {
+    "_comment": "www. on unknown host stripped too",
+    "input_url": "https://www.example.com/MyOrg/repo",
+    "expected_namespace": "example.com/MyOrg"
+  },
+  {
+    "_comment": "--- trailing .git on repo segment is stripped, org unaffected ---",
+    "input_url": "https://gitlab.com/mygroup/project.git",
+    "expected_namespace": "gitlab.com/mygroup"
+  },
+  {
+    "_comment": "SSH short form: git@gitlab.com:group/project",
+    "input_url": "git@gitlab.com:group/project",
+    "expected_namespace": "gitlab.com/group"
+  },
+  {
+    "_comment": "SSH short form: git@bitbucket.org:MyOrg/repo.git — case folded",
+    "input_url": "git@bitbucket.org:MyOrg/repo.git",
+    "expected_namespace": "bitbucket.org/myorg"
+  },
+  {
+    "_comment": "ssh:// with git@ userinfo residue on gitlab",
+    "input_url": "ssh://git@gitlab.com/mygroup/project",
+    "expected_namespace": "gitlab.com/mygroup"
+  }
+]
