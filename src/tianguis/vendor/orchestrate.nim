@@ -13,6 +13,7 @@ import ./merge
 import ./denylist
 import ./alerts
 import ../model
+import ../namespace
 
 type
   CloneResult* = object
@@ -24,7 +25,7 @@ type
   VendorRunResult* = object
     index*:   Index
     alerts*:  string         ## full alerts.kdl log (existing + new)
-    skipped*: seq[string]    ## denylisted packages we skipped
+    skipped*: seq[string]    ## denylisted or undrivable packages we skipped
 
 # ---------------------------------------------------------------------------
 # Driver protocol — concrete drivers override these.
@@ -55,19 +56,31 @@ proc runVendor*(
 ): VendorRunResult =
   ## Walk every upstream package; for each one not denylisted, fetch
   ## tags + HEAD, select the right tag, shallow-clone-and-hash, merge
-  ## the resulting entry into the index. Drift alerts append to the
-  ## alerts log.
+  ## the resulting entry into the index. Drift and collision alerts append
+  ## to the alerts log.
   var idx = initialIndex
   var alerts = initialAlerts
   var skipped: seq[string] = @[]
 
   for pkg in driver.fetchPackagesJson():
-    if denylist.contains(pkg.name):
-      skipped.add(pkg.name)
-      continue
     if pkg.`method` != "git":
       # Non-git transports get their own vendoring path when their
       # fetcher lands; skip silently for now.
+      continue
+
+    # Derive namespace up front from the git provenance URL.
+    # If underivable → log + skip + continue (auditable, not silent).
+    let nsResult = deriveNamespace(pkg.url)
+    if nsResult.isErr:
+      stderr.writeLine("tianguis: vendor: " & pkg.name &
+        " skipped (undeivable namespace, " & $nsResult.error & "): " & pkg.url)
+      skipped.add(pkg.name)
+      continue
+    let ns = namespaceString(nsResult.get)
+
+    # Denylist check is tuple-keyed: (namespace, name).
+    if denylist.contains(ns, pkg.name):
+      skipped.add(pkg.name)
       continue
 
     # Per-package isolation: a single bad upstream (deleted repo, network
@@ -80,16 +93,43 @@ proc runVendor*(
       let refName = if sel.tag.len > 0: sel.tag else: "HEAD"
       let clone = driver.shallowCloneAndHash(pkg.url, refName)
 
-      let entry = buildVendoredEntry(
+      let entryResult = buildVendoredEntry(
         pkg, sel,
         contentHash = clone.contentHash,
         commitSha   = clone.commitSha,
         publishedAt = nowIso,
       )
-      let outcome = mergeVendored(idx, entry)
-      idx = outcome.index
-      if outcome.drift.isSome:
-        alerts = appendAlert(alerts, outcome.drift.get, detectedAt = nowIso)
+      # buildVendoredEntry already checked derivability; if it errors
+      # here it's a logic bug, but be robust.
+      if entryResult.isErr:
+        stderr.writeLine("tianguis: vendor: " & pkg.name &
+          " skipped (buildVendoredEntry err, " & $entryResult.error & "): " & pkg.url)
+        skipped.add(pkg.name)
+        continue
+
+      let entry = entryResult.get
+      let (newIdx, outcome) = mergeVendored(idx, entry)
+      case outcome.kind
+      of mokAdded:
+        # Only commit the mutated index on an actual add.
+        idx = newIdx
+      of mokIdempotent:
+        # Safe no-op write avoided — index already contains identical entry.
+        discard
+      of mokIdentityDrift:
+        alerts = appendAlert(alerts, outcome.identity, detectedAt = nowIso)
+        stderr.writeLine("tianguis: vendor: IDX-IDENTITY-DRIFT: " &
+          outcome.identity.name &
+          " stored=" & outcome.identity.storedNamespace &
+          " rederived=" & outcome.identity.rederivedNamespace)
+      of mokCollision:
+        let col = outcome.collision
+        alerts = appendAlert(alerts, col, detectedAt = nowIso)
+        stderr.writeLine("tianguis: vendor: IDX-INTRAORG-COLLISION: " &
+          col.namespace & "/" & col.name &
+          " existing=" & col.existingRepo & " incoming=" & col.newRepo)
+      of mokContentDrift:
+        alerts = appendAlert(alerts, outcome.content, detectedAt = nowIso)
     except CatchableError as e:
       stderr.writeLine("tianguis: vendor: " & pkg.name & " skipped: " & e.msg)
       skipped.add(pkg.name)

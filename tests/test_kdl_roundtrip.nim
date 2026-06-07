@@ -163,3 +163,161 @@ suite "kdl roundtrip":
     let parsed = parseKdl(serialized)
     check parsed.isOk
     check parsed.get == original
+
+  # ---------------------------------------------------------------------------
+  # S3: host/org namespace round-trip + same-name/two-namespace survival
+  # ---------------------------------------------------------------------------
+
+  test "host/org namespace (dots and slashes) round-trips intact":
+    ## Regression: namespace values like "github.com/coreyleavitt" contain
+    ## '.' and '/' which are safe inside KDL quoted strings but must survive
+    ## emit → parse unchanged.
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[
+        Package(
+          name: "nimkdl",
+          namespace: "github.com/coreyleavitt",
+          upstream: "https://github.com/coreyleavitt/nimkdl",
+        ),
+      ],
+    )
+    let serialized = formatKdl(original)
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get.packages.len == 1
+    check parsed.get.packages[0].namespace == "github.com/coreyleavitt"
+
+  test "two packages with same name but different namespace survive round-trip as two distinct entries":
+    ## S3 regression: (namespace, name) is the identity tuple. Two packages
+    ## named "nimkdl" under different namespaces must NOT be collapsed, merged,
+    ## or dropped at the serialization layer.
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[
+        Package(
+          name: "nimkdl",
+          namespace: "github.com/greenm01",
+          upstream: "https://github.com/greenm01/nimkdl",
+        ),
+        Package(
+          name: "nimkdl",
+          namespace: "github.com/coreyleavitt",
+          upstream: "https://github.com/coreyleavitt/nimkdl",
+        ),
+      ],
+    )
+    let parsed = parseKdl(formatKdl(original))
+    check parsed.isOk
+    check parsed.get.packages.len == 2
+    # Both namespaces must be present
+    let namespaces = parsed.get.packages.mapIt(it.namespace)
+    check "github.com/greenm01" in namespaces
+    check "github.com/coreyleavitt" in namespaces
+    # Both names must be "nimkdl"
+    for pkg in parsed.get.packages:
+      check pkg.name == "nimkdl"
+
+  # ---------------------------------------------------------------------------
+  # S5: partiallyResolved round-trip
+  # ---------------------------------------------------------------------------
+
+  test "partiallyResolved=true round-trips through KDL":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "somepkg", namespace: "github.com/someorg",
+        upstream: "https://github.com/someorg/somepkg",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:abc",
+          attestation: "milpa-vendored", signedBy: "milpa-bot",
+          publishedAt: "2026-06-06T00:00:00Z",
+          partiallyResolved: true,
+        )],
+      )],
+    )
+    let parsed = parseKdl(formatKdl(original))
+    check parsed.isOk
+    check parsed.get.packages[0].versions[0].partiallyResolved == true
+
+  test "partiallyResolved=false does not emit the node":
+    ## A version with partiallyResolved=false (default) must NOT include the
+    ## `partially_resolved` node in its KDL output — keeps the S6 migration
+    ## noise-free (2613 existing entries don't gain a spurious field).
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "somepkg", namespace: "github.com/someorg",
+        upstream: "https://github.com/someorg/somepkg",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:abc",
+          attestation: "milpa-vendored", signedBy: "milpa-bot",
+          publishedAt: "2026-06-06T00:00:00Z",
+          partiallyResolved: false,
+        )],
+      )],
+    )
+    let serialized = formatKdl(original)
+    check "partially_resolved" notin serialized
+
+  test "partiallyResolved=false round-trips as false":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "somepkg", namespace: "github.com/someorg",
+        upstream: "https://github.com/someorg/somepkg",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:abc",
+          attestation: "milpa-vendored", signedBy: "milpa-bot",
+          publishedAt: "2026-06-06T00:00:00Z",
+          partiallyResolved: false,
+        )],
+      )],
+    )
+    let parsed = parseKdl(formatKdl(original))
+    check parsed.isOk
+    check parsed.get.packages[0].versions[0].partiallyResolved == false
+
+  test "same-name two-namespace pair emerges in canonical (namespace, name) order after round-trip":
+    ## canonicalize sorts by (namespace, name). "github.com/coreyleavitt" <
+    ## "github.com/greenm01" lexicographically, so coreyleavitt comes first
+    ## regardless of insertion order.
+    let insertedGreenFirst = Index(
+      schemaVersion: 1,
+      packages: @[
+        Package(
+          name: "nimkdl",
+          namespace: "github.com/greenm01",
+          upstream: "https://github.com/greenm01/nimkdl",
+        ),
+        Package(
+          name: "nimkdl",
+          namespace: "github.com/coreyleavitt",
+          upstream: "https://github.com/coreyleavitt/nimkdl",
+        ),
+      ],
+    )
+    let insertedCoreyFirst = Index(
+      schemaVersion: 1,
+      packages: @[
+        Package(
+          name: "nimkdl",
+          namespace: "github.com/coreyleavitt",
+          upstream: "https://github.com/coreyleavitt/nimkdl",
+        ),
+        Package(
+          name: "nimkdl",
+          namespace: "github.com/greenm01",
+          upstream: "https://github.com/greenm01/nimkdl",
+        ),
+      ],
+    )
+    let r1 = parseKdl(formatKdl(insertedGreenFirst))
+    let r2 = parseKdl(formatKdl(insertedCoreyFirst))
+    check r1.isOk
+    check r2.isOk
+    # Both must produce the same canonical ordering
+    check r1.get == r2.get
+    # coreyleavitt < greenm01 lexicographically → coreyleavitt comes first
+    check r1.get.packages[0].namespace == "github.com/coreyleavitt"
+    check r1.get.packages[1].namespace == "github.com/greenm01"

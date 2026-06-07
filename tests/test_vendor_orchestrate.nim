@@ -1,6 +1,6 @@
-import std/[unittest, tables, options, strutils]
+import std/[unittest, tables, strutils]
 import tianguis/[model]
-import tianguis/vendor/[upstream, tagselect, merge, denylist, orchestrate]
+import tianguis/vendor/[upstream, denylist, orchestrate]
 
 # ---------------------------------------------------------------------------
 # Fake driver — canned responses for deterministic tests.
@@ -75,13 +75,76 @@ suite "vendor orchestrate":
     check second.index == first.index
     check second.alerts == first.alerts
 
-  test "denylisted package is skipped":
+  test "denylisted package (tuple-keyed) is skipped":
     let d = chronosFakeDriver()
-    let dl = parseDenylist("""package "chronos" { reason "test" }""")
+    let dl = parseDenylist("""
+package "chronos" {
+    namespace "github.com/coreyleavitt"
+    reason "test"
+}
+""")
     let res = runVendor(d, Index(schemaVersion: 1, packages: @[]),
                         dl, "", NowIso)
     check res.index.packages.len == 0
     check "chronos" in res.skipped
+
+  test "denylist for different namespace does NOT skip the package":
+    let d = chronosFakeDriver()
+    let dl = parseDenylist("""
+package "chronos" {
+    namespace "github.com/someoneelse"
+    reason "test"
+}
+""")
+    let res = runVendor(d, Index(schemaVersion: 1, packages: @[]),
+                        dl, "", NowIso)
+    # Not denylisted — should be vendored
+    check res.index.packages.len == 1
+
+  test "package with underivable URL is skipped and recorded":
+    let d = FakeDriver(
+      packages: @[UpstreamPackage(
+        name: "bad-pkg",
+        url: "https://github.com",  # bare host — no org → derrNoOrg
+        `method`: "git",
+      )],
+      tagsByUrl: initTable[string, seq[string]](),
+      headShaByUrl: initTable[string, string](),
+      cloneByUrlRef: initTable[string, CloneResult](),
+    )
+    let res = runVendor(d, Index(schemaVersion: 1, packages: @[]),
+                        Denylist(), "", NowIso)
+    check res.index.packages.len == 0
+    check "bad-pkg" in res.skipped
+
+  test "intra-org collision is surfaced in alerts with IDX-INTRAORG-COLLISION":
+    # Two packages under github.com/acme both named "utils" but from
+    # different repos — second should be rejected with a logged collision.
+    let d = FakeDriver(
+      packages: @[
+        UpstreamPackage(name: "utils", url: "https://github.com/acme/utils-a", `method`: "git"),
+        UpstreamPackage(name: "utils", url: "https://github.com/acme/utils-b", `method`: "git"),
+      ],
+      tagsByUrl: {
+        "https://github.com/acme/utils-a": @["v1.0.0"],
+        "https://github.com/acme/utils-b": @["v1.0.0"],
+      }.toTable,
+      headShaByUrl: {
+        "https://github.com/acme/utils-a": "aaa",
+        "https://github.com/acme/utils-b": "bbb",
+      }.toTable,
+      cloneByUrlRef: {
+        "https://github.com/acme/utils-a@v1.0.0": CloneResult(contentHash: "sha256:first", commitSha: "aaa"),
+        "https://github.com/acme/utils-b@v1.0.0": CloneResult(contentHash: "sha256:second", commitSha: "bbb"),
+      }.toTable,
+    )
+    let res = runVendor(d, Index(schemaVersion: 1, packages: @[]),
+                        Denylist(), "", NowIso)
+    # Only the first package survives in the index
+    check res.index.packages.len == 1
+    check res.index.packages[0].versions[0].contentHash == "sha256:first"
+    # Collision is logged in alerts
+    check "collision" in res.alerts
 
   test "drift triggers alert append without index mutation":
     let d = chronosFakeDriver()

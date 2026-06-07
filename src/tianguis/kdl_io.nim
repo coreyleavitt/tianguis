@@ -47,6 +47,8 @@ proc formatVersion(v: Version, indent: string): string =
   result.add(indent & "    attestation \"" & v.attestation & "\"\n")
   result.add(indent & "    signed_by \"" & v.signedBy & "\"\n")
   result.add(indent & "    published_at \"" & v.publishedAt & "\"\n")
+  if v.partiallyResolved:
+    result.add(indent & "    partially_resolved #true\n")
   result.add(indent & "}\n")
 
 proc formatPackage(pkg: Package): string =
@@ -75,6 +77,7 @@ const
   VersionChildren = [
     "content_hash", "requires", "provenance",
     "attestation", "signed_by", "published_at",
+    "partially_resolved",
   ]
   ProvenanceChildren = [
     # union of all variant fields — strict-kind enforcement happens
@@ -151,15 +154,16 @@ proc parseVersion(doc: KdlDoc, node: KdlNode): Result[Version, IdxError] =
     if child.name notin VersionChildren:
       return err[Version, IdxError](unknownNode(doc, child, "version"))
     case child.name
-    of "content_hash": v.contentHash = child.argText
-    of "attestation":  v.attestation = child.argText
-    of "signed_by":    v.signedBy    = child.argText
-    of "published_at": v.publishedAt = child.argText
+    of "content_hash":       v.contentHash       = child.argText
+    of "attestation":        v.attestation        = child.argText
+    of "signed_by":          v.signedBy           = child.argText
+    of "published_at":       v.publishedAt        = child.argText
+    of "partially_resolved": v.partiallyResolved  = child.argBool(0).get(false)
     of "provenance":
       let pr = parseProvenance(doc, child)
       if pr.isErr: return err[Version, IdxError](pr.getErr)
       v.provenances.add(pr.get)
-    of "requires":     v.requires    = parseRequires(child)
+    of "requires":           v.requires           = parseRequires(child)
     else: discard  # caught by `notin` check above
   ok[Version, IdxError](v)
 

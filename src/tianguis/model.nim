@@ -25,13 +25,17 @@ type
       digest*:     string
 
   Version* = object
-    version*:     string         ## semver-shaped version identifier
-    contentHash*: string         ## multihash: "sha256:<hex>"
-    requires*:    OrderedTable[string, string]   ## dep name → version constraint
-    attestation*: string         ## "milpa-vendored" | "author-signed"
-    signedBy*:    string         ## URI identifying the signer
-    publishedAt*: string         ## ISO 8601 UTC timestamp
-    provenances*: seq[Provenance]
+    version*:          string         ## semver-shaped version identifier
+    contentHash*:      string         ## multihash: "sha256:<hex>"
+    requires*:         OrderedTable[string, string]   ## dep name → version constraint
+    attestation*:      string         ## "milpa-vendored" | "author-signed"
+    signedBy*:         string         ## URI identifying the signer
+    publishedAt*:      string         ## ISO 8601 UTC timestamp
+    provenances*:      seq[Provenance]
+    partiallyResolved*: bool           ## true when ≥1 bare `requires` entry could not
+                                       ## be mapped to a qualified (namespace, name) pair;
+                                       ## gates resolver correctness independently of edge
+                                       ## persistence (rfc-package-identity.md S5)
 
   Package* = object
     name*:      string
@@ -65,7 +69,8 @@ proc `==`*(a, b: Version): bool =
     a.signedBy == b.signedBy and
     a.publishedAt == b.publishedAt and
     a.provenances == b.provenances and
-    a.requires == b.requires
+    a.requires == b.requires and
+    a.partiallyResolved == b.partiallyResolved
 
 proc `==`*(a, b: Package): bool =
   a.name == b.name and a.namespace == b.namespace and
@@ -124,5 +129,5 @@ proc canonicalize*(idx: Index): Index =
     for j in 0 ..< sortedVersions.len:
       sortedVersions[j].requires = canonicalRequires(sortedVersions[j].requires)
     packages[i].versions = sortedVersions
-  packages.sort(proc(a, b: Package): int = cmp(a.name, b.name))
+  packages.sort(proc(a, b: Package): int = cmp((a.namespace, a.name), (b.namespace, b.name)))
   Index(schemaVersion: idx.schemaVersion, packages: packages)

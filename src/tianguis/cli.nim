@@ -8,7 +8,32 @@
 import std/[os, times]
 import ./kdl_io
 import ./json_io
+import ./namespace
 import ./vendor/[denylist, orchestrate, driver]
+
+proc showResult*(url: string): tuple[code: int, stdout, stderr: string] =
+  ## Pure core for `tianguis show <url>`.
+  ## Returns (exit code, stdout text, stderr text) without any I/O side effects.
+  ## `cmdShow` wraps this with actual echo/writeLine.
+  let r = deriveRepo(url)
+  if r.isErr:
+    result = (code: 2, stdout: "", stderr: $r.error)
+  else:
+    let rr = r.get
+    var outStr = "namespace=" & rr.host & "/" & rr.org
+    if rr.repo.len > 0:
+      outStr.add "\nrepo=" & rr.repo
+    result = (code: 0, stdout: outStr, stderr: "")
+
+proc cmdShow*(url: string): int =
+  ## `tianguis show <url>`: print derived namespace (and repo hint) to stdout,
+  ## or the DerivationError code to stderr with a non-zero exit code.
+  let r = showResult(url)
+  if r.code == 0:
+    echo r.stdout
+  else:
+    stderr.writeLine("tianguis show: " & r.stderr)
+  r.code
 
 proc cmdProject*(projectDir: string, check: bool): int =
   ## Read <projectDir>/index.kdl. If `check`, compare the parsed Index
