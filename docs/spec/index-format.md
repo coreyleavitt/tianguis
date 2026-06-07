@@ -29,13 +29,19 @@ A conformant tianguis implementation MUST:
 Index
 ├── schemaVersion: int            (currently always 1)
 └── packages: Package[]
-    ├── name: string              (lowercase; matches the manifest convention)
-    ├── namespace: string         (OCI / GitHub namespace that owns the name)
-    ├── upstream: string          (URL — human reference + source link)
+    ├── name: string              (lowercase leaf name; matches the manifest convention)
+    ├── namespace: string         (attested publisher identity "host/org", e.g.
+    │                              "github.com/coreyleavitt"; derived from provenance;
+    │                              part of the identity key (namespace, name);
+    │                              NEVER empty, NEVER org-only)
+    ├── upstream: string          (URL — informational human reference + source link;
+    │                              NOT identity-bearing; identity derives from
+    │                              the version's provenance, never this field)
     └── versions: Version[]
         ├── version: string       (semver-shaped identifier)
         ├── contentHash: string   (multihash: "sha256:<hex>")
-        ├── requires: Table<string, string>  (dep name → constraint)
+        ├── requires: Table<string, string>  (dep name → constraint; keys are BARE
+        │                                     names — see "Transitional mixed-key note")
         ├── provenances: Provenance[]
         │   └── kind: "git" | "oci"
         │       git: { url, ref, commit_sha }
@@ -44,6 +50,164 @@ Index
         ├── signedBy: string      (URI identifying the signer)
         └── publishedAt: string   (ISO 8601 UTC timestamp)
 ```
+
+### Identity key
+
+The **identity key** for a package is the pair `(namespace, name)`.
+
+- `namespace` is a canonical string of the form `host/org` derived from the
+  version's provenance URL via the canonicalization algorithm below.
+- `name` is the lowercase leaf name the `.nimble` file declares.
+- Two packages that share a `name` but have different `namespace` values are
+  **distinct entries** (the #32 nimkdl collision case).  Two packages that share
+  a `namespace` but differ in `name` are equally distinct.
+- `(namespace, name)` is **immutable once recorded** (commitment #8): provenance
+  may change (fork move, mirror), but the derived identity is pinned at first ingest.
+
+### Namespace canonicalization (NORMATIVE)
+
+This section is the authoritative cross-language specification of `deriveNamespace`.
+All implementations (Nim, Python, future Rust) derive the same `namespace` value from
+a raw URL by executing these three phases against a shared conformance corpus
+(`spec/fixtures/derive-namespace.json`).
+
+```
+ForgeRef = (host: string, org: string)
+deriveNamespace(raw) -> Result[ForgeRef, DerivationError]
+
+DerivationError =
+  | derrUnparseable        -- no usable host/path could be parsed
+  | derrNoOrg              -- parsed to a bare host with no org segment
+  | derrGitlabNestedGroup  -- gitlab.com path depth > 2 (#37)
+```
+
+**Phase 1 — Parse** `raw` into `(scheme?, userinfo?, host, port?, pathSegments[])`:
+
+- Accept `https://`, `http://`, `git://`, `ssh://`, and the scheme-less SSH short
+  form `git@host:org/repo`.
+- After stripping any scheme, **drop any `userinfo@` prefix** (fixes
+  `ssh://git@host/…` where `git@` survives scheme-stripping and would otherwise
+  contaminate the host field).
+- The SSH short form `git@host:org/repo` uses the host before the colon and the
+  path after it.
+- Drop any `:port`, `?query`, and `#fragment`.
+- **Percent-decode** each path segment (RFC 3986); do not decode the host.
+- Input that yields no identifiable host returns `derrUnparseable`.
+
+**Phase 2 — Normalize** the parsed fields:
+
+- **Host:** strip a leading `www.`; lowercase the entire host; strip a trailing `.`.
+  IDN/punycode hosts are used as-is (transcoding is out of scope).
+- **Path:** drop empty segments (collapses repeated `/`); strip a trailing `.git`
+  from the final path segment.
+- **Org/repo split** and **case-folding of `org`** are per the forge-topology table.
+
+**Phase 3 — Forge topology** — normalized host → org-segment count + owner-case policy:
+
+| Host | Org segments | Owner case |
+|---|---|---|
+| `github.com` | 1 | **fold** (case-insensitive owners) |
+| `gitlab.com` | 1 (see nested-group rule) | **fold** |
+| `bitbucket.org` | 1 | **fold** |
+| `codeberg.org` | 1 | **preserve** (Gitea — case-sensitive owners) |
+| `git.sr.ht` | 1 (`~user`) | **preserve** (case-sensitive) |
+| *any other host* (fallback) | 1 | **preserve** (unknown semantics → safest) |
+
+- **GitLab nested groups** (`gitlab.com/group/subgroup/project`): a GitLab URL with
+  path depth > 2 returns `derrGitlabNestedGroup` — rejected at ingest, never silently
+  mis-derived. Depth-2 GitLab URLs derive normally. First-class nested-group support
+  is filed as #37 (purely additive; accepted URLs later become accepted, so no
+  existing pinned identity breaks).
+- A path that yields no org segment (bare host, or path too short) returns `derrNoOrg`.
+  An entry with `namespace ""` is **never** stored.
+
+**Phase 4 — Serialize:** `namespace = host & "/" & org`.
+
+**Conformance corpus:** `spec/fixtures/derive-namespace.json` is the
+single-source-of-truth oracle. Every implementation MUST pass every case. Cases use
+string error codes matching the `DerivationError` enum symbol names exactly
+(`derrNoOrg`, `derrGitlabNestedGroup`, `derrUnparseable`).
+
+**Forge-list evolution constraint:** a host may be added to the topology table only
+if it produces byte-identical output to the fallback rule for every URL of its form.
+A forge requiring a different rule (different org-segment count or different case
+policy) is a **breaking change** requiring a spec-version bump and a migration, because
+entries already ingested from that host were pinned under the old derivation.
+
+### Per-version attestation-anchor algorithm (NORMATIVE)
+
+`deriveVersionNamespace` selects the identity anchor for a single version and derives
+its `host/org` namespace by applying `deriveNamespace` (Phase 1–4 above) to that anchor.
+The procedure is deterministic and MUST be executed in the order below; the first
+matching branch wins:
+
+1. **pkGit provenance present** — use the first `provenance` node of `kind "git"` in
+   declaration order; extract its `url` field; apply `deriveNamespace(url)`.  This is
+   the vendor-en-absentia path: the forge org that owns the upstream repo is the
+   attested publisher identity.
+
+2. **No git provenance; author-signed `signed_by` present** — use the `signed_by` field
+   value.  On the author-signed path this is a GitHub Actions OIDC SAN URL (e.g.
+   `https://github.com/coreyleavitt`); apply `deriveNamespace(signed_by)`.
+
+   > **`signed_by` format (normative placeholder — full detail in slice P2.3).** An
+   > author-signed `signed_by` value is a parseable GitHub Actions SAN URL of the form
+   > `https://github.com/<org>` or `https://github.com/<org>/<repo>/...`. Deriving the
+   > namespace takes only the `host/org` portion via `deriveNamespace`; the repo path and
+   > any workflow suffix are discarded.  A milpa-vendored `provenance` string is NOT a
+   > valid identity anchor for this branch — vendor-en-absentia packages must have a git
+   > `provenance.url` (branch 1).
+
+3. **Neither present** — the version has no resolvable provenance anchor; derivation
+   fails with a hard error at ingest.  A conformant index NEVER contains a version whose
+   namespace was derived without a valid anchor from branch 1 or 2.
+
+**Immutability and the S6 migration.** Commitment #8 (identity immutable once recorded)
+binds to the `host/org` values produced by this algorithm and stored by the S6
+migration.  Pre-#32 stored values (org-only such as `nim-lang`, or empty `""`) are not
+valid outputs of `deriveVersionNamespace` and are NOT covered by the immutability
+guarantee — S6 replaces them via derive-all-per-version; post-migration, any re-derived
+namespace that differs from the stored `host/org` is a drift violation.
+
+**The nimkdl split (live-index example).** The 2613-package live audit found all 2509
+non-empty namespaces are org-only (pre-#32); 104 are empty.  The sole identity conflict
+is `nimkdl`, where greenm01 git versions and a coreyleavitt OCI version were conflated
+under namespace `coreyleavitt`.  Per-version derivation resolves it without re-ingest:
+greenm01's versions carry git `provenance.url` values that derive `github.com/greenm01`;
+coreyleavitt's OCI version carries a `signed_by` SAN that derives
+`github.com/coreyleavitt`.  The result is two distinct `(namespace, name)` index entries
+with no version data lost.
+
+### Same-name, two-namespace entries
+
+Two packages sharing a leaf `name` under different namespaces are **distinct index
+entries** — both are present simultaneously. Example (the #32 collision pair):
+
+```kdl
+package "nimkdl" {
+    namespace "github.com/greenm01"
+    upstream (url)"https://github.com/greenm01/nimkdl"
+    ...
+}
+
+package "nimkdl" {
+    namespace "github.com/coreyleavitt"
+    upstream (url)"https://github.com/coreyleavitt/nimkdl"
+    ...
+}
+```
+
+In JSON projection these appear as two objects in the `packages` array, both with
+`"name": "nimkdl"` but different `"namespace"` values.
+
+### Transitional mixed-key note
+
+Post-#32 (this slice) and pre-`rfc-index-deps.md` (which introduces qualified dep
+edges): a version's `requires` keys are still **bare names** (e.g. `"chronos"`), not
+qualified `host/org/name` keys.  A consumer MUST treat `requires` keys as bare names
+and resolve them against the index's `(namespace, name)` pairs at lookup time.  This
+is intentional — the bare-name world is resolved at the ingest membrane, not by
+inflating every stored `requires` key prematurely.
 
 Future extensions reserved (parsed but not yet enforced):
 `yanked`, `yankedAt`, `yankedReason` per the yank-semantics work
@@ -55,7 +219,7 @@ Future extensions reserved (parsed but not yet enforced):
 schema_version 1
 
 package "chronos" {
-    namespace "coreyleavitt"
+    namespace "github.com/coreyleavitt"
     upstream (url)"https://github.com/coreyleavitt/chronos"
 
     version "0.5.0" {
@@ -98,7 +262,7 @@ plain string forms for backward compatibility.
   "packages": [
     {
       "name": "chronos",
-      "namespace": "coreyleavitt",
+      "namespace": "github.com/coreyleavitt",
       "upstream": "https://github.com/coreyleavitt/chronos",
       "versions": [
         {
@@ -124,7 +288,10 @@ the same semantic content; parity is asserted programmatically.
 
 ## Canonical ordering
 
-- `packages`: alphabetical by `name`.
+- `packages`: ordered by `(namespace, name)` — namespace first (lexicographic),
+  then name within a namespace (lexicographic). This means all entries for
+  `github.com/greenm01` appear before `github.com/coreyleavitt` when sorted
+  lexicographically, and within a namespace entries are sorted by leaf name.
 - `versions` (per package): descending semver. Pre-release / build-
   metadata suffixes are stripped for ordering purposes; full semver
   2.0.0 prerelease comparison is a future refinement.
