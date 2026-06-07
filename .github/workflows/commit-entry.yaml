@@ -50,8 +50,18 @@ jobs:
           git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "git@github.com:"
           git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "ssh://git@github.com/"
 
-      - name: Clone milpa (build tool)
-        run: git clone --depth 1 https://github.com/coreyleavitt/milpa.git .milpa-tool
+      - name: Clone milpa (build tool — pinned)
+        # Pinned to a fixed SHA, not floating main HEAD: the build tool must be
+        # reproducible, and the pin MUST be >= the P1.2 commit (079dbf0) that
+        # taught parse_index the (namespace,name) tuple key. The instant the #32
+        # migrated (tuple-keyed) index.kdl lands on main, a pre-P1.2 milpa would
+        # choke on it here. Bump deliberately, never below 079dbf0. (RFC
+        # rfc-identity-and-resolution-completion §1 deploy-ordering gate.)
+        env:
+          MILPA_SHA: 130ecd1ed8328fe4b91e35314c7031ed9e72f781
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/coreyleavitt/milpa.git .milpa-tool
+          git -C .milpa-tool checkout "$MILPA_SHA"
 
       - name: Set up Nim
         uses: jiro4989/setup-nim-action@v2

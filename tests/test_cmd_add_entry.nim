@@ -32,7 +32,53 @@ method pullAndHash*(d: FailingPullDriver, ociRef: string): tuple[hash, sha: stri
   raise newException(IOError, "simulated oras pull failure")
 
 suite "cli add-entry":
-  test "adds an author-signed entry to an empty index":
+  # ---------------------------------------------------------------------------
+  # Guard: org-only namespace rejected before any I/O (exit 4, index unchanged)
+  # ---------------------------------------------------------------------------
+
+  test "org-only namespace (no '/') is rejected with exit 4, index unchanged":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      # FailingPullDriver used to prove the guard fires BEFORE pull I/O
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name:        "sample",
+          version:     "v1.0.0",
+          ociRef:      "ghcr.io/coreyleavitt/sample@sha256:abc123",
+          namespace:   "coreyleavitt",   # org-only — missing host prefix
+          upstream:    "https://github.com/coreyleavitt/sample",
+          signedBy:    "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
+          publishedAt: "2026-06-01T12:00:00Z",
+        ),
+        driver = FailingPullDriver(),  # must NOT be reached
+      )
+      check code == 4
+      check readFile(tmp / "index.kdl") == originalBytes
+
+  test "single-component namespace (no '/') is rejected with exit 4":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
+          namespace: "x",   # single component — no host
+          upstream: "https://github.com/x/y",
+          signedBy: "https://github.com/x/y",
+        ),
+        driver = FailingPullDriver(),
+      )
+      check code == 4
+      check readFile(tmp / "index.kdl") == originalBytes
+
+  # ---------------------------------------------------------------------------
+  # Happy path: valid host/org namespace passes the guard and is added
+  # ---------------------------------------------------------------------------
+
+  test "adds an author-signed entry with a valid host/org namespace":
     withTempProject(tmp):
       writeFile(tmp / "index.kdl", "schema_version 1\n")
 
@@ -48,7 +94,7 @@ suite "cli add-entry":
           name:        "sample",
           version:     "v1.0.0",
           ociRef:      "ghcr.io/coreyleavitt/sample@sha256:abc123",
-          namespace:   "coreyleavitt",
+          namespace:   "github.com/coreyleavitt",   # valid host/org
           upstream:    "https://github.com/coreyleavitt/sample",
           signedBy:    "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
           publishedAt: "2026-06-01T12:00:00Z",
@@ -63,7 +109,7 @@ suite "cli add-entry":
       check idx.packages.len == 1
       let pkg = idx.packages[0]
       check pkg.name == "sample"
-      check pkg.namespace == "coreyleavitt"
+      check pkg.namespace == "github.com/coreyleavitt"
       check pkg.upstream == "https://github.com/coreyleavitt/sample"
       check pkg.versions.len == 1
       let v = pkg.versions[0]
@@ -73,7 +119,7 @@ suite "cli add-entry":
       check v.signedBy == "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0"
       check v.publishedAt == "2026-06-01T12:00:00Z"
 
-  test "publishedAt defaults to now when not supplied":
+  test "publishedAt defaults to now when not supplied (host/org namespace)":
     withTempProject(tmp):
       writeFile(tmp / "index.kdl", "schema_version 1\n")
       let driver = FakeAddDriver(
@@ -85,7 +131,8 @@ suite "cli add-entry":
         projectDir = tmp,
         args = AddEntryArgs(
           name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
-          namespace: "x", upstream: "https://github.com/x/y",
+          namespace: "github.com/x",   # valid host/org
+          upstream: "https://github.com/x/y",
           signedBy: "https://github.com/x/y",
           # publishedAt deliberately omitted
         ),
@@ -108,7 +155,8 @@ suite "cli add-entry":
         projectDir = tmp,
         args = AddEntryArgs(
           name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
-          namespace: "x", upstream: "https://github.com/x/y",
+          namespace: "github.com/x",   # valid host/org — guard passes, then pull fails
+          upstream: "https://github.com/x/y",
           signedBy: "https://github.com/x/y",
         ),
         driver = FailingPullDriver(),

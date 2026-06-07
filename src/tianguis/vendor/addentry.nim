@@ -64,6 +64,22 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
   ##   0 — entry added (or already present idempotently)
   ##   1 — index.kdl missing or malformed
   ##   3 — OCI pull or hash failed
+  ##   4 — namespace is not in host/org form (missing '/'); no mutation
+  ##       performed. Dispatched author-publishes emit org-only namespaces
+  ##       until P2.1 wires verified-SAN derivation; this guard closes the
+  ##       window opened by P1.4 migration.
+
+  # Guard: reject any namespace not in host/org form (must contain '/').
+  # Vendored publishing is unaffected — buildVendoredEntry derives host/org
+  # from trusted provenance. Only author self-publish (dispatch path) passes
+  # an explicit namespace here, and the dispatch handler currently emits
+  # org-only form. This is a deliberate fail-closed posture until P2.1.
+  if '/' notin args.namespace:
+    stderr.writeLine("tianguis: add-entry: namespace '" & args.namespace &
+      "' is not in host/org form (missing '/'); author publishes are frozen" &
+      " until P2.1 wires verified-SAN derivation")
+    return 4
+
   let indexPath = projectDir / "index.kdl"
   if not fileExists(indexPath):
     stderr.writeLine("tianguis: " & indexPath & " not found")
@@ -106,10 +122,25 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
     ),
   )
 
-  let outcome = mergeVendored(parsed.get, entry)
-  # Drift (same package+version, different hash) is retained-not-overwritten
-  # — same policy as vendor merges. Alerting is a future cycle.
-  discard outcome.drift
-
-  writeFile(indexPath, formatKdl(outcome.index))
+  let (newIdx, outcome) = mergeVendored(parsed.get, entry)
+  # Reject kinds (mokIdentityDrift, mokCollision, mokContentDrift) leave the
+  # index unchanged — same immutability policy as vendor merges.
+  # Full alerting for these cases is a future cycle; log to stderr for now.
+  case outcome.kind
+  of mokAdded, mokIdempotent:
+    writeFile(indexPath, formatKdl(newIdx))
+  of mokIdentityDrift:
+    stderr.writeLine("tianguis: add-entry: IDX-IDENTITY-DRIFT: " &
+      outcome.identity.name &
+      " stored=" & outcome.identity.storedNamespace &
+      " rederived=" & outcome.identity.rederivedNamespace)
+    return 1
+  of mokCollision:
+    stderr.writeLine("tianguis: add-entry: IDX-INTRAORG-COLLISION: " &
+      outcome.collision.namespace & "/" & outcome.collision.name)
+    return 1
+  of mokContentDrift:
+    stderr.writeLine("tianguis: add-entry: IDX-CONTENT-DRIFT: " &
+      outcome.content.packageName & " " & outcome.content.version)
+    return 1
   0

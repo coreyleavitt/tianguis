@@ -5,9 +5,11 @@
 ##   vendor              run one vendor-en-absentia pass
 ##   add-entry           add an author-signed entry from dispatched payload
 ##                       (invoked by .github/workflows/commit-entry.yaml)
+##   migrate [--execute] one-time #32 namespace migration (dry-run by default)
 
 import std/[os, parseopt]
 import tianguis/cli
+import tianguis/cmd_migrate
 import tianguis/vendor/[addentry, realdriver]
 
 proc usage(): int =
@@ -17,6 +19,8 @@ proc usage(): int =
   echo "  vendor              run one vendor-en-absentia pass against nim-lang/packages.json"
   echo "  add-entry           add an author-signed entry; consumed from commit-entry.yaml"
   echo "    --name --version --oci-ref --namespace --upstream --signed-by [--published-at]"
+  echo "  show <url>          derive and print the namespace (host/org) for an upstream URL"
+  echo "  migrate [--execute] one-time #32 namespace migration; --dry-run is default"
   1
 
 proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
@@ -43,15 +47,20 @@ proc main(): int =
   var p = initOptParser()
   var verb = ""
   var check = false
+  var showUrl = ""
+  var execute = false
   for kind, key, val in p.getopt():
     case kind
     of cmdArgument:
       if verb == "":
         verb = key
-      # subcommand-specific positional args (none today) would land here
+      elif verb == "show" and showUrl == "":
+        showUrl = key
+      # other subcommand-specific positional args would land here
     of cmdLongOption, cmdShortOption:
       case key
       of "check": check = true
+      of "execute": execute = true
       of "help", "h":
         discard usage()
         return 0
@@ -68,6 +77,11 @@ proc main(): int =
     return cmdProject(getCurrentDir(), check = check)
   of "vendor":
     return cmdVendor(getCurrentDir())
+  of "show":
+    if showUrl == "":
+      stderr.writeLine("tianguis show: missing <url> argument")
+      return usage()
+    return cmdShow(showUrl)
   of "add-entry":
     # Re-parse for the subcommand's options (parseopt was consumed above).
     var sub = initOptParser()
@@ -83,6 +97,8 @@ proc main(): int =
       args = args,
       driver = newRealAddEntryDriver(),
     )
+  of "migrate":
+    return cmdMigrate(getCurrentDir(), execute = execute)
   else:
     stderr.writeLine("tianguis: unknown command '" & verb & "'")
     return usage()

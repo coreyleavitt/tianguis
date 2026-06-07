@@ -14,9 +14,11 @@ nim.cfg
 
 # nim build artifacts
 nimcache/
+.nimcache/
 tests/test_*
 !tests/test_*.nim
-/tianguis     # cli binary
+/tianguis           # cli binary (root)
+/src/tianguis_cli   # cli binary (built next to source without -o)
 
 # go build artifacts
 dispatch/server   # local-dev binary if built without -o
