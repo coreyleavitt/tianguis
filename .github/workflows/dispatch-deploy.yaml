@@ -117,3 +117,40 @@ jobs:
           scw function function get ${{ steps.function.outputs.function_id }} \
             -o json | jq -r '.domain_name' \
             | awk '{print "Dispatch endpoint: https://" $0}'
+
+      # Provision the keepalive cron trigger. It POSTs {"secret": …} to the
+      # function root on a ~14-day cadence; the keepalive handler validates the
+      # secret and re-enables the schedule-triggered workflow(s) so GitHub's
+      # 60-day inactivity auto-disable can't permanently stop the vendor cron.
+      # The trigger lives on Scaleway's clock (independent of GitHub), so it
+      # RECOVERS an already-disabled cron, not merely prevents disabling.
+      #
+      # The matching TIANGUIS_KEEPALIVE_SECRET must also be set as a function
+      # secret in the Scaleway console (additive — the CLI's full-list replace
+      # would clobber the unreadable App key, so the function-side secret is set
+      # there, the same way the App key was). When the GitHub secret is unset
+      # this step is a no-op, so the function deploy never depends on it.
+      - name: Ensure keepalive cron trigger
+        env:
+          KEEPALIVE_SECRET: ${{ secrets.TIANGUIS_KEEPALIVE_SECRET }}
+          FUNCTION_ID: ${{ steps.function.outputs.function_id }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${KEEPALIVE_SECRET}" ]]; then
+            echo "TIANGUIS_KEEPALIVE_SECRET unset — skipping keepalive cron provisioning"
+            exit 0
+          fi
+          # jq --arg JSON-escapes the secret into the cron body safely.
+          args=$(jq -nc --arg s "$KEEPALIVE_SECRET" '{secret:$s}')
+          schedule="0 8 1,15 * *"   # 08:00 UTC, 1st & 15th — 4 beats / 60-day window
+
+          existing=$(scw function cron list function-id="$FUNCTION_ID" -o json \
+            | jq -r '.[0].id // empty')
+          if [[ -z "$existing" ]]; then
+            echo "Creating keepalive cron"
+            scw function cron create function-id="$FUNCTION_ID" \
+              name=keepalive schedule="$schedule" args="$args"
+          else
+            echo "Updating keepalive cron $existing"
+            scw function cron update "$existing" schedule="$schedule" args="$args"
+          fi
