@@ -7599,6 +7599,22 @@ package "spotify" {
         published_at "2026-05-26T08:11:36Z"
     }
 }
+package "nkdl" {
+    namespace "github.com/coreyleavitt"
+    upstream (url)"https://github.com/coreyleavitt/nkdl"
+    version "0.1.0" {
+        content_hash "sha256:dd907474be3ae29640286d382525d3c49ef59e7f190219e4e45aa24a7766b277"
+        provenance {
+            kind "oci"
+            registry "ghcr.io"
+            repository "coreyleavitt/nkdl"
+            digest "sha256:01c9ee334f7dc1203586ef55d6254f3b850e8376dc66ff4a2db0b85eb9f6dff3"
+        }
+        attestation "author-signed"
+        signed_by "https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml@refs/heads/main"
+        published_at "2026-06-08T01:18:24Z"
+    }
+}
 package "pipe" {
     namespace "github.com/cosmictoast"
     upstream (url)"https://github.com/CosmicToast/pipe"
