@@ -108,11 +108,15 @@ func publishHandler(deps Dependencies) http.HandlerFunc {
 		// author's cosign signature against the OCI artifact before
 		// committing — dispatch is just the auth-gated relay.
 		if deps.GitHub != nil {
+			// P2.1/P2.2: the namespace is NOT supplied by dispatch. The
+			// commit-entry workflow derives it inside the tianguis binary from
+			// the cosign-verified OIDC SAN (the single source of truth, host/org
+			// form). The old org-only deriveNamespace here was a divergent fourth
+			// derivation; it is deleted.
 			inputs := map[string]string{
 				"name":      req.Name,
 				"version":   req.Version,
 				"oci_ref":   req.OciRef,
-				"namespace": deriveNamespace(req.RepoURL),
 				"upstream":  req.RepoURL,
 				"signed_by": req.SignedBy,
 			}
@@ -151,25 +155,6 @@ func identityMatchesRepoURL(c *Claims, repoURL string) (expected string, match b
 		return expected, expected == repoURL
 	}
 	return "", false
-}
-
-// deriveNamespace pulls the GitHub/GitLab owner from a repo URL.
-func deriveNamespace(repoURL string) string {
-	const ghPrefix = "https://github.com/"
-	if strings.HasPrefix(repoURL, ghPrefix) {
-		tail := strings.TrimPrefix(repoURL, ghPrefix)
-		if i := strings.Index(tail, "/"); i > 0 {
-			return tail[:i]
-		}
-	}
-	const glPrefix = "https://gitlab.com/"
-	if strings.HasPrefix(repoURL, glPrefix) {
-		tail := strings.TrimPrefix(repoURL, glPrefix)
-		if i := strings.Index(tail, "/"); i > 0 {
-			return tail[:i]
-		}
-	}
-	return ""
 }
 
 func extractBearer(header string) (string, error) {

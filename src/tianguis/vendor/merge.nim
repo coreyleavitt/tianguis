@@ -55,14 +55,24 @@ proc buildVendoredEntry*(
     contentHash: string,
     commitSha: string,
     publishedAt: string,
+    precomputedNs: string = "",
 ): Result[VendoredEntry, DerivationError] =
   ## Build a VendoredEntry from upstream package data.
   ## Hard-rejects (returns Err) if namespace cannot be derived from pkg.url —
   ## a package with no derivable namespace MUST NOT enter the index.
-  let nsResult = deriveNamespace(pkg.url)
-  if nsResult.isErr:
-    return err[VendoredEntry, DerivationError](nsResult.error)
-  let ns = namespaceString(nsResult.get)
+  ##
+  ## `precomputedNs` (SSOT / M6): when the caller has already called
+  ## deriveNamespace (e.g. for the denylist check), pass the result here to
+  ## avoid a second derivation. When "" the function derives internally, so
+  ## existing call sites need no change.
+  let ns =
+    if precomputedNs.len > 0:
+      precomputedNs
+    else:
+      let nsResult = deriveNamespace(pkg.url)
+      if nsResult.isErr:
+        return err[VendoredEntry, DerivationError](nsResult.error)
+      namespaceString(nsResult.get)
   let gitRef = if selection.tag.len > 0: selection.tag else: "HEAD"
   ok[VendoredEntry, DerivationError](VendoredEntry(
     package: Package(
@@ -131,6 +141,19 @@ proc mergeVendored*(idx: Index, entry: VendoredEntry): tuple[index: Index, outco
           index:   idx,
           outcome: MergeOutcome(kind: mokIdentityDrift, identity: driftOpt.get),
         )
+    else:
+      # Derivation failed on the incoming entry while stored ns is host/org.
+      # A version with no derivable provenance anchor MUST NOT enter the index
+      # under an established host/org namespace — treat it as identity drift
+      # (the "rederived" namespace is unknown, which is worse than wrong).
+      return (
+        index:   idx,
+        outcome: MergeOutcome(kind: mokIdentityDrift, identity: IdentityDrift(
+          name:               entry.package.name,
+          storedNamespace:    storedNs,
+          rederivedNamespace: "",  # empty = underivable; signals provenance gap
+        )),
+      )
 
   # --- Priority 2: intra-org leaf collision (same namespace+name, different repo) ---
   let existingRepoSeg = gitProvenanceRepo(packages[foundPkgIdx])

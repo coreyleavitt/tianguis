@@ -197,5 +197,25 @@
     "_comment": "ssh:// with git@ userinfo residue on gitlab",
     "input_url": "ssh://git@gitlab.com/mygroup/project",
     "expected_namespace": "gitlab.com/mygroup"
+  },
+  {
+    "_comment": "--- OIDC SAN inputs (P2.1 author-signed path) --- (a) canonical GitHub Actions SAN: repo path + workflow suffix + @ref discarded, host/org kept",
+    "input_url": "https://github.com/coreyleavitt/nimkdl/.github/workflows/publish.yaml@refs/heads/main",
+    "expected_namespace": "github.com/coreyleavitt"
+  },
+  {
+    "_comment": "(a) GitHub Actions SAN with a tag ref derives the same host/org; derivation is forge-agnostic, issuer-trust is gated separately at cosign-verify",
+    "input_url": "https://github.com/greenm01/sample/.github/workflows/release.yaml@refs/tags/v2.1.0",
+    "expected_namespace": "github.com/greenm01"
+  },
+  {
+    "_comment": "(b) non-github OIDC SAN positive case: custom forge derives via fallback path (host = gitlab.example.com, NOT gitlab.com so the depth>2 nested-group rule does NOT fire; issuer-trust is gated separately at cosign-verify time)",
+    "input_url": "https://gitlab.example.com/owner/project/.ci/workflow.yaml@refs/heads/main",
+    "expected_namespace": "gitlab.example.com/owner"
+  },
+  {
+    "_comment": "(c) malformed/non-URL SAN → derivation error",
+    "input_url": "not-a-valid-san",
+    "expected_error": "derrUnparseable"
   }
 ]

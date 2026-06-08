@@ -278,6 +278,35 @@ suite "kdl roundtrip":
     check parsed.isOk
     check parsed.get.packages[0].versions[0].partiallyResolved == false
 
+  # ---------------------------------------------------------------------------
+  # C1: KDL injection — crafted name/namespace must not corrupt the output
+  # ---------------------------------------------------------------------------
+
+  test "C1 injection: crafted name containing quote/newline/brace round-trips as one package (no phantom block)":
+    ## Proof: a name that looks like a KDL injection payload does NOT produce
+    ## extra top-level nodes when re-parsed. The formatter must escape all
+    ## special characters inside quoted strings.
+    let injectionName = "foo\"}\npackage \"evil\" {\n namespace \"github.com/victim\""
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name:      injectionName,
+        namespace: "github.com/legit",
+        upstream:  "https://github.com/legit/foo",
+      )],
+    )
+    let serialized = formatKdl(original)
+    let parsed = parseKdl(serialized)
+    # Must parse cleanly
+    check parsed.isOk
+    if parsed.isOk:
+      # Exactly ONE package — no phantom "evil" block
+      check parsed.get.packages.len == 1
+      # The package name must be the literal injection string (round-trip)
+      check parsed.get.packages[0].name == injectionName
+      # The namespace must be as supplied, not hijacked
+      check parsed.get.packages[0].namespace == "github.com/legit"
+
   test "same-name two-namespace pair emerges in canonical (namespace, name) order after round-trip":
     ## canonicalize sorts by (namespace, name). "github.com/coreyleavitt" <
     ## "github.com/greenm01" lexicographically, so coreyleavitt comes first

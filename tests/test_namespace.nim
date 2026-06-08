@@ -191,3 +191,31 @@ suite "deriveRepo":
     check r.get.host == "github.com"
     check r.get.org == "coreyleavitt"
     check r.get.repo == "nimkdl"
+
+suite "deriveNamespace — M1: query/fragment stripping":
+  ## Regression tests for M1: ?/# in path segments must NOT survive into
+  ## the namespace. The comment at ~line 163 of namespace.nim falsely claimed
+  ## this was already handled for the path; it was not.
+
+  test "M1: query string in path does not survive into namespace":
+    ## https://github.com/org/repo?at=main → github.com/org
+    ## (not github.com/org?at=main or similar)
+    let r = deriveNamespace("https://github.com/org/repo?at=main")
+    check r.isOk
+    if r.isOk:
+      check namespaceString(r.get) == "github.com/org"
+
+  test "M1: fragment in path does not survive into namespace":
+    ## https://github.com/org/repo#readme → github.com/org
+    let r = deriveNamespace("https://github.com/org/repo#readme")
+    check r.isOk
+    if r.isOk:
+      check namespaceString(r.get) == "github.com/org"
+
+  test "M1: custom forge with query tenant in org segment → clean namespace":
+    ## https://custom-forge.io/org?tenant=x/sub → custom-forge.io/org
+    ## (the ? splits the segment; tenant=x/sub must be stripped)
+    let r = deriveNamespace("https://custom-forge.io/org?tenant=x/sub")
+    check r.isOk
+    if r.isOk:
+      check namespaceString(r.get) == "custom-forge.io/org"

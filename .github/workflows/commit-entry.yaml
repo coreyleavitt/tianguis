@@ -22,15 +22,14 @@ on:
       oci_ref:
         description: "<registry>/<repo>@sha256:<digest>"
         required: true
-      namespace:
-        description: "GH/GitLab namespace (owner)"
-        required: true
       upstream:
         description: "Upstream repo URL (https://...)"
         required: true
       signed_by:
-        description: "Expected cosign signer identity (re-verified here)"
+        description: "Expected cosign signer identity regexp prefix (used in cosign verify)"
         required: true
+      # NOTE: `namespace` input removed in P2.1 — the namespace is now derived
+      # inside the binary from the verified OIDC SAN extracted in the cosign step.
 
 permissions:
   contents: write   # commit the new entry to index.kdl + index.json
@@ -99,9 +98,20 @@ jobs:
           else
             P='${{ toJson(github.event.inputs) }}'
           fi
-          for k in name version oci_ref namespace upstream signed_by; do
+          # NOTE: `namespace` removed from key list in P2.1 — no longer passed to add-entry.
+          # M9 fix: use heredoc-delimiter form to prevent multiline values from
+          # smuggling extra output keys via GITHUB_OUTPUT newline injection.
+          for k in name version oci_ref upstream signed_by; do
             v=$(echo "$P" | jq -r --arg k "$k" '.[$k] // ""')
-            echo "${k}=${v}" >> "$GITHUB_OUTPUT"
+            # Reject values containing newlines before writing — a newline in a
+            # payload field would corrupt the GITHUB_OUTPUT format regardless of
+            # the heredoc guard below, since ${k}<<EOF_${k} itself must be a
+            # single line.
+            if [[ "$v" == *$'\n'* ]]; then
+              echo "::error::payload field '${k}' contains a newline; rejecting"
+              exit 1
+            fi
+            printf '%s<<%s\n%s\n%s\n' "$k" "EOF_${k}" "$v" "EOF_${k}" >> "$GITHUB_OUTPUT"
           done
 
       # The actual trust check: verify the author's cosign signature on
@@ -109,31 +119,82 @@ jobs:
       # inclusion proof + that the cert identity matches what the dispatch
       # request claimed in signed_by. If any of those fail, the workflow
       # exits non-zero and nothing gets committed.
+      #
+      # P2.1: additionally extract the verified SAN from cosign's JSON output
+      # and export it. The binary derives the namespace from this SAN — the
+      # caller-supplied signed_by input is only used as a regexp prefix for
+      # cosign verify; the extracted SAN is the authoritative identity.
       - name: Verify author cosign signature
+        id: cosign
         env:
           OCI_REF: ${{ steps.payload.outputs.oci_ref }}
           SIGNED_BY: ${{ steps.payload.outputs.signed_by }}
         run: |
-          # The signer identity URL may legitimately differ from the OIDC
-          # issuer used by the author's CI. We require the GitHub Actions
-          # issuer for now; multi-provider support is a followup once we
-          # know which other issuers real authors will use.
+          # The extracted SAN (from cosign's JSON output) is the AUTHORITATIVE
+          # identity used by the Nim binary to derive the namespace. The
+          # caller-supplied SIGNED_BY is used ONLY as a regexp prefix hint for
+          # cosign verify here — it is NOT trusted as the authoritative identity.
+          # H2 explanation: because the extracted SAN is authoritative, the
+          # --certificate-identity-regexp using caller input is technically
+          # defense-in-depth, not the trust anchor. The trust anchor is the
+          # extracted SAN that goes into steps.cosign.outputs.san and is passed
+          # to the binary as --signed-by. The caller can only narrow (not
+          # broaden) the match; the cosign OIDC issuer pin does the actual trust.
           # The reusable publish workflow lives at a stable path; refs
           # vary (refs/heads/main, refs/tags/v1, SHAs). Match prefix.
-          cosign verify \
+          COSIGN_OUTPUT=$(cosign verify \
             --certificate-identity-regexp="^${SIGNED_BY}@" \
             --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
-            "${OCI_REF}"
+            --output json \
+            "${OCI_REF}")
+
+          SAN=$(echo "$COSIGN_OUTPUT" | jq -r '.[0].optional.Subject')
+
+          # A missing/empty/null SAN means the jq path is wrong or cosign output
+          # changed. Hard-fail here so a bad SAN cannot silently cause every
+          # publish to be rejected by the binary's deriveNamespace guard.
+          # H3 fix: also guard against jq -r yielding the literal string "null"
+          # (happens when the jq path doesn't match — `jq -r` emits "null"
+          # instead of empty for missing keys, which passes a bare -z guard).
+          # TODO(P2.1 Gate B): verify jq SAN path against real cosign v2.4.0
+          # --output json before relying on this. The path .[0].optional.Subject
+          # mirrors the cosign v2 verify JSON schema but has NOT been verified
+          # against a genuine Fulcio cert + Rekor entry. Run the workflow on a
+          # real signed artifact and confirm SAN is non-empty before removing
+          # this TODO.
+          if [[ -z "$SAN" || "$SAN" == "null" ]]; then
+            echo "::error::empty or null SAN from cosign verify --output json; check the jq path .[0].optional.Subject"
+            exit 1
+          fi
+
+          # Heredoc-delimiter form (consistent with M9 fix on payload fields):
+          # prevents a SAN containing a newline from smuggling extra output keys.
+          printf '%s<<%s\n%s\n%s\n' "san" "EOF_san" "$SAN" "EOF_san" >> "$GITHUB_OUTPUT"
 
       - name: Add entry (pulls OCI + content_hash + merges index)
+        # P2.1: --namespace removed; the binary derives it from --signed-by (the
+        # verified cosign SAN extracted above). --signed-by is now the actual cert
+        # SAN, not the caller-supplied regexp prefix used for cosign verify.
+        env:
+          # Route every interpolated value through env vars (same discipline as
+          # the predicate step). GitHub expands `${{ }}` BEFORE the shell parses
+          # the line, so an inline `--upstream="${{ ...upstream }}"` with a value
+          # containing a `"` is argument injection into the binary (a crafted
+          # upstream/oci_ref could smuggle extra `tianguis add-entry` flags).
+          # As `"$ARG"` shell expansions, a `"` inside the value stays data, not
+          # a quote delimiter, so each flag receives exactly one argument.
+          ARG_NAME:      ${{ steps.payload.outputs.name }}
+          ARG_VERSION:   ${{ steps.payload.outputs.version }}
+          ARG_OCI_REF:   ${{ steps.payload.outputs.oci_ref }}
+          ARG_UPSTREAM:  ${{ steps.payload.outputs.upstream }}
+          ARG_SIGNED_BY: ${{ steps.cosign.outputs.san }}
         run: |
           ./tianguis add-entry \
-            --name="${{ steps.payload.outputs.name }}" \
-            --version="${{ steps.payload.outputs.version }}" \
-            --oci-ref="${{ steps.payload.outputs.oci_ref }}" \
-            --namespace="${{ steps.payload.outputs.namespace }}" \
-            --upstream="${{ steps.payload.outputs.upstream }}" \
-            --signed-by="${{ steps.payload.outputs.signed_by }}"
+            --name="$ARG_NAME" \
+            --version="$ARG_VERSION" \
+            --oci-ref="$ARG_OCI_REF" \
+            --upstream="$ARG_UPSTREAM" \
+            --signed-by="$ARG_SIGNED_BY"
 
       - name: Regenerate index.json
         run: ./tianguis project
@@ -144,19 +205,47 @@ jobs:
       # decisions in Rekor to catch dispatch-only-side compromise.
       - name: Write attestation predicate
         id: predicate
+        env:
+          # Pull all interpolated values into env vars so jq --arg receives
+          # them as safe shell variables, not as inline GitHub expression
+          # expansions inside a JSON heredoc. A `"` in any of these values
+          # would otherwise inject into the JSON and corrupt the Rekor
+          # attestation (T2 fix).
+          PRED_NAME:          ${{ steps.payload.outputs.name }}
+          PRED_VERSION:       ${{ steps.payload.outputs.version }}
+          PRED_OCI_REF:       ${{ steps.payload.outputs.oci_ref }}
+          PRED_UPSTREAM:      ${{ steps.payload.outputs.upstream }}
+          # H2 + T2: use the EXTRACTED SAN (verified cert identity), not the
+          # caller-supplied signed_by regexp. The extracted SAN is what cosign
+          # actually verified against the Fulcio cert + Rekor entry, and is
+          # what index.kdl records. Using the caller input here would create
+          # an audit trail mismatch between Rekor and index.kdl.
+          PRED_SIGNED_BY:     ${{ steps.cosign.outputs.san }}
+          PRED_TIANGUIS_REPO: ${{ github.repository }}
+          PRED_WORKFLOW_RUN:  ${{ github.run_id }}
         run: |
-          cat > predicate.json <<EOF
-          {
-            "name": "${{ steps.payload.outputs.name }}",
-            "version": "${{ steps.payload.outputs.version }}",
-            "oci_ref": "${{ steps.payload.outputs.oci_ref }}",
-            "upstream": "${{ steps.payload.outputs.upstream }}",
-            "signed_by": "${{ steps.payload.outputs.signed_by }}",
-            "tianguis_repo": "${{ github.repository }}",
-            "workflow_run": "${{ github.run_id }}",
-            "verified_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          }
-          EOF
+          # jq --arg passes each value through its JSON string encoder, so
+          # quotes, backslashes, newlines, and other control characters in any
+          # field are properly escaped. No heredoc string interpolation.
+          jq -n \
+            --arg name          "$PRED_NAME" \
+            --arg version       "$PRED_VERSION" \
+            --arg oci_ref       "$PRED_OCI_REF" \
+            --arg upstream      "$PRED_UPSTREAM" \
+            --arg signed_by     "$PRED_SIGNED_BY" \
+            --arg tianguis_repo "$PRED_TIANGUIS_REPO" \
+            --arg workflow_run  "$PRED_WORKFLOW_RUN" \
+            --arg verified_at   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              name:          $name,
+              version:       $version,
+              oci_ref:       $oci_ref,
+              upstream:      $upstream,
+              signed_by:     $signed_by,
+              tianguis_repo: $tianguis_repo,
+              workflow_run:  $workflow_run,
+              verified_at:   $verified_at
+            }' > predicate.json
           echo "path=predicate.json" >> "$GITHUB_OUTPUT"
 
       - name: Cosign attest commit decision

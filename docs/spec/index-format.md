@@ -150,13 +150,30 @@ matching branch wins:
    value.  On the author-signed path this is a GitHub Actions OIDC SAN URL (e.g.
    `https://github.com/coreyleavitt`); apply `deriveNamespace(signed_by)`.
 
-   > **`signed_by` format (normative placeholder — full detail in slice P2.3).** An
-   > author-signed `signed_by` value is a parseable GitHub Actions SAN URL of the form
-   > `https://github.com/<org>` or `https://github.com/<org>/<repo>/...`. Deriving the
-   > namespace takes only the `host/org` portion via `deriveNamespace`; the repo path and
-   > any workflow suffix are discarded.  A milpa-vendored `provenance` string is NOT a
-   > valid identity anchor for this branch — vendor-en-absentia packages must have a git
-   > `provenance.url` (branch 1).
+   > **`signed_by` format (NORMATIVE).** An author-signed `signed_by` value is a parseable
+   > identity SAN URL — the Subject Alternative Name from the keyless-OIDC signing
+   > certificate that was cosign-verified (Fulcio cert + Rekor inclusion) at ingest. The
+   > canonical GitHub Actions form is
+   > `https://github.com/<org>/<repo>/.github/workflows/<workflow>.yaml@<ref>` (where
+   > `<ref>` is e.g. `refs/heads/main` or `refs/tags/v1`). Deriving the namespace applies
+   > `deriveNamespace(signed_by)`, which takes only the `host/org` portion; the repo path,
+   > the workflow suffix, and the `@<ref>` fragment are discarded.
+   >
+   > **Derivation is forge-agnostic; issuer trust is a separate, orthogonal gate.**
+   > `deriveNamespace` is host-agnostic by design (named forges + a generic `host/org`
+   > fallback) — it does NOT restrict identity to `github.com`. The set of *trusted OIDC
+   > issuers* is enforced upstream of derivation, at the cosign-verify step in
+   > `commit-entry.yaml` (`--certificate-oidc-issuer`), which currently accepts only the
+   > GitHub Actions issuer `https://token.actions.githubusercontent.com` and is expandable
+   > as other issuers (GitLab CI, etc.) are validated. A `signed_by` from a non-GitHub
+   > forge would derive a perfectly valid `host/org` namespace; whether it is *accepted*
+   > is decided by that issuer-trust gate, never by the (forge-agnostic) namespace
+   > derivation. Do not conflate the two: identity derivation answers "whose namespace is
+   > this?", the verify gate answers "is this signer's issuer one we trust?".
+   >
+   > A milpa-vendored `provenance` string is NOT a valid identity anchor for this branch —
+   > vendor-en-absentia packages must carry a git `provenance.url` (branch 1). It is a
+   > freeform provenance record, not a signer identity.
 
 3. **Neither present** — the version has no resolvable provenance anchor; derivation
    fails with a hard error at ingest.  A conformant index NEVER contains a version whose

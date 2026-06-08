@@ -16,9 +16,12 @@
 ##   identity-drift name="<package>" stored="<ns>" rederived="<ns>"
 ##
 ##   collision namespace="<ns>" name="<leaf>" existing-repo="<repo>" new-repo="<repo>"
+##
+##   reject namespace-underivable signed_by="<san>" reason="<DerivationError>" detected_at="<ISO>"
 
 import ./merge
 import ../namespace
+import ../kdl_io  # for kdlEscapeString
 
 # ---------------------------------------------------------------------------
 # Overloaded formatAlert — one per payload type (no sum-wrapper)
@@ -26,29 +29,29 @@ import ../namespace
 
 proc formatAlert*(alert: DriftAlert, detectedAt: string): string =
   ## Format a content-hash drift event as a KDL block.
-  result.add("drift \"" & alert.packageName & "\" {\n")
-  result.add("    version       \"" & alert.version & "\"\n")
-  result.add("    detected_at   \"" & detectedAt & "\"\n")
-  result.add("    existing_hash \"" & alert.existingHash & "\"\n")
-  result.add("    new_hash      \"" & alert.newHash & "\"\n")
+  result.add("drift \"" & kdlEscapeString(alert.packageName) & "\" {\n")
+  result.add("    version       \"" & kdlEscapeString(alert.version) & "\"\n")
+  result.add("    detected_at   \"" & kdlEscapeString(detectedAt) & "\"\n")
+  result.add("    existing_hash \"" & kdlEscapeString(alert.existingHash) & "\"\n")
+  result.add("    new_hash      \"" & kdlEscapeString(alert.newHash) & "\"\n")
   result.add("}\n")
 
 proc formatAlert*(c: IntraOrgCollision, detectedAt: string): string =
   ## Format an intra-org leaf-name collision as a KDL node.
-  "collision namespace=\"" & c.namespace &
-    "\" name=\"" & c.name &
-    "\" existing-repo=\"" & c.existingRepo &
-    "\" new-repo=\"" & c.newRepo &
-    "\" detected_at=\"" & detectedAt & "\"\n"
+  "collision namespace=\"" & kdlEscapeString(c.namespace) &
+    "\" name=\"" & kdlEscapeString(c.name) &
+    "\" existing-repo=\"" & kdlEscapeString(c.existingRepo) &
+    "\" new-repo=\"" & kdlEscapeString(c.newRepo) &
+    "\" detected_at=\"" & kdlEscapeString(detectedAt) & "\"\n"
 
 proc formatAlert*(i: IdentityDrift, detectedAt: string): string =
   ## Format a namespace identity-drift event as a KDL node.
   ## Distinct node name ("identity-drift") so triage tooling can
   ## filter by severity independently of content-drift events.
-  "identity-drift name=\"" & i.name &
-    "\" stored=\"" & i.storedNamespace &
-    "\" rederived=\"" & i.rederivedNamespace &
-    "\" detected_at=\"" & detectedAt & "\"\n"
+  "identity-drift name=\"" & kdlEscapeString(i.name) &
+    "\" stored=\"" & kdlEscapeString(i.storedNamespace) &
+    "\" rederived=\"" & kdlEscapeString(i.rederivedNamespace) &
+    "\" detected_at=\"" & kdlEscapeString(detectedAt) & "\"\n"
 
 # ---------------------------------------------------------------------------
 # Legacy thin wrappers kept for any callers that pass DriftAlert directly
@@ -77,3 +80,33 @@ proc appendAlert*(existing: string, i: IdentityDrift, detectedAt: string): strin
   if result.len > 0 and result[^1] != '\n':
     result.add('\n')
   result.add(formatAlert(i, detectedAt))
+
+# ---------------------------------------------------------------------------
+# Publish-rejection alert — namespace-underivable (P2.1)
+# ---------------------------------------------------------------------------
+
+proc formatAlert*(signedBy: string, reason: DerivationError, detectedAt: string): string =
+  ## Format a namespace-underivable publish rejection as a KDL node.
+  ## Node: `reject namespace-underivable signed_by="…" reason="…" detected_at="…"`
+  ##
+  ## `reason` is the DerivationError variant serialized as a kebab-case string
+  ## so alert-triage tooling can filter by cause without string surgery.
+  ## `signedBy` is escaped — it originates from caller input (the OIDC SAN
+  ## that failed derivation) and may contain characters that would corrupt KDL.
+  let reasonStr = case reason
+    of derrUnparseable:       "unparseable"
+    of derrNoOrg:             "no-org"
+    of derrGitlabNestedGroup: "gitlab-nested-group"
+  "reject namespace-underivable" &
+    " signed_by=\"" & kdlEscapeString(signedBy) & "\"" &
+    " reason=\"" & reasonStr & "\"" &
+    " detected_at=\"" & kdlEscapeString(detectedAt) & "\"\n"
+
+proc appendAlert*(existing: string, signedBy: string, reason: DerivationError,
+                  detectedAt: string): string =
+  ## Append a namespace-underivable rejection entry. Append-only — never
+  ## mutates prior entries.
+  result = existing
+  if result.len > 0 and result[^1] != '\n':
+    result.add('\n')
+  result.add(formatAlert(signedBy, reason, detectedAt))

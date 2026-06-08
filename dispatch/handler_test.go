@@ -523,7 +523,6 @@ func TestWorkflowDispatch_CalledWithFullPayload(t *testing.T) {
 		"name":      "sample",
 		"version":   "v1.0.0",
 		"oci_ref":   "ghcr.io/x/sample@sha256:abc123",
-		"namespace": "coreyleavitt",
 		"upstream":  "https://github.com/coreyleavitt/sample",
 		"signed_by": "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
 	}

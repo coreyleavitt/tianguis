@@ -153,14 +153,21 @@ proc parseRawUrl(raw: string): Option[ParsedUrl] =
   if host.len == 0:
     return none(ParsedUrl)
 
+  # Strip query (?) and fragment (#) from pathStr before splitting.
+  # The authority split above handles ? and # that appear immediately after
+  # the host, but a URL like https://custom-forge.io/org?tenant=x/sub has
+  # the ? INSIDE the path string, not at the start. Truncate at first ? or #.
+  var cleanPath = pathStr
+  for i, c in cleanPath:
+    if c == '?' or c == '#':
+      cleanPath = cleanPath[0 ..< i]
+      break
+
   # Parse path into segments, percent-decoding each, dropping empties
   var segs: seq[string] = @[]
-  for s in pathStr.split('/'):
+  for s in cleanPath.split('/'):
     if s.len > 0:
       segs.add(percentDecode(s))
-
-  # Strip trailing '?' and '#' fragments from last segment if any
-  # (already handled by authority split above for most cases)
 
   # Strip .git from final segment
   if segs.len > 0 and segs[^1].endsWith(".git"):
@@ -170,6 +177,7 @@ proc parseRawUrl(raw: string): Option[ParsedUrl] =
       segs.setLen(segs.len - 1)
 
   some(ParsedUrl(host: host, segments: segs))
+
 
 # ---------------------------------------------------------------------------
 # Public API

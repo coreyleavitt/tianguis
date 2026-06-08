@@ -375,6 +375,61 @@ suite "identity drift guard":
     check outcome.kind == mokIdentityDrift   # drift wins over collision
     check returnedIdx == storedIdx           # index unchanged
 
+suite "M5: identity guard on derivation failure":
+  ## When stored namespace is host/org (contains '/') AND deriveVersionNamespace
+  ## fails on the incoming entry, the guard must NOT silently pass through.
+  ## It must return mokIdentityDrift so the entry is rejected.
+
+  test "M5: stored host/org + incoming version with underivable provenance → mokIdentityDrift":
+    ## The incoming version has NO git provenance and NO signedBy →
+    ## deriveVersionNamespace returns err. With stored ns containing '/',
+    ## this must yield mokIdentityDrift, not silently proceed to merge.
+    let storedPkg = Package(
+      name:      "mypkg",
+      namespace: "github.com/legit",
+      upstream:  "https://github.com/legit/mypkg",
+    )
+    var storedVersion = Version(
+      version:     "1.0.0",
+      contentHash: "sha256:aaa",
+      attestation: "milpa-vendored",
+      signedBy:    "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)",
+      publishedAt: fixedPublishedAt,
+      provenances: @[Provenance(
+        kind:      pkGit,
+        url:       "https://github.com/legit/mypkg",
+        gitRef:    "v1.0.0",
+        commitSha: "deadbeef",
+      )],
+    )
+    var storedIdx = Index(schemaVersion: 1, packages: @[storedPkg])
+    storedIdx.packages[0].versions = @[storedVersion]
+
+    # Incoming entry matches (namespace="github.com/legit", name="mypkg") so
+    # foundPkgIdx >= 0. But the version has no provenances and no signedBy →
+    # deriveVersionNamespace returns err(derrUnparseable).
+    let underivableEntry = VendoredEntry(
+      package: Package(
+        name:      "mypkg",
+        namespace: "github.com/legit",
+        upstream:  "https://github.com/legit/mypkg",
+      ),
+      version: Version(
+        version:     "2.0.0",
+        contentHash: "sha256:bbb",
+        attestation: "milpa-vendored",
+        signedBy:    "",         # no signedBy
+        publishedAt: fixedPublishedAt,
+        provenances: @[],        # no provenances → deriveVersionNamespace → err
+      ),
+    )
+
+    let (returnedIdx, outcome) = mergeVendored(storedIdx, underivableEntry)
+    # Must reject (identity drift), not silently add
+    check outcome.kind == mokIdentityDrift
+    # Index must be unchanged
+    check returnedIdx == storedIdx
+
 suite "checkIdentityStable":
   test "returns none when stored equals rederived":
     let r = checkIdentityStable("nimkdl", "github.com/coreyleavitt", "github.com/coreyleavitt")

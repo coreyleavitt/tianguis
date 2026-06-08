@@ -18,7 +18,8 @@ proc usage(): int =
   echo "  project [--check]   regenerate index.json from index.kdl"
   echo "  vendor              run one vendor-en-absentia pass against nim-lang/packages.json"
   echo "  add-entry           add an author-signed entry; consumed from commit-entry.yaml"
-  echo "    --name --version --oci-ref --namespace --upstream --signed-by [--published-at]"
+  echo "    --name --version --oci-ref --upstream --signed-by [--published-at]"
+  echo "    (namespace is derived inside the binary from the verified OIDC SAN in --signed-by)"
   echo "  show <url>          derive and print the namespace (host/org) for an upstream URL"
   echo "  migrate [--execute] one-time #32 namespace migration; --dry-run is default"
   1
@@ -33,10 +34,13 @@ proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
       of "name":         result.name = val
       of "version":      result.version = val
       of "oci-ref":      result.ociRef = val
-      of "namespace":    result.namespace = val
       of "upstream":     result.upstream = val
       of "signed-by":    result.signedBy = val
       of "published-at": result.publishedAt = val
+      of "namespace":
+        stderr.writeLine("tianguis add-entry: --namespace is no longer accepted;" &
+          " namespace is derived from --signed-by (P2.1)")
+        quit(4)
       else:
         stderr.writeLine("tianguis add-entry: unknown option --" & key)
     of cmdShortOption: discard

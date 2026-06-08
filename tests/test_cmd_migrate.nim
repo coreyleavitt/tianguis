@@ -11,7 +11,7 @@
 
 import std/[unittest, os, strutils, tables, tempfiles]
 import std/json as stdjson
-import tianguis/[model, kdl_io, json_io, migrate, cmd_migrate]
+import tianguis/[model, kdl_io, json_io, migrate, cmd_migrate, fileutil]
 
 # ---------------------------------------------------------------------------
 # Synthetic builders (same pattern as test_migrate_index.nim)

@@ -4,7 +4,7 @@
 ## Strict schema: unknown nodes / properties raise typed errors with
 ## stable IDX-* codes ([[error_catalog_discipline]]).
 
-import std/[options, tables]
+import std/[options, strutils, tables]
 import nkdl
 import ./model
 import ./errors
@@ -14,47 +14,125 @@ import ./errors
 export nkdl, errors
 
 # ---------------------------------------------------------------------------
+# Package name validation — single source of truth for all write paths
+# ---------------------------------------------------------------------------
+
+proc isValidPackageName*(name: string): bool =
+  ## Return true iff `name` is safe to record in index.kdl.
+  ##
+  ## Rules (must agree with milpa's `is_safe_name` on the read side):
+  ##   1. Non-empty.
+  ##   2. Only chars from the strict allowlist [A-Za-z0-9_.-].
+  ##   3. No leading `.` (rejects `.git`, `.`, `..`, `.hidden`).
+  ##   4. No `..` sequence anywhere (rejects `a..b`, `..`).
+  ##   5. Not exactly `.` or `..` (belt-and-suspenders over rule 3/4 above).
+  ##
+  ## Rules 3-5 close the registry-wide DoS: milpa's `_validate_safe_name`
+  ## hard-errors on `..` in a name, making index.kdl unparseable for EVERY
+  ## consumer if a `..`-named entry lands. The allowlist charset (rule 2) is
+  ## the primary gate; `/` and `\` are already blocked by it.
+  if name.len == 0: return false
+  # Rule 3 — no leading dot.
+  if name[0] == '.': return false
+  # Rule 2 — allowlist charset only.
+  for c in name:
+    if c notin {'A'..'Z', 'a'..'z', '0'..'9', '_', '.', '-'}:
+      return false
+  # Rule 4 — no `..` sequence anywhere (catches `a..b` and `..`).
+  if ".." in name: return false
+  true
+
+# ---------------------------------------------------------------------------
+# KDL string escaping
+# ---------------------------------------------------------------------------
+
+proc kdlEscapeString*(s: string): string =
+  ## Escape a string for embedding inside a KDL quoted string literal.
+  ##
+  ## Mirrors the escape policy in nkdl's `appendQuotedString` (emitter.nim):
+  ##   - `\` → `\\`
+  ##   - `"` → `\"`
+  ##   - newline (U+000A) → `\n`
+  ##   - carriage return (U+000D) → `\r`
+  ##   - tab (U+0009) → `\t`
+  ##   - backspace (U+0008) → `\b`
+  ##   - form feed (U+000C) → `\f`
+  ##   - other KDL-disallowed control bytes (U+0000–U+0008, U+000E–U+001F,
+  ##     U+007F) → `\u{XX}` hex escape
+  ##
+  ## The caller writes the surrounding `"` delimiters; this proc only
+  ## processes the *content* of the string.
+  ##
+  ## nkdl does not export a standalone string-escape helper (only the
+  ## `BufferEmitter`-based push functions), so we mirror the logic here.
+  ## This is the single source of truth for KDL escaping in tianguis.
+  result = newStringOfCap(s.len)
+  for c in s:
+    case c
+    of '\\': result.add("\\\\")
+    of '"':  result.add("\\\"")
+    of '\n': result.add("\\n")
+    of '\r': result.add("\\r")
+    of '\t': result.add("\\t")
+    of '\x08': result.add("\\b")  # backspace
+    of '\x0c': result.add("\\f")  # form feed
+    else:
+      let u = uint8(c)
+      # KDL-disallowed control bytes: U+0000–U+0008, U+000E–U+001F, U+007F
+      if (u <= 0x08'u8) or (u >= 0x0E'u8 and u <= 0x1F'u8) or (u == 0x7F'u8):
+        result.add("\\u{")
+        const HexDigits = "0123456789abcdef"
+        if u < 0x10'u8:
+          result.add(HexDigits[int(u)])
+        else:
+          result.add(HexDigits[int(u shr 4)])
+          result.add(HexDigits[int(u and 0x0f)])
+        result.add('}')
+      else:
+        result.add(c)
+
+# ---------------------------------------------------------------------------
 # Emit
 # ---------------------------------------------------------------------------
 
 proc formatProvenance(p: Provenance, indent: string): string =
   result.add(indent & "provenance {\n")
-  result.add(indent & "    kind \"" & $p.kind & "\"\n")
+  result.add(indent & "    kind \"" & kdlEscapeString($p.kind) & "\"\n")
   case p.kind
   of pkGit:
-    result.add(indent & "    url (url)\"" & p.url & "\"\n")
-    result.add(indent & "    ref \"" & p.gitRef & "\"\n")
-    result.add(indent & "    commit_sha \"" & p.commitSha & "\"\n")
+    result.add(indent & "    url (url)\"" & kdlEscapeString(p.url) & "\"\n")
+    result.add(indent & "    ref \"" & kdlEscapeString(p.gitRef) & "\"\n")
+    result.add(indent & "    commit_sha \"" & kdlEscapeString(p.commitSha) & "\"\n")
   of pkOci:
-    result.add(indent & "    registry \"" & p.registry & "\"\n")
-    result.add(indent & "    repository \"" & p.repository & "\"\n")
-    result.add(indent & "    digest \"" & p.digest & "\"\n")
+    result.add(indent & "    registry \"" & kdlEscapeString(p.registry) & "\"\n")
+    result.add(indent & "    repository \"" & kdlEscapeString(p.repository) & "\"\n")
+    result.add(indent & "    digest \"" & kdlEscapeString(p.digest) & "\"\n")
   result.add(indent & "}\n")
 
 proc formatRequires(r: OrderedTable[string, string], indent: string): string =
   if r.len == 0: return
   result.add(indent & "requires {\n")
   for name, constraint in r.pairs:
-    result.add(indent & "    \"" & name & "\" \"" & constraint & "\"\n")
+    result.add(indent & "    \"" & kdlEscapeString(name) & "\" \"" & kdlEscapeString(constraint) & "\"\n")
   result.add(indent & "}\n")
 
 proc formatVersion(v: Version, indent: string): string =
-  result.add(indent & "version \"" & v.version & "\" {\n")
-  result.add(indent & "    content_hash \"" & v.contentHash & "\"\n")
+  result.add(indent & "version \"" & kdlEscapeString(v.version) & "\" {\n")
+  result.add(indent & "    content_hash \"" & kdlEscapeString(v.contentHash) & "\"\n")
   result.add(formatRequires(v.requires, indent & "    "))
   for prov in v.provenances:
     result.add(formatProvenance(prov, indent & "    "))
-  result.add(indent & "    attestation \"" & v.attestation & "\"\n")
-  result.add(indent & "    signed_by \"" & v.signedBy & "\"\n")
-  result.add(indent & "    published_at \"" & v.publishedAt & "\"\n")
+  result.add(indent & "    attestation \"" & kdlEscapeString(v.attestation) & "\"\n")
+  result.add(indent & "    signed_by \"" & kdlEscapeString(v.signedBy) & "\"\n")
+  result.add(indent & "    published_at \"" & kdlEscapeString(v.publishedAt) & "\"\n")
   if v.partiallyResolved:
     result.add(indent & "    partially_resolved #true\n")
   result.add(indent & "}\n")
 
 proc formatPackage(pkg: Package): string =
-  result.add("package \"" & pkg.name & "\" {\n")
-  result.add("    namespace \"" & pkg.namespace & "\"\n")
-  result.add("    upstream (url)\"" & pkg.upstream & "\"\n")
+  result.add("package \"" & kdlEscapeString(pkg.name) & "\" {\n")
+  result.add("    namespace \"" & kdlEscapeString(pkg.namespace) & "\"\n")
+  result.add("    upstream (url)\"" & kdlEscapeString(pkg.upstream) & "\"\n")
   for v in pkg.versions:
     result.add(formatVersion(v, "    "))
   result.add("}\n")

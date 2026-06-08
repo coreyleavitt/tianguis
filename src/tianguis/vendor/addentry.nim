@@ -7,20 +7,29 @@
 ## commit-entry.yaml workflow: it does `cosign verify` before invoking
 ## this CLI. So by the time we run, the OCI artifact's author signature
 ## has already been validated against Rekor — we just pull, hash, merge.
+##
+## P2.1: the namespace is NO LONGER caller-supplied. It is derived from
+## the verified OIDC SAN (`signedBy`) via `deriveNamespace`. Hard-reject
+## if derivation fails (exit 4 + structured stderr + alerts.kdl append).
+## The `--namespace` flag is removed from the CLI entirely.
 
 import std/[os, options, strutils, times]
 import ../model
 import ../kdl_io
+import ../namespace
+import ../fileutil
 import ./merge
+import ./alerts
 
 type
   AddEntryArgs* = object
     name*:        string
     version*:     string    ## semver-shaped author-supplied version (e.g. v1.2.3)
     ociRef*:      string    ## <registry>/<repo>@sha256:<digest>
-    namespace*:   string
+    ## NOTE: `namespace` field removed in P2.1 — namespace is derived from
+    ## signedBy (the verified OIDC SAN) inside cmdAddEntry.
     upstream*:    string
-    signedBy*:    string    ## OIDC identity that cosign-signed the artifact
+    signedBy*:    string    ## verified OIDC SAN from cosign (GH Actions SAN)
     publishedAt*: string    ## ISO 8601 UTC; empty → "now" (tianguis observed time)
 
   ## AddEntryDriver — injectable I/O for testability. Real impl pulls
@@ -56,6 +65,11 @@ proc normalizeVersion*(v: string): string =
   if v.startsWith("v") and v.len > 1 and v[1] in '0'..'9': v[1 .. ^1]
   else: v
 
+## isValidPackageName is defined in kdl_io (the serialization boundary) and
+## re-exported here so tests and the CLI layer can access it without a
+## separate import. The canonical definition lives in one place only.
+export kdl_io.isValidPackageName
+
 proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver): int =
   ## Read index.kdl, pull + hash the OCI artifact, merge the author-signed
   ## entry, write back.
@@ -64,21 +78,36 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
   ##   0 — entry added (or already present idempotently)
   ##   1 — index.kdl missing or malformed
   ##   3 — OCI pull or hash failed
-  ##   4 — namespace is not in host/org form (missing '/'); no mutation
-  ##       performed. Dispatched author-publishes emit org-only namespaces
-  ##       until P2.1 wires verified-SAN derivation; this guard closes the
-  ##       window opened by P1.4 migration.
+  ##   4 — namespace could not be derived from signedBy (underivable OIDC SAN),
+  ##       OR package name is not in the strict allowlist [A-Za-z0-9_.-]+.
+  ##       No mutation performed, alerts.kdl appended with reject entry.
+  ##       Replaces/promotes the former P1.4 host/org-form guard.
 
-  # Guard: reject any namespace not in host/org form (must contain '/').
-  # Vendored publishing is unaffected — buildVendoredEntry derives host/org
-  # from trusted provenance. Only author self-publish (dispatch path) passes
-  # an explicit namespace here, and the dispatch handler currently emits
-  # org-only form. This is a deliberate fail-closed posture until P2.1.
-  if '/' notin args.namespace:
-    stderr.writeLine("tianguis: add-entry: namespace '" & args.namespace &
-      "' is not in host/org form (missing '/'); author publishes are frozen" &
-      " until P2.1 wires verified-SAN derivation")
+  # Name validation — hard-reject BEFORE any network I/O.
+  # The allowlist keeps package names safe as KDL identifiers and prevents
+  # injection even without escaping (defence in depth: escaping is the
+  # primary fix; the allowlist is the input gate).
+  if not isValidPackageName(args.name):
+    stderr.writeLine("tianguis: add-entry: reject: invalid package name '" &
+      args.name & "' (must match [A-Za-z0-9_.-]+)")
     return 4
+
+  # P2.1 — derive namespace from the verified OIDC SAN.
+  # Hard-reject BEFORE any network I/O if derivation fails.
+  let nowStr = now().utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
+  let derived = deriveNamespace(args.signedBy)
+  if derived.isErr:
+    let reason = derived.getErr
+    stderr.writeLine("tianguis: add-entry: reject: namespace-underivable" &
+      " signed_by=" & args.signedBy &
+      " reason=" & $reason)
+    # Append to alerts.kdl in projectDir (create if absent; append-only).
+    let alertsPath = projectDir / "alerts.kdl"
+    let existing = if fileExists(alertsPath): readFile(alertsPath) else: ""
+    writeFile(alertsPath, appendAlert(existing, args.signedBy, reason, nowStr))
+    return 4
+
+  let namespace = namespaceString(derived.get)
 
   let indexPath = projectDir / "index.kdl"
   if not fileExists(indexPath):
@@ -99,12 +128,12 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
 
   let publishedAt =
     if args.publishedAt.len > 0: args.publishedAt
-    else: now().utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    else: nowStr
 
   let entry = VendoredEntry(
     package: Package(
       name: args.name,
-      namespace: args.namespace,
+      namespace: namespace,
       upstream: args.upstream,
     ),
     version: Version(
@@ -128,7 +157,7 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
   # Full alerting for these cases is a future cycle; log to stderr for now.
   case outcome.kind
   of mokAdded, mokIdempotent:
-    writeFile(indexPath, formatKdl(newIdx))
+    atomicWrite(indexPath, formatKdl(newIdx))
   of mokIdentityDrift:
     stderr.writeLine("tianguis: add-entry: IDX-IDENTITY-DRIFT: " &
       outcome.identity.name &

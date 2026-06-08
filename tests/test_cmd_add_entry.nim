@@ -2,9 +2,9 @@
 ## workflow runs after dispatch + cosign verify. Pulls + hashes the OCI
 ## artifact, merges into index.kdl, writes back.
 
-import std/[unittest, options, os, strutils, tables, tempfiles]
+import std/[unittest, options, os, strutils, tempfiles]
 import tianguis/[model, kdl_io]
-import tianguis/vendor/[merge, addentry]
+import tianguis/vendor/[addentry]
 
 template withTempProject(name: untyped, body: untyped) =
   let name {.inject.} = createTempDir("tianguis-add-entry-", "")
@@ -33,52 +33,10 @@ method pullAndHash*(d: FailingPullDriver, ociRef: string): tuple[hash, sha: stri
 
 suite "cli add-entry":
   # ---------------------------------------------------------------------------
-  # Guard: org-only namespace rejected before any I/O (exit 4, index unchanged)
+  # P2.1 — valid full GH Actions SAN derives namespace; no --namespace field
   # ---------------------------------------------------------------------------
 
-  test "org-only namespace (no '/') is rejected with exit 4, index unchanged":
-    withTempProject(tmp):
-      writeFile(tmp / "index.kdl", "schema_version 1\n")
-      let originalBytes = readFile(tmp / "index.kdl")
-      # FailingPullDriver used to prove the guard fires BEFORE pull I/O
-      let code = cmdAddEntry(
-        projectDir = tmp,
-        args = AddEntryArgs(
-          name:        "sample",
-          version:     "v1.0.0",
-          ociRef:      "ghcr.io/coreyleavitt/sample@sha256:abc123",
-          namespace:   "coreyleavitt",   # org-only — missing host prefix
-          upstream:    "https://github.com/coreyleavitt/sample",
-          signedBy:    "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
-          publishedAt: "2026-06-01T12:00:00Z",
-        ),
-        driver = FailingPullDriver(),  # must NOT be reached
-      )
-      check code == 4
-      check readFile(tmp / "index.kdl") == originalBytes
-
-  test "single-component namespace (no '/') is rejected with exit 4":
-    withTempProject(tmp):
-      writeFile(tmp / "index.kdl", "schema_version 1\n")
-      let originalBytes = readFile(tmp / "index.kdl")
-      let code = cmdAddEntry(
-        projectDir = tmp,
-        args = AddEntryArgs(
-          name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
-          namespace: "x",   # single component — no host
-          upstream: "https://github.com/x/y",
-          signedBy: "https://github.com/x/y",
-        ),
-        driver = FailingPullDriver(),
-      )
-      check code == 4
-      check readFile(tmp / "index.kdl") == originalBytes
-
-  # ---------------------------------------------------------------------------
-  # Happy path: valid host/org namespace passes the guard and is added
-  # ---------------------------------------------------------------------------
-
-  test "adds an author-signed entry with a valid host/org namespace":
+  test "valid GH Actions SAN derives namespace to github.com/owner, no namespace arg":
     withTempProject(tmp):
       writeFile(tmp / "index.kdl", "schema_version 1\n")
 
@@ -88,15 +46,15 @@ suite "cli add-entry":
         commitSha:    "deadbeef1234567",
       )
 
+      let san = "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0"
       let code = cmdAddEntry(
         projectDir = tmp,
         args = AddEntryArgs(
           name:        "sample",
           version:     "v1.0.0",
           ociRef:      "ghcr.io/coreyleavitt/sample@sha256:abc123",
-          namespace:   "github.com/coreyleavitt",   # valid host/org
           upstream:    "https://github.com/coreyleavitt/sample",
-          signedBy:    "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
+          signedBy:    san,
           publishedAt: "2026-06-01T12:00:00Z",
         ),
         driver = driver,
@@ -109,17 +67,129 @@ suite "cli add-entry":
       check idx.packages.len == 1
       let pkg = idx.packages[0]
       check pkg.name == "sample"
+      # namespace derived from SAN: github.com/coreyleavitt
       check pkg.namespace == "github.com/coreyleavitt"
       check pkg.upstream == "https://github.com/coreyleavitt/sample"
       check pkg.versions.len == 1
       let v = pkg.versions[0]
-      check v.version == "1.0.0"  # v-prefix stripped from passed "v1.0.0"
+      check v.version == "1.0.0"
       check v.contentHash == "sha256:abcdef"
       check v.attestation == "author-signed"
-      check v.signedBy == "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0"
+      # signedBy stores the verbatim SAN
+      check v.signedBy == san
       check v.publishedAt == "2026-06-01T12:00:00Z"
 
-  test "publishedAt defaults to now when not supplied (host/org namespace)":
+  # ---------------------------------------------------------------------------
+  # P2.1 — underivable signedBy → exit 4, index unchanged, alerts.kdl written
+  # ---------------------------------------------------------------------------
+
+  test "empty signedBy is underivable: exit 4, index unchanged, alerts.kdl written":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name:     "sample",
+          version:  "v1.0.0",
+          ociRef:   "ghcr.io/x/sample@sha256:abc",
+          upstream: "https://github.com/x/sample",
+          signedBy: "",   # empty SAN — underivable
+          publishedAt: "2026-06-01T12:00:00Z",
+        ),
+        driver = FailingPullDriver(),  # must NOT be reached
+      )
+      check code == 4
+      check readFile(tmp / "index.kdl") == originalBytes
+      # alerts.kdl should record the rejection
+      check fileExists(tmp / "alerts.kdl")
+      let alertsContent = readFile(tmp / "alerts.kdl")
+      check "reject" in alertsContent
+      check "namespace-underivable" in alertsContent
+
+  test "non-github host SAN is underivable: exit 4, index unchanged":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      # A bare host with no org segment → derrNoOrg
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name:     "pkg",
+          version:  "1.0.0",
+          ociRef:   "ghcr.io/x/pkg@sha256:abc",
+          upstream: "https://notgithub.com/pkg",
+          signedBy: "https://notgithub.com",   # no org segment
+          publishedAt: "2026-06-01T12:00:00Z",
+        ),
+        driver = FailingPullDriver(),
+      )
+      check code == 4
+      check readFile(tmp / "index.kdl") == originalBytes
+      let alertsContent = readFile(tmp / "alerts.kdl")
+      check "namespace-underivable" in alertsContent
+      check "notgithub.com" in alertsContent
+
+  test "bare host-only SAN (no org) is underivable: exit 4, alerts.kdl written":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "pkg", version: "1.0.0",
+          ociRef: "ghcr.io/x/pkg@sha256:abc",
+          upstream: "https://github.com/x/pkg",
+          signedBy: "https://github.com",   # no org in path
+        ),
+        driver = FailingPullDriver(),
+      )
+      check code == 4
+      check readFile(tmp / "index.kdl") == originalBytes
+      check fileExists(tmp / "alerts.kdl")
+
+  test "underivable signedBy: OCI pull is NOT attempted (reject before network)":
+    ## Prove via FailingPullDriver that derivation guard fires before pull I/O.
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "sample", version: "1.0.0",
+          ociRef: "ghcr.io/x/sample@sha256:abc",
+          upstream: "https://github.com/x/sample",
+          signedBy: "",  # underivable
+        ),
+        driver = FailingPullDriver(),  # would raise if reached
+      )
+      # exit 4 = namespace-underivable (not exit 3 = pull failure)
+      check code == 4
+
+  test "alerts.kdl contains signed_by and reason on reject":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let badSan = "not-a-url"
+      discard cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "p", version: "1.0.0",
+          ociRef: "ghcr.io/x/p@sha256:abc",
+          upstream: "https://github.com/x/p",
+          signedBy: badSan,
+        ),
+        driver = FailingPullDriver(),
+      )
+      let alertsContent = readFile(tmp / "alerts.kdl")
+      check badSan in alertsContent
+      # reason is the DerivationError name
+      check ("derrUnparseable" in alertsContent or "derrNoOrg" in alertsContent or
+             "unparseable" in alertsContent or "no-org" in alertsContent)
+
+  # ---------------------------------------------------------------------------
+  # P2.1 — happy path still works: publishedAt defaults to now
+  # ---------------------------------------------------------------------------
+
+  test "publishedAt defaults to now when not supplied":
     withTempProject(tmp):
       writeFile(tmp / "index.kdl", "schema_version 1\n")
       let driver = FakeAddDriver(
@@ -131,9 +201,8 @@ suite "cli add-entry":
         projectDir = tmp,
         args = AddEntryArgs(
           name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
-          namespace: "github.com/x",   # valid host/org
           upstream: "https://github.com/x/y",
-          signedBy: "https://github.com/x/y",
+          signedBy: "https://github.com/x/y/.github/workflows/publish.yaml@refs/heads/main",
           # publishedAt deliberately omitted
         ),
         driver = driver,
@@ -147,6 +216,10 @@ suite "cli add-entry":
       check pa.endsWith("Z")
       check pa[4] == '-' and pa[7] == '-' and pa[10] == 'T'
 
+  # ---------------------------------------------------------------------------
+  # Pull failure still returns exit 3 (unrelated to namespace derivation)
+  # ---------------------------------------------------------------------------
+
   test "pull failure refuses to commit (exit 3)":
     withTempProject(tmp):
       writeFile(tmp / "index.kdl", "schema_version 1\n")
@@ -155,11 +228,87 @@ suite "cli add-entry":
         projectDir = tmp,
         args = AddEntryArgs(
           name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
-          namespace: "github.com/x",   # valid host/org — guard passes, then pull fails
           upstream: "https://github.com/x/y",
-          signedBy: "https://github.com/x/y",
+          # valid SAN — guard passes, then pull fails
+          signedBy: "https://github.com/x/y/.github/workflows/publish.yaml@refs/heads/main",
         ),
         driver = FailingPullDriver(),
       )
       check code == 3
       check readFile(tmp / "index.kdl") == originalBytes
+
+# ---------------------------------------------------------------------------
+# T1 — isValidPackageName: unsafe name rejection (path-traversal + DoS guard)
+# ---------------------------------------------------------------------------
+# These tests are the regression pin for the fix that tightened the validator
+# to match milpa's is_safe_name semantics (single source of truth across impls).
+# Names that pass the charset but are structurally unsafe MUST be rejected by
+# the validator and cause cmdAddEntry to return exit 4 with no mutation.
+
+suite "isValidPackageName — unsafe names":
+  let validSan = "https://github.com/x/y/.github/workflows/publish.yaml@refs/heads/main"
+
+  test "empty name is invalid":
+    check not isValidPackageName("")
+
+  test "double-dot component (..) is invalid — registry-wide DoS vector":
+    # A name of exactly `..` passes the charset but would make index.kdl
+    # unparseable by milpa's _validate_safe_name, causing a registry-wide DoS.
+    check not isValidPackageName("..")
+
+  test "single-dot (.) is invalid — not a meaningful package name":
+    check not isValidPackageName(".")
+
+  test "leading-dot name (.git) is invalid":
+    check not isValidPackageName(".git")
+
+  test "name containing .. sequence (a..b) is invalid":
+    check not isValidPackageName("a..b")
+
+  test "name containing forward-slash is invalid (charset-rejected)":
+    # '/' is not in the allowlist charset, so already rejected — verify.
+    check not isValidPackageName("a/b")
+
+  test "name containing backslash is invalid (charset-rejected)":
+    check not isValidPackageName("a\\b")
+
+  test "valid name foo-bar_1.2 passes":
+    check isValidPackageName("foo-bar_1.2")
+
+  test "valid name nim-chronos passes":
+    check isValidPackageName("nim-chronos")
+
+  # Integration: ensure cmdAddEntry returns exit 4 + no mutation for bad names.
+  test "cmdAddEntry with name=.. returns exit 4, index unchanged":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let original = readFile(tmp / "index.kdl")
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "..", version: "1.0.0",
+          ociRef: "ghcr.io/x/y@sha256:abc",
+          upstream: "https://github.com/x/y",
+          signedBy: validSan,
+        ),
+        driver = FailingPullDriver(),  # must NOT be reached
+      )
+      check code == 4
+      check readFile(tmp / "index.kdl") == original
+
+  test "cmdAddEntry with name=.git returns exit 4, index unchanged":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let original = readFile(tmp / "index.kdl")
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: ".git", version: "1.0.0",
+          ociRef: "ghcr.io/x/y@sha256:abc",
+          upstream: "https://github.com/x/y",
+          signedBy: validSan,
+        ),
+        driver = FailingPullDriver(),
+      )
+      check code == 4
+      check readFile(tmp / "index.kdl") == original

@@ -14,6 +14,7 @@ import ./denylist
 import ./alerts
 import ../model
 import ../namespace
+import ../kdl_io
 
 type
   CloneResult* = object
@@ -83,6 +84,16 @@ proc runVendor*(
       skipped.add(pkg.name)
       continue
 
+    # Name safety guard — same rule as the add-entry path (SSOT: kdl_io).
+    # A name containing `..` or a leading `.` would make index.kdl
+    # unparseable by milpa (registry-wide DoS). Log + skip, never write.
+    if not isValidPackageName(pkg.name):
+      stderr.writeLine("tianguis: vendor: " & pkg.name &
+        " skipped (invalid package name — path-traversal or leading-dot): " &
+        pkg.url)
+      skipped.add(pkg.name)
+      continue
+
     # Per-package isolation: a single bad upstream (deleted repo, network
     # blip, weird git state) must not abort the entire vendor pass. We
     # log + skip + continue, leaving the rest of the catalog to vendor.
@@ -95,9 +106,10 @@ proc runVendor*(
 
       let entryResult = buildVendoredEntry(
         pkg, sel,
-        contentHash = clone.contentHash,
-        commitSha   = clone.commitSha,
-        publishedAt = nowIso,
+        contentHash    = clone.contentHash,
+        commitSha      = clone.commitSha,
+        publishedAt    = nowIso,
+        precomputedNs  = ns,  # ns already derived above (SSOT: derive once)
       )
       # buildVendoredEntry already checked derivability; if it errors
       # here it's a logic bug, but be robust.

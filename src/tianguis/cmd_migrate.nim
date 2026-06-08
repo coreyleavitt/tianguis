@@ -32,6 +32,7 @@ import ./model
 import ./kdl_io
 import ./json_io
 import ./migrate
+import ./fileutil
 
 # ---------------------------------------------------------------------------
 # Public types
@@ -130,17 +131,6 @@ proc renderAuditRecord*(report: MigrationReport): string =
     "splits":              splitsNode,
   }
   result = $node
-
-# ---------------------------------------------------------------------------
-# Atomic write helper
-# ---------------------------------------------------------------------------
-
-proc atomicWrite*(dest, content: string) =
-  ## Write content to a staging file then rename into place.
-  ## On success, no staging file remains.
-  let staging = dest & ".tmp"
-  writeFile(staging, content)
-  moveFile(staging, dest)
 
 # ---------------------------------------------------------------------------
 # Thin I/O
