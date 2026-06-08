@@ -19,7 +19,9 @@ proc usage(): int =
   echo "  vendor              run one vendor-en-absentia pass against nim-lang/packages.json"
   echo "  add-entry           add an author-signed entry; consumed from commit-entry.yaml"
   echo "    --name --version --oci-ref --upstream --signed-by [--published-at]"
-  echo "    (namespace is derived inside the binary from the verified OIDC SAN in --signed-by)"
+  echo "    [--rekor-uuid --rekor-log-index --rekor-integrated-time]"
+  echo "    (namespace is derived inside the binary from the verified OIDC SAN in --signed-by;"
+  echo "     rekor fields are the durable transparency-log pointer captured by commit-entry.yaml)"
   echo "  show <url>          derive and print the namespace (host/org) for an upstream URL"
   echo "  migrate [--execute] one-time #32 namespace migration; --dry-run is default"
   1
@@ -37,6 +39,9 @@ proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
       of "upstream":     result.upstream = val
       of "signed-by":    result.signedBy = val
       of "published-at": result.publishedAt = val
+      of "rekor-uuid":            result.rekorUuid = val
+      of "rekor-log-index":       result.rekorLogIndex = val
+      of "rekor-integrated-time": result.rekorIntegratedTime = val
       of "namespace":
         stderr.writeLine("tianguis add-entry: --namespace is no longer accepted;" &
           " namespace is derived from --signed-by (P2.1)")

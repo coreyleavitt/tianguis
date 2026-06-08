@@ -31,6 +31,12 @@ type
     upstream*:    string
     signedBy*:    string    ## verified OIDC SAN from cosign (GH Actions SAN)
     publishedAt*: string    ## ISO 8601 UTC; empty → "now" (tianguis observed time)
+    ## Durable Rekor pointer, captured at publish from the same
+    ## `cosign verify --output json` that extracted signedBy (Gate B). All
+    ## optional — an empty trio yields no `rekor` block on the stored version.
+    rekorUuid*:           string  ## Rekor entry UUID (content-addressed)
+    rekorLogIndex*:       string  ## Rekor logIndex
+    rekorIntegratedTime*: string  ## inclusion timestamp (epoch seconds)
 
   ## AddEntryDriver — injectable I/O for testability. Real impl pulls
   ## the OCI artifact via oras and computes content_hash via the
@@ -148,6 +154,19 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
         repository: ociRepository(args.ociRef),
         digest:    ociDigest(args.ociRef),
       )],
+      # Author-signed durable Rekor pointer. Recorded only when the workflow
+      # captured at least one field; an all-empty trio leaves rekor = none so
+      # we never emit a hollow block.
+      rekor:
+        if args.rekorUuid.len > 0 or args.rekorLogIndex.len > 0 or
+            args.rekorIntegratedTime.len > 0:
+          some(RekorRef(
+            uuid:           args.rekorUuid,
+            logIndex:       args.rekorLogIndex,
+            integratedTime: args.rekorIntegratedTime,
+          ))
+        else:
+          none(RekorRef),
     ),
   )
 

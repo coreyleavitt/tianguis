@@ -156,20 +156,40 @@ jobs:
           # H3 fix: also guard against jq -r yielding the literal string "null"
           # (happens when the jq path doesn't match — `jq -r` emits "null"
           # instead of empty for missing keys, which passes a bare -z guard).
-          # TODO(P2.1 Gate B): verify jq SAN path against real cosign v2.4.0
-          # --output json before relying on this. The path .[0].optional.Subject
-          # mirrors the cosign v2 verify JSON schema but has NOT been verified
-          # against a genuine Fulcio cert + Rekor entry. Run the workflow on a
-          # real signed artifact and confirm SAN is non-empty before removing
-          # this TODO.
+          # jq paths verified 2026-06-08 against real cosign v2.4.0 --output json
+          # on a genuine Fulcio cert + Rekor entry (nkdl v0.1.0,
+          # ghcr.io/coreyleavitt/nkdl@sha256:01c9ee…): .[0].optional.Subject and
+          # the Bundle.Payload paths below all resolved correctly.
           if [[ -z "$SAN" || "$SAN" == "null" ]]; then
             echo "::error::empty or null SAN from cosign verify --output json; check the jq path .[0].optional.Subject"
             exit 1
           fi
 
-          # Heredoc-delimiter form (consistent with M9 fix on payload fields):
-          # prevents a SAN containing a newline from smuggling extra output keys.
-          printf '%s<<%s\n%s\n%s\n' "san" "EOF_san" "$SAN" "EOF_san" >> "$GITHUB_OUTPUT"
+          # Durable Rekor pointer (root-cause fix for the vanishing site link):
+          # capture the transparency-log entry coordinates ONCE here, at publish,
+          # so the site renders a stable link from index.json instead of
+          # re-running `cosign verify` at every build. logIndex + integratedTime
+          # are in the same cosign Bundle.Payload we just verified; the UUID
+          # (content-addressed, shard-independent — the most durable id) is the
+          # top-level key of the Rekor entry, resolved by a best-effort lookup.
+          REKOR_LOG_INDEX=$(echo "$COSIGN_OUTPUT" | jq -r '.[0].optional.Bundle.Payload.logIndex // empty')
+          REKOR_INTEGRATED_TIME=$(echo "$COSIGN_OUTPUT" | jq -r '.[0].optional.Bundle.Payload.integratedTime // empty')
+          REKOR_UUID=""
+          if [[ -n "$REKOR_LOG_INDEX" ]]; then
+            # The public-good Rekor instance keys entries by UUID; querying by
+            # logIndex returns { "<uuid>": {…} }. Best-effort: a UUID-less entry
+            # still records logIndex (the link falls back to ?logIndex=).
+            REKOR_UUID=$(curl -sf "https://rekor.sigstore.dev/api/v1/log/entries?logIndex=${REKOR_LOG_INDEX}" \
+              | jq -r 'keys[0] // empty' || true)
+          fi
+          # These values are numeric (logIndex, integratedTime) or hex (uuid) and
+          # cannot contain newlines, so a plain key=value GITHUB_OUTPUT line is safe.
+          {
+            printf '%s<<%s\n%s\n%s\n' "san" "EOF_san" "$SAN" "EOF_san"
+            echo "rekor_uuid=${REKOR_UUID}"
+            echo "rekor_log_index=${REKOR_LOG_INDEX}"
+            echo "rekor_integrated_time=${REKOR_INTEGRATED_TIME}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Add entry (pulls OCI + content_hash + merges index)
         # P2.1: --namespace removed; the binary derives it from --signed-by (the
@@ -188,13 +208,21 @@ jobs:
           ARG_OCI_REF:   ${{ steps.payload.outputs.oci_ref }}
           ARG_UPSTREAM:  ${{ steps.payload.outputs.upstream }}
           ARG_SIGNED_BY: ${{ steps.cosign.outputs.san }}
+          # Durable Rekor pointer captured in the cosign step. Empty values are
+          # tolerated by the binary (an all-empty trio records no rekor block).
+          ARG_REKOR_UUID:            ${{ steps.cosign.outputs.rekor_uuid }}
+          ARG_REKOR_LOG_INDEX:       ${{ steps.cosign.outputs.rekor_log_index }}
+          ARG_REKOR_INTEGRATED_TIME: ${{ steps.cosign.outputs.rekor_integrated_time }}
         run: |
           ./tianguis add-entry \
             --name="$ARG_NAME" \
             --version="$ARG_VERSION" \
             --oci-ref="$ARG_OCI_REF" \
             --upstream="$ARG_UPSTREAM" \
-            --signed-by="$ARG_SIGNED_BY"
+            --signed-by="$ARG_SIGNED_BY" \
+            --rekor-uuid="$ARG_REKOR_UUID" \
+            --rekor-log-index="$ARG_REKOR_LOG_INDEX" \
+            --rekor-integrated-time="$ARG_REKOR_INTEGRATED_TIME"
 
       - name: Regenerate index.json
         run: ./tianguis project

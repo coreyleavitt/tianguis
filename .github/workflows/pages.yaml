@@ -34,10 +34,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Set up cosign
-        uses: sigstore/cosign-installer@v3
-        with:
-          cosign-release: "v2.4.0"
+      # No cosign at build time: the durable Rekor pointer is recorded in the
+      # index at publish (the `rekor` block), so the site reads a field instead
+      # of re-verifying. This is the root-cause fix for the vanishing-link bug.
 
       - name: Install build deps
         run: pip install -r site/scripts/requirements.txt

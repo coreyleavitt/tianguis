@@ -4,7 +4,7 @@
 ## get the same Index. Bijection through canonical KDL is the load-
 ## bearing property for spec conformance.
 
-import std/[unittest, sequtils, strutils, tables]
+import std/[unittest, options, sequtils, strutils, tables]
 import tianguis/[model, kdl_io]
 
 suite "kdl roundtrip":
@@ -277,6 +277,85 @@ suite "kdl roundtrip":
     let parsed = parseKdl(formatKdl(original))
     check parsed.isOk
     check parsed.get.packages[0].versions[0].partiallyResolved == false
+
+  # ---------------------------------------------------------------------------
+  # Durable Rekor reference (author-signed attestation pointer)
+  # ---------------------------------------------------------------------------
+
+  test "rekor block (uuid + log_index + integrated_time) round-trips through KDL":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "nkdl", namespace: "github.com/coreyleavitt",
+        upstream: "https://github.com/coreyleavitt/nkdl",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:dd907474",
+          attestation: "author-signed",
+          signedBy: "https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml@refs/heads/main",
+          publishedAt: "2026-06-08T01:18:24Z",
+          rekor: some(RekorRef(
+            uuid: "108e9186e8c5677abce5a62d285437741218f878474a02d9a4dac01dc12e39b979336e712890d636",
+            logIndex: "1753541583",
+            integratedTime: "1780881469",
+          )),
+        )],
+      )],
+    )
+    let parsed = parseKdl(formatKdl(original))
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.packages[0].versions[0].rekor.isSome
+    check parsed.get.packages[0].versions[0].rekor.get.uuid ==
+      "108e9186e8c5677abce5a62d285437741218f878474a02d9a4dac01dc12e39b979336e712890d636"
+
+  test "rekor=none does NOT emit a rekor block":
+    ## milpa-vendored versions carry no rekor pointer; the field must not
+    ## leak an empty block into the index (keeps the 2600+ vendored entries
+    ## noise-free, same discipline as partially_resolved).
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "vendored", namespace: "github.com/someorg",
+        upstream: "https://github.com/someorg/vendored",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:abc",
+          attestation: "milpa-vendored", signedBy: "milpa-bot",
+          publishedAt: "2026-06-06T00:00:00Z",
+          rekor: none(RekorRef),
+        )],
+      )],
+    )
+    let serialized = formatKdl(original)
+    check "rekor" notin serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get.packages[0].versions[0].rekor.isNone
+
+  test "rekor block with only log_index (no uuid) round-trips; absent fields stay empty":
+    ## A publish that captured logIndex/integratedTime but could not resolve a
+    ## UUID (best-effort Rekor lookup) must still round-trip; omitted sub-fields
+    ## emit nothing and parse back as "".
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "p", namespace: "github.com/org",
+        upstream: "https://github.com/org/p",
+        versions: @[Version(
+          version: "1.0.0", contentHash: "sha256:abc",
+          attestation: "author-signed", signedBy: "https://github.com/org",
+          publishedAt: "2026-06-08T00:00:00Z",
+          rekor: some(RekorRef(uuid: "", logIndex: "42", integratedTime: "1780881469")),
+        )],
+      )],
+    )
+    let serialized = formatKdl(original)
+    check "uuid" notin serialized
+    check "log_index" in serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.packages[0].versions[0].rekor.get.uuid == ""
+    check parsed.get.packages[0].versions[0].rekor.get.logIndex == "42"
 
   # ---------------------------------------------------------------------------
   # C1: KDL injection — crafted name/namespace must not corrupt the output

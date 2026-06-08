@@ -7613,6 +7613,11 @@ package "nkdl" {
         attestation "author-signed"
         signed_by "https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml@refs/heads/main"
         published_at "2026-06-08T01:18:24Z"
+        rekor {
+            uuid "108e9186e8c5677abce5a62d285437741218f878474a02d9a4dac01dc12e39b979336e712890d636"
+            log_index "1753541583"
+            integrated_time "1780881469"
+        }
     }
 }
 package "pipe" {

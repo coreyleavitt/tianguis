@@ -48,7 +48,13 @@ Index
         │       oci: { registry, repository, digest }
         ├── attestation: string   ("milpa-vendored" | "author-signed")
         ├── signedBy: string      (URI identifying the signer)
-        └── publishedAt: string   (ISO 8601 UTC timestamp)
+        ├── publishedAt: string   (ISO 8601 UTC timestamp)
+        └── rekor?: RekorRef      (OPTIONAL; author-signed only — durable pointer
+                                   to the Rekor transparency-log entry for the
+                                   author's cosign signature; see below)
+            ├── uuid: string             (Rekor entry UUID — content-addressed)
+            ├── logIndex: string         (Rekor logIndex — shard-relative int)
+            └── integratedTime: string   (inclusion timestamp — epoch seconds)
 ```
 
 ### Identity key
@@ -195,6 +201,50 @@ coreyleavitt's OCI version carries a `signed_by` SAN that derives
 `github.com/coreyleavitt`.  The result is two distinct `(namespace, name)` index entries
 with no version data lost.
 
+### Rekor attestation pointer (NORMATIVE)
+
+An **author-signed** version MAY carry a `rekor` block: a durable, publish-time-captured
+pointer to the Sigstore Rekor transparency-log entry for the author's `cosign sign`
+signature on the OCI artifact.
+
+```
+RekorRef = (uuid: string, logIndex: string, integratedTime: string)
+```
+
+- **`uuid`** — the Rekor entry UUID. This is the **primary** identifier: it is
+  content-addressed and shard-independent, so it remains resolvable as the public-good
+  Rekor instance shards over time. `search.sigstore.dev/?uuid=<uuid>` opens the entry.
+- **`logIndex`** — the Rekor logIndex (a shard-relative integer, stored as a string).
+  Convenience/fallback: `search.sigstore.dev/?logIndex=<n>` also opens the entry, and a
+  publish that could not resolve the UUID still records this.
+- **`integratedTime`** — the inclusion timestamp (epoch seconds, as a string). Audit
+  convenience.
+
+All three sub-fields are stored as strings (the scalar-child shape; this avoids the
+bare-KDL-number float-parse hazard on the read side). Each sub-field is independently
+optional: a `rekor` block emits only the sub-fields it has, and the block itself is
+emitted only when at least one is present.
+
+**Provenance, not identity.** The `rekor` block is *attestation provenance* — it points
+at the transparency-log record that proves the signature existed. It is **not** an
+identity anchor: namespace derivation (the per-version attestation-anchor algorithm
+above) never consults `rekor`. A consumer that does not understand `rekor` MUST ignore
+it (forward-compatible); milpa, which enforces identity + content-hash, treats it as
+inert metadata.
+
+**Author-signed only.** `milpa-vendored` versions have no author cosign signature and
+therefore no `rekor` block. Recording one on a vendored entry is malformed.
+
+**Capture point.** The pointer is captured once, at ingest, by `commit-entry.yaml` from
+the same `cosign verify --output json` that extracts the verified SAN (Gate B):
+`logIndex`/`integratedTime` come from `.[0].optional.Bundle.Payload.*`; the UUID is the
+top-level key of the Rekor entry resolved by logIndex. Recording it in the index — rather
+than re-deriving it via a live `cosign verify` at every site build — is what makes the
+"view in Rekor" link durable (it cannot vanish on a transient verify failure or a digest
+change). Existing author-signed entries published before this field was introduced carry
+no `rekor` block until republished or backfilled; the site simply renders no Rekor link
+for them.
+
 ### Same-name, two-namespace entries
 
 Two packages sharing a leaf `name` under different namespaces are **distinct index
@@ -263,6 +313,12 @@ package "chronos" {
         attestation "author-signed"
         signed_by "https://github.com/coreyleavitt"
         published_at "2026-05-25T00:00:00Z"
+
+        rekor {
+            uuid "108e9186e8c5677abce5a62d285437741218f878474a02d9a4dac01dc12e39b97…"
+            log_index "1753541583"
+            integrated_time "1780881469"
+        }
     }
 }
 ```
@@ -292,7 +348,12 @@ plain string forms for backward compatibility.
           ],
           "attestation": "author-signed",
           "signed_by": "https://github.com/coreyleavitt",
-          "published_at": "2026-05-25T00:00:00Z"
+          "published_at": "2026-05-25T00:00:00Z",
+          "rekor": {
+            "uuid": "108e9186e8c5677abce5a62d285437741218f878474a02d9a4dac01dc12e39b97…",
+            "log_index": "1753541583",
+            "integrated_time": "1780881469"
+          }
         }
       ]
     }

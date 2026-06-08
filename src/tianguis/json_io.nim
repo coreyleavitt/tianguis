@@ -9,6 +9,7 @@
 ## for every valid Index value.
 
 import std/json as stdjson
+import std/options
 import std/tables
 import nkdl   # Result / ok / err (re-exported from nkdl/spans)
 import ./model
@@ -46,7 +47,7 @@ proc versionToJson(v: Version): JsonNode =
   let reqs = newJObject()
   for name, constraint in v.requires.pairs:
     reqs[name] = %constraint
-  %*{
+  let obj = %*{
     "version":      v.version,
     "content_hash": v.contentHash,
     "requires":     reqs,
@@ -55,6 +56,17 @@ proc versionToJson(v: Version): JsonNode =
     "signed_by":    v.signedBy,
     "published_at": v.publishedAt,
   }
+  # Author-signed durable Rekor pointer — emitted only when present (the site
+  # reads index.json, so the field must project here too). Absent on
+  # milpa-vendored versions.
+  if v.rekor.isSome:
+    let rk = v.rekor.get
+    obj["rekor"] = %*{
+      "uuid":            rk.uuid,
+      "log_index":       rk.logIndex,
+      "integrated_time": rk.integratedTime,
+    }
+  obj
 
 proc packageToJson(pkg: Package): JsonNode =
   let versions = newJArray()
@@ -113,6 +125,14 @@ proc versionFromJson(node: JsonNode): Version =
   if rNode != nil and rNode.kind == JObject:
     for k, v in rNode:
       reqs[k] = v.getStr("")
+  var rekor = none(RekorRef)
+  let rkNode = node{"rekor"}
+  if rkNode != nil and rkNode.kind == JObject:
+    rekor = some(RekorRef(
+      uuid:           rkNode{"uuid"}.getStr(""),
+      logIndex:       rkNode{"log_index"}.getStr(""),
+      integratedTime: rkNode{"integrated_time"}.getStr(""),
+    ))
   Version(
     version:     node{"version"}.getStr(""),
     contentHash: node{"content_hash"}.getStr(""),
@@ -120,6 +140,7 @@ proc versionFromJson(node: JsonNode): Version =
     signedBy:    node{"signed_by"}.getStr(""),
     publishedAt: node{"published_at"}.getStr(""),
     provenances: provs,
+    rekor:       rekor,
     requires:    reqs,
   )
 

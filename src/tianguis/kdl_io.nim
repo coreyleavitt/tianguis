@@ -116,6 +116,21 @@ proc formatRequires(r: OrderedTable[string, string], indent: string): string =
     result.add(indent & "    \"" & kdlEscapeString(name) & "\" \"" & kdlEscapeString(constraint) & "\"\n")
   result.add(indent & "}\n")
 
+proc formatRekor(rk: RekorRef, indent: string): string =
+  ## Emit the author-signed Rekor attestation pointer. Only non-empty
+  ## sub-fields are written (a publish that captured a logIndex but no UUID
+  ## omits `uuid` rather than emitting an empty one). The caller emits this
+  ## block only when `Version.rekor` is `some` (milpa-vendored versions have
+  ## `none` and produce no block).
+  result.add(indent & "rekor {\n")
+  if rk.uuid.len > 0:
+    result.add(indent & "    uuid \"" & kdlEscapeString(rk.uuid) & "\"\n")
+  if rk.logIndex.len > 0:
+    result.add(indent & "    log_index \"" & kdlEscapeString(rk.logIndex) & "\"\n")
+  if rk.integratedTime.len > 0:
+    result.add(indent & "    integrated_time \"" & kdlEscapeString(rk.integratedTime) & "\"\n")
+  result.add(indent & "}\n")
+
 proc formatVersion(v: Version, indent: string): string =
   result.add(indent & "version \"" & kdlEscapeString(v.version) & "\" {\n")
   result.add(indent & "    content_hash \"" & kdlEscapeString(v.contentHash) & "\"\n")
@@ -125,6 +140,8 @@ proc formatVersion(v: Version, indent: string): string =
   result.add(indent & "    attestation \"" & kdlEscapeString(v.attestation) & "\"\n")
   result.add(indent & "    signed_by \"" & kdlEscapeString(v.signedBy) & "\"\n")
   result.add(indent & "    published_at \"" & kdlEscapeString(v.publishedAt) & "\"\n")
+  if v.rekor.isSome:
+    result.add(formatRekor(v.rekor.get, indent & "    "))
   if v.partiallyResolved:
     result.add(indent & "    partially_resolved #true\n")
   result.add(indent & "}\n")
@@ -155,8 +172,9 @@ const
   VersionChildren = [
     "content_hash", "requires", "provenance",
     "attestation", "signed_by", "published_at",
-    "partially_resolved",
+    "rekor", "partially_resolved",
   ]
+  RekorChildren = ["uuid", "log_index", "integrated_time"]
   ProvenanceChildren = [
     # union of all variant fields — strict-kind enforcement happens
     # post-discrimination
@@ -215,6 +233,18 @@ proc parseProvenance(doc: KdlDoc, node: KdlNode): Result[Provenance, IdxError] =
       line = line, col = col,
     ))
 
+proc parseRekor(doc: KdlDoc, node: KdlNode): Result[RekorRef, IdxError] =
+  ## Parse the optional `rekor { uuid; log_index; integrated_time }` block.
+  ## Strict membership: any child not in RekorChildren raises IDX-NODE-UNKNOWN.
+  for child in node.children:
+    if child.name notin RekorChildren:
+      return err[RekorRef, IdxError](unknownNode(doc, child, "rekor"))
+  ok[RekorRef, IdxError](RekorRef(
+    uuid:           node.childText("uuid"),
+    logIndex:       node.childText("log_index"),
+    integratedTime: node.childText("integrated_time"),
+  ))
+
 proc parseRequires(node: KdlNode): OrderedTable[string, string] =
   ## A `requires` block: each child is `<dep-name> "<constraint>"` — the
   ## node name is the map key (dynamic-name map shape).
@@ -237,6 +267,10 @@ proc parseVersion(doc: KdlDoc, node: KdlNode): Result[Version, IdxError] =
     of "signed_by":          v.signedBy           = child.argText
     of "published_at":       v.publishedAt        = child.argText
     of "partially_resolved": v.partiallyResolved  = child.argBool(0).get(false)
+    of "rekor":
+      let rr = parseRekor(doc, child)
+      if rr.isErr: return err[Version, IdxError](rr.getErr)
+      v.rekor = some(rr.get)
     of "provenance":
       let pr = parseProvenance(doc, child)
       if pr.isErr: return err[Version, IdxError](pr.getErr)

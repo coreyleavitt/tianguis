@@ -4,7 +4,7 @@
 ## index. Bijection with the data model is the load-bearing property:
 ## parse(format(idx)) == idx.
 
-import std/[unittest, tables]
+import std/[unittest, options, strutils, tables]
 import tianguis/[model, json_io]
 
 suite "json roundtrip":
@@ -81,6 +81,49 @@ suite "json roundtrip":
     let parsed = parseJson(serialized)
     check parsed.isOk
     check parsed.get == original
+
+  test "rekor pointer round-trips through JSON (author-signed)":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "nkdl", namespace: "github.com/coreyleavitt",
+        upstream: "https://github.com/coreyleavitt/nkdl",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:dd907474",
+          attestation: "author-signed",
+          signedBy: "https://github.com/coreyleavitt",
+          publishedAt: "2026-06-08T01:18:24Z",
+          rekor: some(RekorRef(
+            uuid: "108e9186e8c5677a", logIndex: "1753541583",
+            integratedTime: "1780881469",
+          )),
+        )],
+      )],
+    )
+    let serialized = formatJson(original)
+    check "rekor" in serialized
+    let parsed = parseJson(serialized)
+    check parsed.isOk
+    check parsed.get == original
+
+  test "rekor=none emits no rekor key in JSON":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "vendored", namespace: "ns", upstream: "https://x/v",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:abc",
+          attestation: "milpa-vendored", signedBy: "milpa-bot",
+          publishedAt: "2026-06-06T00:00:00Z",
+          rekor: none(RekorRef),
+        )],
+      )],
+    )
+    let serialized = formatJson(original)
+    check "rekor" notin serialized
+    let parsed = parseJson(serialized)
+    check parsed.isOk
+    check parsed.get.packages[0].versions[0].rekor.isNone
 
   test "one-package zero-versions round-trips through JSON":
     let original = Index(

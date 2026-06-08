@@ -3,12 +3,35 @@
 ## KDL (`index.kdl`) and JSON (`index.json`) are projections of this model;
 ## the model is the canonical artifact, both serializations are derivable.
 
-import std/[algorithm, strutils, tables]
+import std/[algorithm, options, strutils, tables]
 
 type
   ProvenanceKind* = enum
     pkGit = "git"
     pkOci = "oci"
+
+  RekorRef* = object
+    ## Durable, publish-time-captured pointer to the Rekor transparency-log
+    ## entry for an author-signed artifact's `cosign sign` signature.
+    ##
+    ## Recorded once, at ingest, from the same `cosign verify --output json`
+    ## the commit-entry workflow already runs (Gate B). The site reads these
+    ## fields directly and renders a stable "view in Rekor" link — it no
+    ## longer re-derives the entry via a live `cosign verify` at every build,
+    ## which was the root cause of the recurring vanishing-link bug.
+    ##
+    ## Author-signed versions only; absent (`Version.rekor == none`) on
+    ## milpa-vendored entries, which carry no author cosign signature.
+    ##
+    ## `uuid` is the most durable identifier: the Rekor entry UUID is
+    ## content-addressed and shard-independent. `logIndex` is shard-relative
+    ## (an int) and `integratedTime` is convenience metadata; both are kept
+    ## because search.sigstore.dev accepts `?logIndex=` and they aid audit.
+    ## All three are stored as strings (the scalar-child KDL shape; avoids
+    ## the float-parse hazard of bare KDL numbers on the read side).
+    uuid*:           string  ## Rekor entry UUID (content-addressed) — primary link key
+    logIndex*:       string  ## Rekor logIndex (shard-relative int, as string)
+    integratedTime*: string  ## inclusion timestamp (epoch seconds, as string)
 
   Provenance* = object
     ## Discriminated union over transport kinds (per
@@ -32,6 +55,9 @@ type
     signedBy*:         string         ## URI identifying the signer
     publishedAt*:      string         ## ISO 8601 UTC timestamp
     provenances*:      seq[Provenance]
+    rekor*:            Option[RekorRef] ## author-signed: durable Rekor entry pointer
+                                        ## captured at publish (see RekorRef). `none`
+                                        ## on milpa-vendored versions.
     partiallyResolved*: bool           ## true when ≥1 bare `requires` entry could not
                                        ## be mapped to a qualified (namespace, name) pair;
                                        ## gates resolver correctness independently of edge
@@ -69,6 +95,7 @@ proc `==`*(a, b: Version): bool =
     a.signedBy == b.signedBy and
     a.publishedAt == b.publishedAt and
     a.provenances == b.provenances and
+    a.rekor == b.rekor and
     a.requires == b.requires and
     a.partiallyResolved == b.partiallyResolved
 

@@ -217,6 +217,66 @@ suite "cli add-entry":
       check pa[4] == '-' and pa[7] == '-' and pa[10] == 'T'
 
   # ---------------------------------------------------------------------------
+  # Durable Rekor reference — captured at publish, recorded on the version
+  # ---------------------------------------------------------------------------
+
+  test "rekor fields are recorded on the author-signed version":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let driver = FakeAddDriver(
+        expectedRef: "ghcr.io/coreyleavitt/nkdl@sha256:01c9ee",
+        contentHash: "sha256:dd907474",
+        commitSha:   "",
+      )
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "nkdl", version: "v0.1.0",
+          ociRef: "ghcr.io/coreyleavitt/nkdl@sha256:01c9ee",
+          upstream: "https://github.com/coreyleavitt/nkdl",
+          signedBy: "https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml@refs/heads/main",
+          publishedAt: "2026-06-08T01:18:24Z",
+          rekorUuid: "108e9186e8c5677abce5a62d285437741218f878474a02d9a4dac01dc12e39b979336e712890d636",
+          rekorLogIndex: "1753541583",
+          rekorIntegratedTime: "1780881469",
+        ),
+        driver = driver,
+      )
+      check code == 0
+      let parsed = parseKdl(readFile(tmp / "index.kdl"))
+      check parsed.isOk
+      let rk = parsed.get.packages[0].versions[0].rekor
+      check rk.isSome
+      check rk.get.uuid == "108e9186e8c5677abce5a62d285437741218f878474a02d9a4dac01dc12e39b979336e712890d636"
+      check rk.get.logIndex == "1753541583"
+      check rk.get.integratedTime == "1780881469"
+
+  test "no rekor flags → no rekor block on the version":
+    ## A publish where the workflow failed to capture any Rekor field must not
+    ## synthesize a hollow block; the version simply carries no pointer.
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let driver = FakeAddDriver(
+        expectedRef: "ghcr.io/x/y@sha256:abc",
+        contentHash: "sha256:zzz", commitSha: "",
+      )
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
+          upstream: "https://github.com/x/y",
+          signedBy: "https://github.com/x/y/.github/workflows/publish.yaml@refs/heads/main",
+          # rekor* all empty
+        ),
+        driver = driver,
+      )
+      check code == 0
+      check "rekor" notin readFile(tmp / "index.kdl")
+      let parsed = parseKdl(readFile(tmp / "index.kdl"))
+      check parsed.isOk
+      check parsed.get.packages[0].versions[0].rekor.isNone
+
+  # ---------------------------------------------------------------------------
   # Pull failure still returns exit 3 (unrelated to namespace derivation)
   # ---------------------------------------------------------------------------
 
