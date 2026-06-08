@@ -16,14 +16,14 @@ dep "nimcrypto" {
 }
 
 dep "nkdl" {
-    identity "sha256:c8ee4804c71d404260926fc44c4a2555e9af701e64d80b41dfd59afa7ca217c0"
+    identity "sha256:dd907474be3ae29640286d382525d3c49ef59e7f190219e4e45aa24a7766b277"
     version "0.0.1"
     src_dir "src"
     requires
     provenance {
         kind "git"
         url "ssh://git@github.com/coreyleavitt/nkdl.git"
-        ref "main"
-        commit_sha "f3ce655254e6bdeba9c215e4a88fe39703eac11e"
+        ref "v0.1.0"
+        commit_sha "f42588456ef03979913241c5ad80ca1529aa8f74"
     }
 }
