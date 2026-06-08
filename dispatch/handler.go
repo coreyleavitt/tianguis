@@ -1,6 +1,7 @@
 package function
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -36,6 +37,13 @@ type PublishRequest struct {
 type Dependencies struct {
 	OIDC   OIDCVerifier
 	GitHub GitHubAPI
+
+	// KeepaliveSecret gates POST /v1/keepalive. When empty the keepalive
+	// route is disabled (returns 503) — fail-closed, no insecure default.
+	// The Scaleway cron trigger sends this secret in the request body; it
+	// stops the public endpoint from letting anyone spend the App's GitHub
+	// API budget by hammering the enable calls.
+	KeepaliveSecret string
 }
 
 // NewRouter — R3a-era constructor. Kept for tests that don't exercise the
@@ -50,6 +58,13 @@ func NewRouter(verifier OIDCVerifier) http.Handler {
 func NewRouterWithDeps(deps Dependencies) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /v1/publish", publishHandler(deps))
+	// Scaleway cron triggers POST their args to the function ROOT ("/"), not a
+	// sub-path, so the keepalive heartbeat must be served there. POST /{$}
+	// matches ONLY the exact root (unmatched sub-paths stay 404). /v1/keepalive
+	// is also registered for explicit/manual invocation and parity with publish.
+	keepalive := keepaliveHandler(deps)
+	mux.HandleFunc("POST /v1/keepalive", keepalive)
+	mux.HandleFunc("POST /{$}", keepalive)
 	mux.HandleFunc("GET /healthz", healthHandler)
 	return mux
 }
@@ -60,6 +75,12 @@ const (
 	indexRepoName       = "tianguis"
 	commitEntryWorkflow = "commit-entry.yaml"
 )
+
+// keepaliveWorkflows is the set of schedule-triggered workflows the keepalive
+// heartbeat keeps enabled. Only `vendor.yaml` is cron-triggered today (the
+// rest are event-triggered and never auto-disabled). Add to this slice as
+// more cron workflows appear.
+var keepaliveWorkflows = []string{"vendor.yaml"}
 
 func publishHandler(deps Dependencies) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -128,6 +149,66 @@ func publishHandler(deps Dependencies) http.HandlerFunc {
 		}
 
 		writeJSON(w, http.StatusOK, map[string]string{"status": "accepted"})
+	}
+}
+
+// keepaliveRequest is the JSON body of POST /v1/keepalive. The shared secret
+// is carried in the body because Scaleway cron triggers deliver their `args`
+// as the request body (custom headers aren't available on a cron trigger).
+type keepaliveRequest struct {
+	Secret string `json:"secret"`
+}
+
+// keepaliveHandler re-enables the cron-triggered workflows so GitHub's 60-day
+// inactivity auto-disable can't permanently shut them off. Invoked by a
+// Scaleway cron trigger on a cadence well under 60 days. The trigger lives off
+// GitHub's inactivity clock, so this RECOVERS a workflow that has already been
+// disabled — the property an in-repo keepalive step structurally can't have
+// (a disabled workflow never runs its own keepalive).
+func keepaliveHandler(deps Dependencies) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if deps.KeepaliveSecret == "" {
+			writeError(w, http.StatusServiceUnavailable, "keepalive_disabled",
+				"keepalive is not configured (TIANGUIS_KEEPALIVE_SECRET unset)")
+			return
+		}
+
+		var req keepaliveRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "malformed_body", err.Error())
+			return
+		}
+		// Constant-time compare so the endpoint doesn't leak the secret via
+		// response timing. Mismatched lengths compare as not-equal.
+		if subtle.ConstantTimeCompare([]byte(req.Secret), []byte(deps.KeepaliveSecret)) != 1 {
+			writeError(w, http.StatusUnauthorized, "unauthorized", "invalid keepalive secret")
+			return
+		}
+
+		if deps.GitHub == nil {
+			writeError(w, http.StatusServiceUnavailable, "github_unconfigured",
+				"no GitHub client wired")
+			return
+		}
+
+		enabled := make([]string, 0, len(keepaliveWorkflows))
+		for _, wf := range keepaliveWorkflows {
+			if err := deps.GitHub.EnableWorkflow(r.Context(),
+				indexRepoOwner, indexRepoName, wf); err != nil {
+				// Fail loud on the first error so the cron run shows red and
+				// the next heartbeat retries; partial success is reported in
+				// the detail for observability.
+				writeError(w, http.StatusBadGateway, "enable_failed",
+					"enabled "+strings.Join(enabled, ",")+"; failed on "+wf+": "+err.Error())
+				return
+			}
+			enabled = append(enabled, wf)
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status":  "ok",
+			"enabled": enabled,
+		})
 	}
 }
 

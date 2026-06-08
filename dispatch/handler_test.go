@@ -477,8 +477,10 @@ func TestIdentityCrossCheck_NoRecognizedClaim(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 type fakeGitHub struct {
-	calls     []ghCall
-	returnErr error
+	calls       []ghCall
+	returnErr   error
+	enableCalls []ghCall
+	enableErr   error
 }
 
 type ghCall struct {
@@ -489,6 +491,11 @@ type ghCall struct {
 func (f *fakeGitHub) DispatchWorkflow(_ context.Context, owner, repo, workflowFile string, inputs map[string]string) error {
 	f.calls = append(f.calls, ghCall{owner, repo, workflowFile, inputs})
 	return f.returnErr
+}
+
+func (f *fakeGitHub) EnableWorkflow(_ context.Context, owner, repo, workflowFile string) error {
+	f.enableCalls = append(f.enableCalls, ghCall{owner, repo, workflowFile, nil})
+	return f.enableErr
 }
 
 func fullDeps(t *testing.T, ti *testIssuer, gh GitHubAPI) Dependencies {
@@ -606,5 +613,98 @@ func TestDryRun_StillEnforcesIdentityCheck(t *testing.T) {
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("dry-run must still enforce identity; want 403, got %d body=%s",
 			rec.Code, rec.Body.String())
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Keepalive — re-enable the cron-triggered workflow(s). Invoked by the
+// external Scaleway cron so GitHub's 60-day inactivity auto-disable can't
+// permanently shut the vendor cron off.
+// ---------------------------------------------------------------------------
+
+func doKeepalive(t *testing.T, h http.Handler, body []byte) *httptest.ResponseRecorder {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodPost, "/v1/keepalive", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	return rec
+}
+
+func TestKeepalive_DisabledWhenSecretUnset(t *testing.T) {
+	gh := &fakeGitHub{}
+	h := NewRouterWithDeps(Dependencies{GitHub: gh}) // no KeepaliveSecret
+	rec := doKeepalive(t, h, []byte(`{"secret":"anything"}`))
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("want 503 when keepalive unconfigured; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if len(gh.enableCalls) != 0 {
+		t.Fatalf("must not call GitHub when keepalive is disabled; got %d calls", len(gh.enableCalls))
+	}
+}
+
+func TestKeepalive_WrongSecretRejected(t *testing.T) {
+	gh := &fakeGitHub{}
+	h := NewRouterWithDeps(Dependencies{GitHub: gh, KeepaliveSecret: "correct-horse"})
+	rec := doKeepalive(t, h, []byte(`{"secret":"wrong"}`))
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("want 401 on wrong secret; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if len(gh.enableCalls) != 0 {
+		t.Fatalf("must not enable on bad secret; got %d calls", len(gh.enableCalls))
+	}
+}
+
+func TestKeepalive_EnablesVendorWorkflow(t *testing.T) {
+	gh := &fakeGitHub{}
+	h := NewRouterWithDeps(Dependencies{GitHub: gh, KeepaliveSecret: "correct-horse"})
+	rec := doKeepalive(t, h, []byte(`{"secret":"correct-horse"}`))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200 on valid keepalive; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if len(gh.enableCalls) != 1 {
+		t.Fatalf("want exactly one enable call; got %d", len(gh.enableCalls))
+	}
+	c := gh.enableCalls[0]
+	if c.owner != "coreyleavitt" || c.repo != "tianguis" || c.workflowFile != "vendor.yaml" {
+		t.Fatalf("enable targeted wrong workflow: %+v", c)
+	}
+}
+
+func TestKeepalive_EnableErrorReturns502(t *testing.T) {
+	gh := &fakeGitHub{enableErr: errors.New("github API 403")}
+	h := NewRouterWithDeps(Dependencies{GitHub: gh, KeepaliveSecret: "correct-horse"})
+	rec := doKeepalive(t, h, []byte(`{"secret":"correct-horse"}`))
+	if rec.Code != http.StatusBadGateway {
+		t.Fatalf("want 502 when enable fails; got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestKeepalive_ServedAtRootForScalewayCron(t *testing.T) {
+	// Scaleway cron triggers POST to "/", not "/v1/keepalive" — the heartbeat
+	// must work at the function root or the cron can't reach it.
+	gh := &fakeGitHub{}
+	h := NewRouterWithDeps(Dependencies{GitHub: gh, KeepaliveSecret: "correct-horse"})
+	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"secret":"correct-horse"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200 on root keepalive; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if len(gh.enableCalls) != 1 || gh.enableCalls[0].workflowFile != "vendor.yaml" {
+		t.Fatalf("root POST must enable vendor.yaml; got %+v", gh.enableCalls)
+	}
+}
+
+func TestKeepalive_MalformedBodyRejected(t *testing.T) {
+	gh := &fakeGitHub{}
+	h := NewRouterWithDeps(Dependencies{GitHub: gh, KeepaliveSecret: "correct-horse"})
+	rec := doKeepalive(t, h, []byte(`not json`))
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("want 400 on malformed body; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if len(gh.enableCalls) != 0 {
+		t.Fatalf("must not enable on malformed body; got %d calls", len(gh.enableCalls))
 	}
 }

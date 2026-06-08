@@ -80,6 +80,42 @@ func (c *ghAppClient) DispatchWorkflow(ctx context.Context, owner, repo, workflo
 	return fmt.Errorf("workflow_dispatch returned %d: %s", resp.StatusCode, string(respBody))
 }
 
+func (c *ghAppClient) EnableWorkflow(ctx context.Context, owner, repo, workflowFile string) error {
+	installID, err := c.installationIDFor(ctx, owner)
+	if err != nil {
+		return fmt.Errorf("locate installation for %s: %w", owner, err)
+	}
+	token, err := c.installationToken(ctx, installID)
+	if err != nil {
+		return fmt.Errorf("exchange JWT for installation token: %w", err)
+	}
+
+	// Same `actions: write` scope the dispatch path already uses, so no new
+	// App permission is required.
+	url := fmt.Sprintf(
+		"https://api.github.com/repos/%s/%s/actions/workflows/%s/enable",
+		owner, repo, workflowFile,
+	)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNoContent {
+		return nil // GH returns 204 on successful enable (and on already-enabled)
+	}
+	respBody, _ := io.ReadAll(resp.Body)
+	return fmt.Errorf("enable workflow returned %d: %s", resp.StatusCode, string(respBody))
+}
+
 // signJWT mints a fresh App JWT (~10 min validity per GitHub's recommendation).
 // Either appID or Client ID works as the iss claim; we use whatever
 // was passed at construction.

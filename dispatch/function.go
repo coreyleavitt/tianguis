@@ -69,6 +69,10 @@ func buildDeps(env func(string) string) (Dependencies, error) {
 	return Dependencies{
 		OIDC:   verifier,
 		GitHub: NewGitHubAppClient(appID, key),
+		// Optional: when unset, POST /v1/keepalive is disabled (503). The
+		// keepalive cron and this secret are configured together; absence
+		// just means the heartbeat feature is off.
+		KeepaliveSecret: env("TIANGUIS_KEEPALIVE_SECRET"),
 	}, nil
 }
 
