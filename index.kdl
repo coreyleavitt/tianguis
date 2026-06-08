@@ -36899,6 +36899,18 @@ package "nimics" {
 package "nimletter" {
     namespace "github.com/thomastjdev"
     upstream (url)"https://github.com/ThomasTJdev/nimletter"
+    version "0.9.6" {
+        content_hash "sha256:1d9d40c9d9270cc682157abb7581eaa2eb114773454c084977c21e2df5e82a3c"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/ThomasTJdev/nimletter"
+            ref "v0.9.6"
+            commit_sha "a0a59264f6f8bd3c0ba187e78b90c254620bfd6d"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-08T07:51:13Z"
+    }
     version "0.9.4" {
         content_hash "sha256:55d07bede4915db2b838d894c58f355c33d719d02487e4fdcf8ac7c779b80e02"
         provenance {
@@ -41363,6 +41375,18 @@ package "package_visible_types" {
 package "redpool" {
     namespace "github.com/zedeus"
     upstream (url)"https://github.com/zedeus/redpool"
+    version "0.2.2" {
+        content_hash "sha256:63c00b2824c817761f0fe0ea8920151ce2a808b22ffeb452d703394397ec487a"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/zedeus/redpool"
+            ref "v0.2.2"
+            commit_sha "fc7869f83d168e6ca1413fe97873140fd5805183"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-08T07:51:13Z"
+    }
     version "0.2.0" {
         content_hash "sha256:607f4521827a75f3e8849a37d7b4652ac773cc1adc324b9d9ddbccbdf65ce028"
         provenance {
