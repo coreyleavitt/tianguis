@@ -140,6 +140,22 @@ jobs:
             echo "TIANGUIS_KEEPALIVE_SECRET unset — skipping keepalive cron provisioning"
             exit 0
           fi
+
+          # `scw function deploy` is async; the function is in a blocking state
+          # (pending/deploying) for a bit afterward and rejects cron mutations.
+          # Wait for it to settle to `ready` before provisioning the cron.
+          echo "Waiting for function to be ready..."
+          for _ in $(seq 1 60); do
+            status=$(scw function function get "$FUNCTION_ID" -o json | jq -r '.status')
+            echo "  status=$status"
+            [[ "$status" == "ready" ]] && break
+            [[ "$status" == "error" ]] && { echo "function in error state"; exit 1; }
+            sleep 10
+          done
+          if [[ "$status" != "ready" ]]; then
+            echo "function did not reach ready state in time"; exit 1
+          fi
+
           # jq --arg JSON-escapes the secret into the cron body safely.
           args=$(jq -nc --arg s "$KEEPALIVE_SECRET" '{secret:$s}')
           schedule="0 8 1,15 * *"   # 08:00 UTC, 1st & 15th — 4 beats / 60-day window
