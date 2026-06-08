@@ -114,13 +114,39 @@ jobs:
           ref=$(echo "${ref}" | tr '[:upper:]' '[:lower:]')
           echo "registry=${ref}" >> "$GITHUB_OUTPUT"
 
-          # cosign keyless signer identity = the workflow that actually
-          # runs `cosign sign`. For a reusable-workflow architecture
-          # that's the REUSABLE workflow's path, not the caller's. The
-          # @ref portion varies (refs/heads/main, refs/tags/v1, SHA),
-          # so we pass a known-good pattern; commit-entry.yaml uses
-          # cosign's --certificate-identity-regexp to match across refs.
-          echo "signed_by=https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml" >> "$GITHUB_OUTPUT"
+          # cosign keyless signer identity = the workflow that actually runs
+          # `cosign sign`. In a reusable-workflow architecture Fulcio stamps the
+          # cert SAN with THIS reusable workflow's `job_workflow_ref`, not the
+          # caller's (verified live: a publish through here yields SAN
+          # https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml@<ref>).
+          # The @<ref> varies (refs/heads/main, refs/tags/v1, SHA); we strip it
+          # and commit-entry.yaml matches across refs via
+          # --certificate-identity-regexp.
+          #
+          # #30: self-derive the path from the OIDC token's job_workflow_ref
+          # claim instead of hardcoding, so a fork of this repo needs no
+          # find/replace. NOTE: GITHUB_WORKFLOW_REF can't be used here — for a
+          # reusable workflow it is the CALLER's ref, which would derive the
+          # wrong (author) identity. Fall back to the canonical path if the
+          # OIDC lookup fails: signer derivation must never break a publish.
+          DEFAULT_SIGNER="https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml"
+          signer="$DEFAULT_SIGNER"
+          if [[ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" && -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
+            tok=$(curl -sf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sigstore" | jq -r '.value // empty' || true)
+            if [[ -n "$tok" ]]; then
+              # Decode the JWT payload (2nd segment, base64url) and read the claim.
+              payload=$(echo "$tok" | cut -d. -f2)
+              case $(( ${#payload} % 4 )) in 2) payload="${payload}==";; 3) payload="${payload}=";; esac
+              claim=$(echo "$payload" | tr '_-' '/+' | base64 -d 2>/dev/null \
+                | jq -r '.job_workflow_ref // empty' 2>/dev/null || true)
+              if [[ -n "$claim" ]]; then
+                signer="https://github.com/${claim%@*}"
+              fi
+            fi
+          fi
+          echo "Resolved cosign signer identity: ${signer}"
+          echo "signed_by=${signer}" >> "$GITHUB_OUTPUT"
 
       - name: milpa publish
         env:

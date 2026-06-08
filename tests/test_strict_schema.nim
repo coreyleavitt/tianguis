@@ -4,7 +4,7 @@
 ## errors carrying a stable IDX-* code consumers can rely on (the
 ## bijection discipline carried over from milpa's error catalog).
 
-import std/[unittest, options]
+import std/[unittest, options, strutils]
 import tianguis/[model, kdl_io, json_io]
 
 suite "kdl strict schema":
@@ -109,4 +109,70 @@ suite "json strict schema":
 
   test "valid empty index parses without error":
     let parsed = parseJson("""{"schema_version":1,"packages":[]}""")
+    check parsed.isOk
+
+  # #16 — nested strict-schema parity with KDL: unknown keys inside package,
+  # version, provenance, and rekor objects are rejected (not silently ignored).
+
+  test "unknown key inside package object rejected with IDX-NODE-UNKNOWN":
+    let parsed = parseJson("""
+      {"schema_version":1,"packages":[
+        {"name":"x","namespace":"ns","upstream":"https://x","bogus":1}
+      ]}""")
+    check parsed.isErr
+    check parsed.getErr.code == iecUnknownNode
+    check "bogus" in parsed.getErr.message
+    check "packages[0]" in parsed.getErr.message
+
+  test "unknown key inside version object rejected with IDX-NODE-UNKNOWN":
+    let parsed = parseJson("""
+      {"schema_version":1,"packages":[
+        {"name":"x","namespace":"ns","upstream":"https://x","versions":[
+          {"version":"0.1.0","content_hash":"sha256:a","bogus":true}
+        ]}
+      ]}""")
+    check parsed.isErr
+    check parsed.getErr.code == iecUnknownNode
+    check "packages[0].versions[0]" in parsed.getErr.message
+
+  test "unknown key inside provenance object rejected with IDX-NODE-UNKNOWN":
+    let parsed = parseJson("""
+      {"schema_version":1,"packages":[
+        {"name":"x","namespace":"ns","upstream":"https://x","versions":[
+          {"version":"0.1.0","content_hash":"sha256:a","provenances":[
+            {"kind":"git","url":"https://x","bogus":"y"}
+          ]}
+        ]}
+      ]}""")
+    check parsed.isErr
+    check parsed.getErr.code == iecUnknownNode
+    check "provenances[0]" in parsed.getErr.message
+
+  test "unknown key inside rekor object rejected with IDX-NODE-UNKNOWN":
+    let parsed = parseJson("""
+      {"schema_version":1,"packages":[
+        {"name":"x","namespace":"ns","upstream":"https://x","versions":[
+          {"version":"0.1.0","content_hash":"sha256:a",
+           "rekor":{"uuid":"abc","bogus":"y"}}
+        ]}
+      ]}""")
+    check parsed.isErr
+    check parsed.getErr.code == iecUnknownNode
+    check ".rekor" in parsed.getErr.message
+
+  test "valid fully-nested index (with rekor) parses without error":
+    let parsed = parseJson("""
+      {"schema_version":1,"packages":[
+        {"name":"nkdl","namespace":"github.com/coreyleavitt",
+         "upstream":"https://github.com/coreyleavitt/nkdl","versions":[
+          {"version":"0.1.0","content_hash":"sha256:dd",
+           "requires":{"chronos":"^0.5.0"},
+           "provenances":[{"kind":"oci","registry":"ghcr.io",
+             "repository":"coreyleavitt/nkdl","digest":"sha256:01"}],
+           "attestation":"author-signed","signed_by":"https://github.com/coreyleavitt",
+           "published_at":"2026-06-08T01:18:24Z",
+           "rekor":{"uuid":"108e9186","log_index":"1753541583",
+             "integrated_time":"1780881469"}}
+        ]}
+      ]}""")
     check parsed.isOk

@@ -157,13 +157,75 @@ proc packageFromJson(node: JsonNode): Package =
     versions:  versions,
   )
 
-const TopLevelKeys = ["schema_version", "packages"]
+# ---------------------------------------------------------------------------
+# Strict-schema validation (#16) — parity with parseKdl's per-context
+# IDX-NODE-UNKNOWN rejection. JSON has no native line/col, so the location is
+# a path-style context string (e.g. "packages[0].versions[0]"). The allowed
+# key sets mirror the KDL child whitelists in kdl_io (package/version/
+# provenance/rekor); `requires` keys are dynamic dep names (data, not schema)
+# and are intentionally not validated, exactly as on the KDL side.
+# ---------------------------------------------------------------------------
+
+const
+  TopLevelKeys       = ["schema_version", "packages"]
+  JsonPackageKeys    = ["name", "namespace", "upstream", "versions"]
+  JsonVersionKeys    = ["version", "content_hash", "requires", "provenances",
+                        "attestation", "signed_by", "published_at", "rekor"]
+  JsonProvenanceKeys = ["kind", "url", "ref", "commit_sha",
+                        "registry", "repository", "digest"]
+  JsonRekorKeys      = ["uuid", "log_index", "integrated_time"]
+
+proc unknownKeyIn(node: JsonNode, allowed: openArray[string],
+                  ctx: string): Option[IdxError] =
+  ## Strict membership for a JSON object's keys; `none` when all keys are in
+  ## `allowed`. Non-objects are skipped (their shape is checked elsewhere).
+  if node.kind != JObject: return none(IdxError)
+  for k, _ in node:
+    if k notin allowed:
+      return some(initIndexError(
+        iecUnknownNode, "unknown key '" & k & "' in " & ctx))
+  none(IdxError)
+
+proc validateVersionJson(node: JsonNode, ctx: string): Option[IdxError] =
+  let e = unknownKeyIn(node, JsonVersionKeys, ctx)
+  if e.isSome: return e
+  let provs = node{"provenances"}
+  if provs != nil and provs.kind == JArray:
+    for i, p in provs.elems:
+      let pe = unknownKeyIn(p, JsonProvenanceKeys,
+                            ctx & ".provenances[" & $i & "]")
+      if pe.isSome: return pe
+  let rekor = node{"rekor"}
+  if rekor != nil and rekor.kind == JObject:
+    let re = unknownKeyIn(rekor, JsonRekorKeys, ctx & ".rekor")
+    if re.isSome: return re
+  none(IdxError)
+
+proc validatePackageJson(node: JsonNode, ctx: string): Option[IdxError] =
+  let e = unknownKeyIn(node, JsonPackageKeys, ctx)
+  if e.isSome: return e
+  let versions = node{"versions"}
+  if versions != nil and versions.kind == JArray:
+    for i, v in versions.elems:
+      let ve = validateVersionJson(v, ctx & ".versions[" & $i & "]")
+      if ve.isSome: return ve
+  none(IdxError)
+
+proc validateIndexJson(node: JsonNode): Option[IdxError] =
+  let e = unknownKeyIn(node, TopLevelKeys, "(root)")
+  if e.isSome: return e
+  let pkgs = node{"packages"}
+  if pkgs != nil and pkgs.kind == JArray:
+    for i, p in pkgs.elems:
+      let pe = validatePackageJson(p, "packages[" & $i & "]")
+      if pe.isSome: return pe
+  none(IdxError)
 
 proc parseJson*(s: string): Result[Index, IdxError] =
-  ## Parse canonical JSON into an Index. Strict-schema: unknown keys
-  ## at the root produce IDX-NODE-UNKNOWN. Nested strict-schema for
-  ## package/version/provenance lands when the JSON path catches up to
-  ## the KDL path.
+  ## Parse canonical JSON into an Index. Strict-schema at every level:
+  ## unknown keys in the root, package, version, provenance, or rekor objects
+  ## produce IDX-NODE-UNKNOWN with a path-style location (#16 — parity with
+  ## parseKdl).
   let node = try:
     stdjson.parseJson(s)
   except JsonParsingError as e:
@@ -174,11 +236,9 @@ proc parseJson*(s: string): Result[Index, IdxError] =
     return err[Index, IdxError](initIndexError(
       iecBadType, "root must be a JSON object, got " & $node.kind
     ))
-  for k, _ in node:
-    if k notin TopLevelKeys:
-      return err[Index, IdxError](initIndexError(
-        iecUnknownNode, "unknown top-level key '" & k & "'"
-      ))
+  let verr = validateIndexJson(node)
+  if verr.isSome:
+    return err[Index, IdxError](verr.get)
   let sv = node{"schema_version"}.getInt(0)
   var packages: seq[Package] = @[]
   let pkgsNode = node{"packages"}
