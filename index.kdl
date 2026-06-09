@@ -7687,6 +7687,18 @@ package "cap10" {
 package "chalk" {
     namespace "github.com/crashappsec"
     upstream (url)"https://github.com/crashappsec/chalk"
+    version "1.1.0" {
+        content_hash "sha256:34b4a62a1091a0409adc35697268cb2d3ed58b22b5830164077408f9ff01be31"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/crashappsec/chalk"
+            ref "v1.1.0"
+            commit_sha "036059e3c23ca38bbc2f28645f2936198c2e98b8"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-09T07:21:56Z"
+    }
     version "1.0.2" {
         content_hash "sha256:cbfd22de4f7dda75c14151ff999fb7acce5c7663baa05632ecc8895c1fe220f2"
         provenance {
@@ -25643,6 +25655,18 @@ package "simdX86" {
 package "crown" {
     namespace "github.com/nimmer-jp"
     upstream (url)"https://github.com/nimmer-jp/crown"
+    version "0.6.0" {
+        content_hash "sha256:5ad7e7c1cd9e3fc4b8bb90d73e392d1328a290ed4f48d8f9ad918eb901082664"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/nimmer-jp/crown"
+            ref "0.6.0"
+            commit_sha "0fdd448cf9bc3a12c522fcb221f06d1e069ac656"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-09T07:21:56Z"
+    }
     version "0.5.8" {
         content_hash "sha256:d5921612ed57f278c4073302c296cf3b572e5275ff7356f29072a4d171a2f75e"
         provenance {
@@ -26959,6 +26983,18 @@ package "bro" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
     }
+    version "0.0.0+commit-1130ede" {
+        content_hash "sha256:07ca1f382b25ef63627a296e5651f71b46c43c6691a3b74dbd344845dea2f7cf"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/openpeeps/bro"
+            ref "HEAD"
+            commit_sha "1130edefe762b67fbc0509c0b1093fb081427f4a"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-09T07:21:56Z"
+    }
 }
 package "crossdb" {
     namespace "github.com/openpeeps"
@@ -27411,6 +27447,18 @@ package "openparser" {
 package "oris" {
     namespace "github.com/openpeeps"
     upstream (url)"https://github.com/openpeeps/oris"
+    version "0.0.0+commit-523f8b3" {
+        content_hash "sha256:b47e35b2867a960c2ef58c03ff5d08b3d9b845c93a6bc897a61fe765c2bf9084"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/openpeeps/oris"
+            ref "HEAD"
+            commit_sha "523f8b39ea41df7013f262f55631ac74f586141a"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-09T07:21:56Z"
+    }
     version "0.0.0+commit-313f821" {
         content_hash "sha256:7cf2cc36e69bcc3d9654e4c67b670450f33e3bf945e1ec64cc0bbe7012168c54"
         provenance {
@@ -34195,6 +34243,18 @@ package "presto" {
 package "protobuf_serialization" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-protobuf-serialization"
+    version "0.5.0" {
+        content_hash "sha256:aee3dd8acb1664c2375b44259be4ce3bcdfb4c2ea81ee02d939e8e351b77a733"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-protobuf-serialization"
+            ref "v0.5.0"
+            commit_sha "f45476a3c1f4e7bff73845e6450d686be040ddeb"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-09T07:21:56Z"
+    }
     version "0.4.0" {
         content_hash "sha256:85207fe569c1c9b8e89fd2dda46a9eddf8c307d298c7836d3b34050e7a1b44cc"
         provenance {
@@ -38935,6 +38995,18 @@ package "intops" {
 package "libp2p" {
     namespace "github.com/vacp2p"
     upstream (url)"https://github.com/vacp2p/nim-libp2p"
+    version "2.0.0" {
+        content_hash "sha256:db2a84f58d251f7936b41713f08d13a2458f1aa5c7bbf3a032e737ff505f3049"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/vacp2p/nim-libp2p"
+            ref "v2.0.0"
+            commit_sha "c43199378f46d0aaf61be1cad1ee1d63e8f665d6"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-09T07:21:56Z"
+    }
     version "1.15.3" {
         content_hash "sha256:04926170802290f0471cd64fde9e1e0ee44b0cbb2eb0021e745ef5fad3331f18"
         provenance {
