@@ -11,7 +11,6 @@
 import std/[httpclient, osproc, os, strutils, tempfiles]
 import ./orchestrate
 import ./upstream
-import ../identity
 import ../errors
 
 const NimLangPackagesUrl* =
@@ -80,7 +79,16 @@ method shallowCloneAndHash*(d: RealDriver, url, refName: string): CloneResult =
   if code != 0:
     raise newException(IOError, "git clone failed: " & output)
   let sha = strip(gitOutput(["-C", quoteShell(tmp), "rev-parse", "HEAD"]))
+  # Delegate identity computation to the SSOT: `milpa hash git=<url> ref=<sha>`.
+  # After the shallow clone the commit SHA is known; we pass it as the pinned
+  # ref so milpa re-materializes through its own FetcherRegistry and emits the
+  # canonical dag-sha256 identity string — no local hashing in tianguis.
+  let (hashOut, hashCode) = execCmdEx(
+    "milpa hash " & quoteShell("git=" & url) & " " & quoteShell("ref=" & sha))
+  if hashCode != 0:
+    raise newException(IOError,
+      "milpa hash failed (exit " & $hashCode & "): " & hashOut)
   CloneResult(
-    contentHash: computeContentHash(tmp),
+    contentHash: strip(hashOut),
     commitSha:   sha,
   )

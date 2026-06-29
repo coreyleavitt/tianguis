@@ -62,6 +62,16 @@ jobs:
       - name: Fetch deps via milpa
         run: uv run --project .milpa-tool python -m milpa fetch
 
+      - name: Expose milpa on PATH
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          cat > "$HOME/.local/bin/milpa" <<'SH'
+          #!/usr/bin/env bash
+          exec uv run --project "$GITHUB_WORKSPACE/.milpa-tool" python -m milpa "$@"
+          SH
+          chmod +x "$HOME/.local/bin/milpa"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
       - name: Run unit tests
         run: |
           for f in tests/test_*.nim; do
