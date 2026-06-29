@@ -40,7 +40,12 @@ jobs:
       - name: Set up uv (for milpa)
         uses: astral-sh/setup-uv@v7
         with:
-          enable-cache: true
+          # Cache disabled: setup-uv's cache-dependency-glob recursively walks
+          # the workspace (incl. the cloned .milpa-tool/), and milpa's
+          # conformance corpus carries an intentional cyclic-symlink fixture
+          # (fixture-309-ws-member-cyclic-symlink) that ELOOPs the walk. The
+          # cache only saves seconds on milpa's small pydep set.
+          enable-cache: false
 
       - name: Install milpa deps
         working-directory: .milpa-tool
