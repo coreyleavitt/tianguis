@@ -48,7 +48,7 @@ jobs:
           enable-cache: false
 
       - name: Install milpa deps
-        working-directory: .milpa-tool
+        working-directory: .milpa-tool/impls/python
         run: uv sync
 
       - name: Expose milpa on PATH
@@ -56,13 +56,13 @@ jobs:
           mkdir -p "$HOME/.local/bin"
           cat > "$HOME/.local/bin/milpa" <<'SH'
           #!/usr/bin/env bash
-          exec uv run --project "$GITHUB_WORKSPACE/.milpa-tool" python -m milpa "$@"
+          exec uv run --project "$GITHUB_WORKSPACE/.milpa-tool/impls/python" python -m milpa "$@"
           SH
           chmod +x "$HOME/.local/bin/milpa"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Fetch deps via milpa
-        run: uv run --project .milpa-tool python -m milpa fetch
+        run: uv run --project .milpa-tool/impls/python python -m milpa fetch
 
       - name: Build tianguis CLI
         run: nim c -d:release -d:ssl -o:tianguis src/tianguis_cli.nim

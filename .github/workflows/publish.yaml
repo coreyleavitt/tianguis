@@ -73,12 +73,7 @@ jobs:
       - name: Set up uv (Python runtime for milpa)
         uses: astral-sh/setup-uv@v7
         with:
-          # Cache disabled: setup-uv's cache-dependency-glob recursively walks
-          # the workspace (incl. the cloned .milpa-tool/), and milpa's
-          # conformance corpus carries an intentional cyclic-symlink fixture
-          # (fixture-309-ws-member-cyclic-symlink) that ELOOPs the walk. The
-          # cache only saves seconds on milpa's small pydep set.
-          enable-cache: false
+          enable-cache: true
 
       - name: Install milpa CLI
         env:
@@ -88,9 +83,9 @@ jobs:
           # succeeds. Once milpa goes public this whole branch collapses
           # to the unauthenticated install.
           if [[ -n "${MILPA_TOKEN}" ]]; then
-            uv tool install "git+https://x-access-token:${MILPA_TOKEN}@github.com/coreyleavitt/milpa.git@main"
+            uv tool install "git+https://x-access-token:${MILPA_TOKEN}@github.com/coreyleavitt/milpa.git@main#subdirectory=impls/python"
           else
-            uv tool install git+https://github.com/coreyleavitt/milpa.git@main
+            uv tool install "git+https://github.com/coreyleavitt/milpa.git@main#subdirectory=impls/python"
           fi
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
