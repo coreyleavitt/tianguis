@@ -11627,6 +11627,18 @@ package "simdutf" {
 package "stylus" {
     namespace "github.com/ferus-web"
     upstream (url)"https://github.com/ferus-web/stylus"
+    version "0.1.5" {
+        content_hash "dag-sha256:096e9ea24e18b8f0f38acae3197283f92365e01a80b90df716a33d771a05d725"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/ferus-web/stylus"
+            ref "0.1.5"
+            commit_sha "2da8f3c4d947c20078ae1b13960e8cefbeb32ea4"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-30T07:24:44Z"
+    }
     version "0.1.4" {
         content_hash "dag-sha256:485adb9ed86ec822827e5ed205cf5cd096fe91d8a2cd4603af0a8b019409151a"
         provenance {
@@ -24631,6 +24643,18 @@ package "nextract" {
 package "nexum" {
     namespace "github.com/nim-community"
     upstream (url)"https://github.com/nim-community/nexum"
+    version "0.0.0+commit-c7ad2cb" {
+        content_hash "dag-sha256:5034cdadc9445c68898316fed8432d098d91b19cd433a14f99e164700f6aad46"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/nim-community/nexum"
+            ref "HEAD"
+            commit_sha "c7ad2cbd4d1a202277abbb47f54b6fc0648161ef"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-30T07:24:44Z"
+    }
     version "0.0.0+commit-34c96f3" {
         content_hash "dag-sha256:6955b4a26809dc6d331d1d2cbf32bf6058c46e369486742cff62b47885d6c091"
         provenance {
@@ -33471,6 +33495,18 @@ package "testify" {
 package "seaqt" {
     namespace "github.com/seaqt"
     upstream (url)"https://github.com/seaqt/nim-seaqt"
+    version "qt-6.4-seaqt-gen-5bc1bc586192c3c5cd5bd9e7e51be0f5ce8c744e" {
+        content_hash "dag-sha256:2db908ed2a8fa2957636f283502b33c531a537842e4194c63f1459b8561ea429"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/seaqt/nim-seaqt"
+            ref "qt-6.4-seaqt-gen-5bc1bc586192c3c5cd5bd9e7e51be0f5ce8c744e"
+            commit_sha "2d95808bdd9f6dd2c212b69a57af4618da241d37"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-06-30T07:24:44Z"
+    }
     version "0.0.0+commit-c534392" {
         content_hash "dag-sha256:01f5f78a7c70a431f1e4cc75227c635511dfef9282a130f84f68c681dc88178c"
         provenance {
