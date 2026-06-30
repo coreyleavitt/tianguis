@@ -3,6 +3,8 @@
 ## Subcommands:
 ##   project [--check]   regenerate / verify index.json from index.kdl
 ##   vendor              run one vendor-en-absentia pass
+##   reindex             epoch-migration: re-vendor all packages, re-baseline
+##                       content_hash to dag-sha256 (one-shot, auditable)
 ##   add-entry           add an author-signed entry from dispatched payload
 ##                       (invoked by .github/workflows/commit-entry.yaml)
 ##   migrate [--execute] one-time #32 namespace migration (dry-run by default)
@@ -17,6 +19,7 @@ proc usage(): int =
   echo ""
   echo "  project [--check]   regenerate index.json from index.kdl"
   echo "  vendor              run one vendor-en-absentia pass against nim-lang/packages.json"
+  echo "  reindex             epoch-migration: re-vendor all packages and re-baseline content_hash to dag-sha256"
   echo "  add-entry           add an author-signed entry; consumed from commit-entry.yaml"
   echo "    --name --version --oci-ref --upstream --signed-by [--published-at]"
   echo "    [--rekor-uuid --rekor-log-index --rekor-integrated-time]"
@@ -86,6 +89,8 @@ proc main(): int =
     return cmdProject(getCurrentDir(), check = check)
   of "vendor":
     return cmdVendor(getCurrentDir())
+  of "reindex":
+    return cmdReindex(getCurrentDir())
   of "show":
     if showUrl == "":
       stderr.writeLine("tianguis show: missing <url> argument")

@@ -37,13 +37,15 @@ type
     mokIdentityDrift  ## stored host/org namespace != re-derived (immutability violation; reject)
     mokCollision      ## intra-org leaf-name collision, different repo (reject-new/preserve-existing)
     mokContentDrift   ## same (namespace,name,version), different content_hash (reject incoming, warn)
+    mokRebaselined    ## epoch-migration: content_hash updated from old scheme to new (audit only)
 
   MergeOutcome* = object
     case kind*: MergeOutcomeKind
     of mokAdded, mokIdempotent: discard
-    of mokIdentityDrift: identity*:  IdentityDrift      ## defined in namespace.nim
-    of mokCollision:     collision*: IntraOrgCollision  ## defined in vendor/merge.nim
-    of mokContentDrift:  content*:   DriftAlert         ## defined in vendor/merge.nim
+    of mokIdentityDrift: identity*:    IdentityDrift      ## defined in namespace.nim
+    of mokCollision:     collision*:   IntraOrgCollision  ## defined in vendor/merge.nim
+    of mokContentDrift:  content*:     DriftAlert         ## defined in vendor/merge.nim
+    of mokRebaselined:   rebaseline*:  DriftAlert         ## old→new hash; audit trail
 
 const
   AttestationMilpaVendored = "milpa-vendored"
@@ -193,6 +195,106 @@ proc mergeVendored*(idx: Index, entry: VendoredEntry): tuple[index: Index, outco
       )
 
   # --- New version on an existing package ---
+  existingVersions.add(entry.version)
+  packages[foundPkgIdx].versions = existingVersions
+  (
+    index:   Index(schemaVersion: idx.schemaVersion, packages: packages),
+    outcome: MergeOutcome(kind: mokAdded),
+  )
+
+proc mergeRebaseline*(idx: Index, entry: VendoredEntry): tuple[index: Index, outcome: MergeOutcome] =
+  ## Epoch-migration variant of mergeVendored: identical in every check EXCEPT
+  ## the content-drift branch. When an existing (namespace, name, version) is
+  ## found with a DIFFERENT content_hash, instead of rejecting (mokContentDrift),
+  ## this proc UPDATES the stored hash to the incoming epoch-2 value and returns
+  ## mokRebaselined so the caller persists the mutated index.
+  ##
+  ## ALL other protections remain enforced:
+  ##   mokIdentityDrift — namespace identity immutability guard (still rejects)
+  ##   mokCollision     — intra-org leaf-name collision (still rejects)
+  ##   mokIdempotent    — incoming hash already matches stored (still a no-op)
+  ##
+  ## This is the ONLY merge proc that may mutate an existing version's
+  ## content_hash. Normal vendoring NEVER does this (see mergeVendored).
+  var packages = idx.packages
+  var foundPkgIdx = -1
+  for i, p in packages:
+    if (p.namespace, p.name) == (entry.package.namespace, entry.package.name):
+      foundPkgIdx = i
+      break
+
+  if foundPkgIdx < 0:
+    var newPkg = entry.package
+    newPkg.versions = @[entry.version]
+    packages.add(newPkg)
+    return (
+      index:   Index(schemaVersion: idx.schemaVersion, packages: packages),
+      outcome: MergeOutcome(kind: mokAdded),
+    )
+
+  # --- Priority 1: identity drift (immutability guard — unchanged from mergeVendored) ---
+  let storedNs = packages[foundPkgIdx].namespace
+  if '/' in storedNs:
+    let rederivedResult = deriveVersionNamespace(entry.version)
+    if rederivedResult.isOk:
+      let rederived = rederivedResult.get
+      let driftOpt = checkIdentityStable(entry.package.name, storedNs, rederived)
+      if driftOpt.isSome:
+        return (
+          index:   idx,
+          outcome: MergeOutcome(kind: mokIdentityDrift, identity: driftOpt.get),
+        )
+    else:
+      return (
+        index:   idx,
+        outcome: MergeOutcome(kind: mokIdentityDrift, identity: IdentityDrift(
+          name:               entry.package.name,
+          storedNamespace:    storedNs,
+          rederivedNamespace: "",
+        )),
+      )
+
+  # --- Priority 2: intra-org leaf collision (unchanged from mergeVendored) ---
+  let existingRepoSeg = gitProvenanceRepo(packages[foundPkgIdx])
+  let incomingRepoSeg =
+    block:
+      let r = deriveRepo(entry.package.upstream)
+      if r.isOk: r.get.repo else: ""
+  if existingRepoSeg.len > 0 and incomingRepoSeg.len > 0 and
+      existingRepoSeg != incomingRepoSeg:
+    return (
+      index:   idx,
+      outcome: MergeOutcome(kind: mokCollision, collision: IntraOrgCollision(
+        namespace:    entry.package.namespace,
+        name:         entry.package.name,
+        existingRepo: existingRepoSeg,
+        newRepo:      incomingRepoSeg,
+      )),
+    )
+
+  # --- Priority 3 (REBASELINE): same version, different hash — UPDATE, do not reject ---
+  var existingVersions = packages[foundPkgIdx].versions
+  for i, v in existingVersions:
+    if v.version == entry.version.version:
+      if v.contentHash == entry.version.contentHash:
+        # Idempotent — hash already matches epoch-2 form; nothing to do.
+        return (index: idx, outcome: MergeOutcome(kind: mokIdempotent))
+      # Re-baseline: overwrite stored hash with incoming epoch-2 value.
+      let alert = DriftAlert(
+        packageName:  entry.package.name,
+        namespace:    entry.package.namespace,
+        version:      entry.version.version,
+        existingHash: v.contentHash,
+        newHash:      entry.version.contentHash,
+      )
+      existingVersions[i].contentHash = entry.version.contentHash
+      packages[foundPkgIdx].versions = existingVersions
+      return (
+        index:   Index(schemaVersion: idx.schemaVersion, packages: packages),
+        outcome: MergeOutcome(kind: mokRebaselined, rebaseline: alert),
+      )
+
+  # --- New version on existing package (no drift; append as normal) ---
   existingVersions.add(entry.version)
   packages[foundPkgIdx].versions = existingVersions
   (

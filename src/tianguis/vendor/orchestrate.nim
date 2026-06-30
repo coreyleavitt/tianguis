@@ -54,11 +54,18 @@ proc runVendor*(
     denylist:      Denylist,
     initialAlerts: string,
     nowIso:        string,
+    rebaseline:    bool = false,
 ): VendorRunResult =
   ## Walk every upstream package; for each one not denylisted, fetch
   ## tags + HEAD, select the right tag, shallow-clone-and-hash, merge
   ## the resulting entry into the index. Drift and collision alerts append
   ## to the alerts log.
+  ##
+  ## When `rebaseline` is true (epoch-migration mode), uses mergeRebaseline
+  ## instead of mergeVendored: existing content_hashes for known (namespace,
+  ## name, version) triples are REPLACED by the incoming epoch-2 dag-sha256
+  ## value rather than triggering a drift alert. Identity and collision
+  ## protections remain enforced regardless of this flag.
   var idx = initialIndex
   var alerts = initialAlerts
   var skipped: seq[string] = @[]
@@ -120,7 +127,9 @@ proc runVendor*(
         continue
 
       let entry = entryResult.get
-      let (newIdx, outcome) = mergeVendored(idx, entry)
+      let (newIdx, outcome) =
+        if rebaseline: mergeRebaseline(idx, entry)
+        else: mergeVendored(idx, entry)
       case outcome.kind
       of mokAdded:
         # Only commit the mutated index on an actual add.
@@ -128,6 +137,13 @@ proc runVendor*(
       of mokIdempotent:
         # Safe no-op write avoided — index already contains identical entry.
         discard
+      of mokRebaselined:
+        # Epoch-migration: commit updated index and emit auditable log line.
+        idx = newIdx
+        let rb = outcome.rebaseline
+        stderr.writeLine("reindex: REBASELINE " &
+          rb.namespace & "/" & rb.packageName & "@" & rb.version & " " &
+          rb.existingHash & "→" & rb.newHash)
       of mokIdentityDrift:
         alerts = appendAlert(alerts, outcome.identity, detectedAt = nowIso)
         stderr.writeLine("tianguis: vendor: IDX-IDENTITY-DRIFT: " &

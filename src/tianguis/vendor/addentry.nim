@@ -191,4 +191,8 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
     stderr.writeLine("tianguis: add-entry: IDX-CONTENT-DRIFT: " &
       outcome.content.packageName & " " & outcome.content.version)
     return 1
+  of mokRebaselined:
+    # mergeVendored never returns mokRebaselined (only mergeRebaseline does);
+    # this branch is unreachable here but required for exhaustive coverage.
+    raise newException(Defect, "add-entry: unexpected mokRebaselined from mergeVendored")
   0

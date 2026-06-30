@@ -1,0 +1,125 @@
+name: reindex
+
+on:
+  workflow_dispatch:       # one-shot manual trigger only — NO schedule
+
+permissions:
+  contents: write          # to commit + push updated index.kdl / index.json
+  id-token: write          # cosign keyless: attest the reindex pass under workflow identity
+
+jobs:
+  reindex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Rewrite every github.com URL form to authenticated https using a
+      # fine-grained PAT scoped to milpa + nimkdl read-only. This applies
+      # globally for this job, so both this step's explicit clone of milpa
+      # AND milpa's subprocess clones (which fetch nimkdl) inherit auth
+      # transparently — no per-clone token interpolation, no ssh-agent.
+      - name: Configure git auth for private deps
+        env:
+          PAT: ${{ secrets.TIANGUIS_GIT_READ_PAT }}
+        run: |
+          # insteadOf is multi-valued; --add to avoid overwriting previous.
+          git config --global url."https://x-access-token:${PAT}@github.com/".insteadOf "https://github.com/"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "ssh://git@github.com/"
+
+      - name: Clone milpa
+        run: git clone --depth 1 https://github.com/coreyleavitt/milpa.git .milpa-tool
+
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: "2.2.0"
+
+      - name: Set up uv (for milpa)
+        uses: astral-sh/setup-uv@v7
+        with:
+          # Cache disabled: setup-uv's cache-dependency-glob recursively walks
+          # the workspace (incl. the cloned .milpa-tool/), and milpa's
+          # conformance corpus carries an intentional cyclic-symlink fixture
+          # (fixture-309-ws-member-cyclic-symlink) that ELOOPs the walk. The
+          # cache only saves seconds on milpa's small pydep set.
+          enable-cache: false
+
+      - name: Install milpa deps
+        working-directory: .milpa-tool/impls/python
+        run: uv sync
+
+      - name: Expose milpa on PATH
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          cat > "$HOME/.local/bin/milpa" <<'SH'
+          #!/usr/bin/env bash
+          exec uv run --project "$GITHUB_WORKSPACE/.milpa-tool/impls/python" python -m milpa "$@"
+          SH
+          chmod +x "$HOME/.local/bin/milpa"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch deps via milpa
+        run: uv run --project .milpa-tool/impls/python python -m milpa fetch
+
+      - name: Build tianguis CLI
+        run: nim c -d:release -d:ssl -o:tianguis src/tianguis_cli.nim
+
+      - name: Set up cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: "v2.4.0"
+
+      - name: Run reindex
+        run: ./tianguis reindex
+
+      - name: Keep index.json in parity
+        run: ./tianguis project
+
+      - name: Commit + push changes
+        id: commit
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "no changes from this reindex pass (all hashes already epoch-2)"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "milpa-bot"
+          git config user.email "milpa-bot@users.noreply.github.com"
+          git add index.kdl index.json
+          git commit -m "chore(reindex): epoch-2 dag-sha256 content-hash re-baseline"
+          # A reindex pass can take >1h; rebase before push in case of contention.
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break
+            echo "push attempt $i failed; will retry"
+            sleep $((i * 2))
+          done
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # Attest the reindex pass to Rekor under milpa-bot's GH Actions OIDC
+      # identity. The signed blob is the post-reindex index.kdl; the predicate
+      # names this workflow run + the commit it produced so third parties can
+      # correlate Rekor entries against tianguis git history and verify that
+      # the re-baseline was an explicit, audited epoch migration.
+      - name: Cosign attest reindex pass
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          COMMIT_SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          cat > predicate.json <<EOF
+          {
+            "pass_kind": "reindex",
+            "tianguis_repo": "${{ github.repository }}",
+            "workflow_run": "${{ github.run_id }}",
+            "commit_sha": "${COMMIT_SHA}",
+            "reindexed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cosign attest-blob \
+            --yes \
+            --type custom \
+            --predicate predicate.json \
+            --bundle reindex-attest.bundle \
+            index.kdl
+          echo "Rekor bundle written to reindex-attest.bundle"
