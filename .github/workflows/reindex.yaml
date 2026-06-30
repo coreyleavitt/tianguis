@@ -89,11 +89,21 @@ jobs:
           git add index.kdl index.json
           git commit -m "chore(reindex): epoch-2 dag-sha256 content-hash re-baseline"
           # A reindex pass can take >1h; rebase before push in case of contention.
+          # --autostash: the "Fetch deps via milpa" step re-locks tianguis's own
+          # milpa.lock (epoch-2 identities) and leaves it dirty; without autostash
+          # `git pull --rebase` aborts with "unstaged changes" and the push is lost.
+          # Fail the job if the push never lands — a lost push must NOT report success.
+          pushed=false
           for i in 1 2 3; do
-            git pull --rebase origin main && git push && break
+            if git pull --rebase --autostash origin main && git push; then
+              pushed=true; break
+            fi
             echo "push attempt $i failed; will retry"
             sleep $((i * 2))
           done
+          if [[ "$pushed" != true ]]; then
+            echo "::error::reindex push failed after 3 attempts"; exit 1
+          fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 

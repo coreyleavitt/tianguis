@@ -96,11 +96,19 @@ jobs:
           # A vendor pass can take >1h, during which other commits may
           # have landed on main. Rebase before push so we don't lose the
           # work. Retry a few times in case of rapid contention.
+          # --autostash: `milpa fetch` re-locks tianguis's milpa.lock and leaves it
+          # dirty, which would otherwise abort the rebase with "unstaged changes".
+          pushed=false
           for i in 1 2 3; do
-            git pull --rebase origin main && git push && break
+            if git pull --rebase --autostash origin main && git push; then
+              pushed=true; break
+            fi
             echo "push attempt $i failed; will retry"
             sleep $((i * 2))
           done
+          if [[ "$pushed" != true ]]; then
+            echo "::error::vendor push failed after 3 attempts"; exit 1
+          fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
