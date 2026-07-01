@@ -6786,6 +6786,18 @@ package "owlkettle" {
 package "jazzy" {
     namespace "github.com/canermastan"
     upstream (url)"https://github.com/canermastan/jazzy-framework"
+    version "0.4.4" {
+        content_hash "dag-sha256:c7bfb387cbcb4c6da24ce25426e66c0ea64b85d624bbb9c8937a0af230203ac4"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/canermastan/jazzy-framework"
+            ref "0.4.4"
+            commit_sha "30a2fc81525f1abbd154755d842841cef92302e0"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.4.3" {
         content_hash "dag-sha256:e9c3fd24afc568a98b27c8d1fb372a71376f6b16247a2794ca9e8677be59294f"
         provenance {
@@ -25727,6 +25739,18 @@ package "ybus" {
 package "nim2d" {
     namespace "github.com/nim2d"
     upstream (url)"https://github.com/nim2d/nim2d"
+    version "0.7.0" {
+        content_hash "dag-sha256:54f8380c56ccbf075e6daea6a8c72ba9413211dd1c84a2c5fe946aaf6b87e7e3"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/nim2d/nim2d"
+            ref "0.7.0"
+            commit_sha "69cb860bfc4af8e7d5a8d28a252fb570c7ece208"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.6.0" {
         content_hash "dag-sha256:d5c1fe349e48bec6938173770f3fce07c86495218017be1177e558f820faed98"
         provenance {
@@ -27751,6 +27775,18 @@ package "booyaka" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
     }
+    version "0.0.0+commit-1717b83" {
+        content_hash "dag-sha256:5db8f4058905a50a2ea8ee1e5947683891355dd9d3c0778433ca3c014a057181"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/openpeeps/booyaka"
+            ref "HEAD"
+            commit_sha "1717b83940f561a5aa07580d13cda4f9e2ca15dc"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.0.0+commit-05219a2" {
         content_hash "sha256:3340a64c7f1858dbfa82f323b41a5f2bad256067bc1202ac3b0a8f4b4473e996"
         provenance {
@@ -27802,6 +27838,22 @@ package "bro" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-09T07:21:56Z"
+    }
+}
+package "clue" {
+    namespace "github.com/openpeeps"
+    upstream (url)"https://github.com/openpeeps/clue"
+    version "0.0.0+commit-c2afa19" {
+        content_hash "dag-sha256:a63a39d3bea97369d2b4bcd90d38beb09501df15b07e245ce384787c6e931352"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/openpeeps/clue"
+            ref "HEAD"
+            commit_sha "c2afa191e00500812c810f73a2b417dfe3eeeac3"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
     }
 }
 package "crossdb" {
@@ -28447,6 +28499,18 @@ package "pluginkit" {
 package "powpow" {
     namespace "github.com/openpeeps"
     upstream (url)"https://github.com/openpeeps/powpow"
+    version "0.1.3" {
+        content_hash "dag-sha256:a62f27cca9d6a2ea4bc1b0a62f3da467612fd5d7a4dd44e8f1991f19ad851660"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/openpeeps/powpow"
+            ref "0.1.3"
+            commit_sha "6b7cd57623f11f085318c3faf72c885eec3857d5"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.1.2" {
         content_hash "dag-sha256:7d5b50f60f0d3ce9e58b24442351d681a8d139f410a8efc493be4f2c977015ea"
         provenance {
@@ -31223,6 +31287,18 @@ package "noxen" {
 package "flowbrigade" {
     namespace "github.com/puffball1567"
     upstream (url)"https://github.com/puffball1567/flowbrigade"
+    version "0.3.0" {
+        content_hash "dag-sha256:2a4ae2344f7e8e8a0a7db023706fea70b942d4da8c7f6a14202df32899a95855"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/puffball1567/flowbrigade"
+            ref "v0.3.0"
+            commit_sha "fc58fc3d49279c087fe327876ded02a0523c9e54"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.1.0" {
         content_hash "dag-sha256:7fed81a58291a6ff114d00ebed65cd92b007c27945c5e53157953ccc21ae7e8c"
         provenance {
@@ -31239,6 +31315,18 @@ package "flowbrigade" {
 package "flowbrigade_memcached" {
     namespace "github.com/puffball1567"
     upstream (url)"https://github.com/puffball1567/flowbrigade"
+    version "0.3.0" {
+        content_hash "dag-sha256:2a4ae2344f7e8e8a0a7db023706fea70b942d4da8c7f6a14202df32899a95855"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/puffball1567/flowbrigade"
+            ref "v0.3.0"
+            commit_sha "fc58fc3d49279c087fe327876ded02a0523c9e54"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.1.0" {
         content_hash "dag-sha256:7fed81a58291a6ff114d00ebed65cd92b007c27945c5e53157953ccc21ae7e8c"
         provenance {
@@ -31255,6 +31343,18 @@ package "flowbrigade_memcached" {
 package "flowbrigade_prologue" {
     namespace "github.com/puffball1567"
     upstream (url)"https://github.com/puffball1567/flowbrigade"
+    version "0.3.0" {
+        content_hash "dag-sha256:2a4ae2344f7e8e8a0a7db023706fea70b942d4da8c7f6a14202df32899a95855"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/puffball1567/flowbrigade"
+            ref "v0.3.0"
+            commit_sha "fc58fc3d49279c087fe327876ded02a0523c9e54"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.1.0" {
         content_hash "dag-sha256:7fed81a58291a6ff114d00ebed65cd92b007c27945c5e53157953ccc21ae7e8c"
         provenance {
@@ -31271,6 +31371,18 @@ package "flowbrigade_prologue" {
 package "flowbrigade_ready" {
     namespace "github.com/puffball1567"
     upstream (url)"https://github.com/puffball1567/flowbrigade"
+    version "0.3.0" {
+        content_hash "dag-sha256:2a4ae2344f7e8e8a0a7db023706fea70b942d4da8c7f6a14202df32899a95855"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/puffball1567/flowbrigade"
+            ref "v0.3.0"
+            commit_sha "fc58fc3d49279c087fe327876ded02a0523c9e54"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.1.0" {
         content_hash "dag-sha256:7fed81a58291a6ff114d00ebed65cd92b007c27945c5e53157953ccc21ae7e8c"
         provenance {
@@ -31287,6 +31399,18 @@ package "flowbrigade_ready" {
 package "flowbrigade_redis" {
     namespace "github.com/puffball1567"
     upstream (url)"https://github.com/puffball1567/flowbrigade"
+    version "0.3.0" {
+        content_hash "dag-sha256:2a4ae2344f7e8e8a0a7db023706fea70b942d4da8c7f6a14202df32899a95855"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/puffball1567/flowbrigade"
+            ref "v0.3.0"
+            commit_sha "fc58fc3d49279c087fe327876ded02a0523c9e54"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.1.0" {
         content_hash "dag-sha256:7fed81a58291a6ff114d00ebed65cd92b007c27945c5e53157953ccc21ae7e8c"
         provenance {
@@ -31303,6 +31427,18 @@ package "flowbrigade_redis" {
 package "nimsodium" {
     namespace "github.com/puffball1567"
     upstream (url)"https://github.com/puffball1567/nimsodium"
+    version "0.2.2" {
+        content_hash "dag-sha256:86d92d63dbbd6d1a7b13e73f4f203791706f61906922e1012ee464394d0002a7"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/puffball1567/nimsodium"
+            ref "v0.2.2"
+            commit_sha "f3ff42cee7e8fabc3f4ccc88261894957fb2ced8"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.2.1" {
         content_hash "dag-sha256:315dab72a13944f59ae1f931500056924ee2c4ce298684a77d675028c2227c5d"
         provenance {
@@ -31330,6 +31466,22 @@ package "rclnim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+    }
+}
+package "codestats" {
+    namespace "github.com/pynickle"
+    upstream (url)"https://github.com/pynickle/codestats"
+    version "0.1.0" {
+        content_hash "dag-sha256:94fc1956051d051a1aad7288a5331ef7f00a2fc0953f410840095a840bba7157"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/pynickle/codestats"
+            ref "v0.1.0"
+            commit_sha "0a9422fbfcbf85ebb1fcaf30aeb222983a63556a"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
     }
 }
 package "amqpstats" {
@@ -38083,6 +38235,18 @@ package "nimics" {
 package "nimletter" {
     namespace "github.com/thomastjdev"
     upstream (url)"https://github.com/ThomasTJdev/nimletter"
+    version "1.0.0" {
+        content_hash "dag-sha256:ffa09a7fe2badfb7365427edf0a692f543ad851a01d0e9295cc5a92eadc23927"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/ThomasTJdev/nimletter"
+            ref "v1.0.0"
+            commit_sha "2a7db5a06efff24b9160db5f236d132209e7e27e"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "0.9.8" {
         content_hash "dag-sha256:47a3b8c00b87f322606a57de6d26ea9866cd65650351c7550e86d9705b478731"
         provenance {
@@ -40035,6 +40199,18 @@ package "simpleMail" {
 package "wewbo" {
     namespace "github.com/upi-0"
     upstream (url)"https://github.com/upi-0/wewbo"
+    version "1.4.1" {
+        content_hash "dag-sha256:67500cd49812b694d0eb359ee8445011b188fc2842681121d76a7c5629208900"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/upi-0/wewbo"
+            ref "1.4.1"
+            commit_sha "a4bf094696afef2f0204f1be9f8a65450fb9a9a8"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "1.4.0" {
         content_hash "dag-sha256:e03b7782d5224db23d46825a7ee217f61eea922d9a24aded92b31db035b5e090"
         provenance {
@@ -40155,6 +40331,18 @@ package "intops" {
 package "libp2p" {
     namespace "github.com/vacp2p"
     upstream (url)"https://github.com/vacp2p/nim-libp2p"
+    version "2.1.1" {
+        content_hash "dag-sha256:8c944948b2c389ca5b40cf3f9695d6a8e7554a8d0732363fd4642891d48edee9"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/vacp2p/nim-libp2p"
+            ref "v2.1.1"
+            commit_sha "faa0164b63fc238d6a6c8d1f167abcad3391b467"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "2.0.0" {
         content_hash "dag-sha256:93c33b5b49ea0e10529dc39c4ac50b274cafc1c85244f2102c8856200a2800ba"
         provenance {
@@ -43191,6 +43379,18 @@ package "zws" {
 package "yyjson" {
     namespace "github.com/zystem"
     upstream (url)"https://github.com/zystem/nim-yyjson"
+    version "1.0.1" {
+        content_hash "dag-sha256:b1633662a79ecf01d3069f0808c1c00af465d0720697fdd6e7a43bcd35f2055b"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/zystem/nim-yyjson"
+            ref "v1.0.1"
+            commit_sha "600ceee473dec2035c27fb6c75963aadf6182fcd"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-01T07:36:55Z"
+    }
     version "1.0.0" {
         content_hash "dag-sha256:865353d98d35cbcb3c71092ca04723d9ee8f856579e4fece2798ea0b05825c48"
         provenance {
