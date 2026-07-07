@@ -6802,6 +6802,18 @@ package "owlkettle" {
 package "jazzy" {
     namespace "github.com/canermastan"
     upstream (url)"https://github.com/canermastan/jazzy-framework"
+    version "0.4.5" {
+        content_hash "dag-sha256:28db22a61b9b1ef22d99253085b49b73a96a4df9159fb4c2f43dbd1c711fcbee"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/canermastan/jazzy-framework"
+            ref "v0.4.5"
+            commit_sha "6e48832517478b713a2d184c69bbdbaca0921a7f"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-07T07:16:58Z"
+    }
     version "0.4.4" {
         content_hash "dag-sha256:c7bfb387cbcb4c6da24ce25426e66c0ea64b85d624bbb9c8937a0af230203ac4"
         provenance {
@@ -7266,6 +7278,18 @@ package "shorten" {
 package "streamhttp" {
     namespace "github.com/capocasa"
     upstream (url)"https://github.com/capocasa/streamhttp"
+    version "0.4.1" {
+        content_hash "dag-sha256:9238fb44fd099b2cf77a8851d62fb7a1b2bcc00488b0930792d5ee2bc0770216"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/capocasa/streamhttp"
+            ref "0.4.1"
+            commit_sha "dec86e07761aad395fa10c609c7005230003c38f"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-07T07:16:58Z"
+    }
     version "0.3.2" {
         content_hash "dag-sha256:0338125d0e269ee05958ff2d1ce0bb1410c9b93f919d251bc11e05684b9c3e7d"
         provenance {
@@ -8179,6 +8203,18 @@ package "cap10" {
 package "chalk" {
     namespace "github.com/crashappsec"
     upstream (url)"https://github.com/crashappsec/chalk"
+    version "1.1.3" {
+        content_hash "dag-sha256:970cb1bfb95903b82c91c03c3eea4263de94118dfabd950743395022cfcf301f"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/crashappsec/chalk"
+            ref "v1.1.3"
+            commit_sha "55123f79b40f73fb806d5c617733560adf383a7c"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-07T07:16:58Z"
+    }
     version "1.1.2" {
         content_hash "dag-sha256:b573b47d344ce143d764a18de7adcbbf45641e20e596bc32ba3383d39a49e278"
         provenance {
@@ -16270,6 +16306,22 @@ package "ttop" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+    }
+}
+package "niobium" {
+    namespace "github.com/invector-tecnologia"
+    upstream (url)"https://github.com/invector-tecnologia/niobium.git"
+    version "0.1.1" {
+        content_hash "dag-sha256:96f5ae228485aa7b3aa31f5cb84f17a2694a70dea8413377ba470a932f9337cc"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/invector-tecnologia/niobium.git"
+            ref "v0.1.1"
+            commit_sha "8304c454dd7395162d14108350dac60c2c99ddb2"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-07T07:16:58Z"
     }
 }
 package "uspokoysa" {
@@ -27679,6 +27731,18 @@ package "murmur" {
 package "clapfn" {
     namespace "github.com/oliversandli"
     upstream (url)"https://github.com/oliversandli/clapfn"
+    version "0.0.0+commit-f6779aa" {
+        content_hash "dag-sha256:245996bdd01dbcda2fa94e957d1336d2a58d3994d45971a3f3c04a263b1e7411"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/oliversandli/clapfn"
+            ref "HEAD"
+            commit_sha "f6779aa4743671344f6bac718aaa7f46cd2fe56b"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-07T07:16:58Z"
+    }
     version "0.0.0+commit-a62d1d6" {
         content_hash "dag-sha256:c3e10ae922286ebc1c61e1262d176ce81bfd7b8bdb5193b6afe7f4cb7d88f0be"
         provenance {
