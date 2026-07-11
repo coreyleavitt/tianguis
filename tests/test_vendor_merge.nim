@@ -66,6 +66,40 @@ suite "vendor build":
     check r.isErr
     check r.error == derrUnparseable
 
+  # ---------------------------------------------------------------------------
+  # S7a — optional bundlePin param: lets the vendor orchestration (S7b
+  # workflow) thread a minted bundle pin through to the built entry.
+  # ---------------------------------------------------------------------------
+
+  test "buildVendoredEntry with bundlePin builds a Version carrying that pin":
+    let pkg = fakeUpstream()
+    let sel = TagSelection(kind: tskSemver, tag: "v0.5.0", version: "0.5.0")
+    let pin = "b".repeat(64)
+    let r = buildVendoredEntry(
+      pkg, sel,
+      contentHash = "sha256:abcdef",
+      commitSha   = "deadbeef1234567",
+      publishedAt = fixedPublishedAt,
+      bundlePin   = pin,
+    )
+    check r.isOk
+    let entry = r.get
+    check entry.version.attestation == "milpa-vendored"
+    check entry.version.bundlePin.isSome
+    check entry.version.bundlePin.get == pin
+
+  test "buildVendoredEntry with no bundlePin arg builds none (default preserved)":
+    let pkg = fakeUpstream()
+    let sel = TagSelection(kind: tskSemver, tag: "v0.5.0", version: "0.5.0")
+    let r = buildVendoredEntry(
+      pkg, sel,
+      contentHash = "sha256:abcdef",
+      commitSha   = "deadbeef1234567",
+      publishedAt = fixedPublishedAt,
+    )
+    check r.isOk
+    check r.get.version.bundlePin.isNone
+
 suite "vendor merge":
   test "merging into empty Index adds the package":
     let pkg = fakeUpstream()
@@ -494,6 +528,35 @@ suite "attestation epoch gate (S5)":
     let (after, outcome) = mergeVendored(idx, entry)
     check outcome.kind == mokAdded
     check after.packages.len == 1
+
+  test "S7a: buildVendoredEntry WITHOUT bundlePin is rejected post-epoch":
+    let pkg = fakeUpstream("gate6")
+    let sel = TagSelection(kind: tskSemver, tag: "v1.0.0", version: "1.0.0")
+    let entry = buildVendoredEntry(
+      pkg, sel, "sha256:aaa", "commit",
+      publishedAt = "2026-06-15T00:00:00Z",
+      # bundlePin deliberately omitted — milpa-vendored attestation alone
+      # is not sufficient once the epoch is live (S5).
+    ).get
+    let idx = Index(schemaVersion: 1, attestationEpoch: some(epoch), packages: @[])
+    let (returned, outcome) = mergeVendored(idx, entry)
+    check outcome.kind == mokMissingAttestation
+    check returned == idx
+
+  test "S7a: buildVendoredEntry WITH bundlePin is accepted post-epoch":
+    let pkg = fakeUpstream("gate7")
+    let sel = TagSelection(kind: tskSemver, tag: "v1.0.0", version: "1.0.0")
+    let pin = "c".repeat(64)
+    let entry = buildVendoredEntry(
+      pkg, sel, "sha256:aaa", "commit",
+      publishedAt = "2026-06-15T00:00:00Z",
+      bundlePin   = pin,
+    ).get
+    let idx = Index(schemaVersion: 1, attestationEpoch: some(epoch), packages: @[])
+    let (after, outcome) = mergeVendored(idx, entry)
+    check outcome.kind == mokAdded
+    check after.packages.len == 1
+    check after.packages[0].versions[0].bundlePin == some(pin)
 
   test "no epoch set — gate is inert regardless of attestation":
     let entry = VendoredEntry(

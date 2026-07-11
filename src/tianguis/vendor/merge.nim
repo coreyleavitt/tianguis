@@ -4,6 +4,7 @@
 ## content_hash, we DO NOT mutate the index (existing lockfiles depend
 ## on those bytes); we report the drift so a human can review.
 
+import std/options
 import ../model
 import ../namespace
 import ./upstream
@@ -73,6 +74,7 @@ proc buildVendoredEntry*(
     commitSha: string,
     publishedAt: string,
     precomputedNs: string = "",
+    bundlePin: string = "",
 ): Result[VendoredEntry, DerivationError] =
   ## Build a VendoredEntry from upstream package data.
   ## Hard-rejects (returns Err) if namespace cannot be derived from pkg.url —
@@ -82,6 +84,12 @@ proc buildVendoredEntry*(
   ## deriveNamespace (e.g. for the denylist check), pass the result here to
   ## avoid a second derivation. When "" the function derives internally, so
   ## existing call sites need no change.
+  ##
+  ## `bundlePin` (rfc-attestation-delivery S7a): sha256 hex of the minted
+  ## attestation bundle's bytes, threaded through by the vendor orchestration
+  ## (S7b — cosign attest-blob over the S3 statement → S4 content-addressed
+  ## store → pin). Default "" preserves existing callers' behavior exactly:
+  ## `Version.bundlePin` builds as `none(string)`.
   let ns =
     if precomputedNs.len > 0:
       precomputedNs
@@ -109,6 +117,9 @@ proc buildVendoredEntry*(
         gitRef:    gitRef,
         commitSha: commitSha,
       )],
+      bundlePin:
+        if bundlePin.len > 0: some(bundlePin)
+        else: none(string),
     ),
   ))
 

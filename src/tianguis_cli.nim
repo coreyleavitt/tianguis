@@ -22,9 +22,10 @@ proc usage(): int =
   echo "  reindex             epoch-migration: re-vendor all packages and re-baseline content_hash to dag-sha256"
   echo "  add-entry           add an author-signed entry; consumed from commit-entry.yaml"
   echo "    --name --version --oci-ref --upstream --signed-by [--published-at]"
-  echo "    [--rekor-uuid --rekor-log-index --rekor-integrated-time]"
+  echo "    [--rekor-uuid --rekor-log-index --rekor-integrated-time] [--bundle-pin]"
   echo "    (namespace is derived inside the binary from the verified OIDC SAN in --signed-by;"
-  echo "     rekor fields are the durable transparency-log pointer captured by commit-entry.yaml)"
+  echo "     rekor fields are the durable transparency-log pointer captured by commit-entry.yaml;"
+  echo "     --bundle-pin is the sha256 hex of the minted attestation bundle's bytes, S7b)"
   echo "  show <url>          derive and print the namespace (host/org) for an upstream URL"
   echo "  migrate [--execute] one-time #32 namespace migration; --dry-run is default"
   1
@@ -45,6 +46,7 @@ proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
       of "rekor-uuid":            result.rekorUuid = val
       of "rekor-log-index":       result.rekorLogIndex = val
       of "rekor-integrated-time": result.rekorIntegratedTime = val
+      of "bundle-pin":            result.bundlePin = val
       of "namespace":
         stderr.writeLine("tianguis add-entry: --namespace is no longer accepted;" &
           " namespace is derived from --signed-by (P2.1)")

@@ -280,6 +280,81 @@ suite "cli add-entry":
   # Pull failure still returns exit 3 (unrelated to namespace derivation)
   # ---------------------------------------------------------------------------
 
+  # ---------------------------------------------------------------------------
+  # S7a — --bundle-pin: sets Version.bundlePin so milpa's registry.py can
+  # parse the 4th attestation sibling `bundle sha256="…"` off this entry.
+  # ---------------------------------------------------------------------------
+
+  test "--bundle-pin=<valid 64hex> sets bundlePin and emits bundle sha256 in KDL":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let driver = FakeAddDriver(
+        expectedRef: "ghcr.io/x/y@sha256:abc",
+        contentHash: "sha256:zzz", commitSha: "",
+      )
+      let pin = "a".repeat(64)
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
+          upstream: "https://github.com/x/y",
+          signedBy: "https://github.com/x/y/.github/workflows/publish.yaml@refs/heads/main",
+          publishedAt: "2026-06-01T12:00:00Z",
+          bundlePin: pin,
+        ),
+        driver = driver,
+      )
+      check code == 0
+      let kdlText = readFile(tmp / "index.kdl")
+      check ("bundle sha256=\"" & pin & "\"") in kdlText
+      let parsed = parseKdl(kdlText)
+      check parsed.isOk
+      let v = parsed.get.packages[0].versions[0]
+      check v.bundlePin.isSome
+      check v.bundlePin.get == pin
+
+  test "--bundle-pin=<malformed> is rejected: exit 4, index unchanged":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
+          upstream: "https://github.com/x/y",
+          signedBy: "https://github.com/x/y/.github/workflows/publish.yaml@refs/heads/main",
+          publishedAt: "2026-06-01T12:00:00Z",
+          bundlePin: "not-hex",
+        ),
+        driver = FailingPullDriver(),  # must NOT be reached
+      )
+      check code == 4
+      check readFile(tmp / "index.kdl") == originalBytes
+
+  test "no --bundle-pin supplied: bundlePin is none (regression guard)":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let driver = FakeAddDriver(
+        expectedRef: "ghcr.io/x/y@sha256:abc",
+        contentHash: "sha256:zzz", commitSha: "",
+      )
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
+          upstream: "https://github.com/x/y",
+          signedBy: "https://github.com/x/y/.github/workflows/publish.yaml@refs/heads/main",
+          publishedAt: "2026-06-01T12:00:00Z",
+          # bundlePin deliberately omitted
+        ),
+        driver = driver,
+      )
+      check code == 0
+      check "bundle" notin readFile(tmp / "index.kdl")
+      let parsed = parseKdl(readFile(tmp / "index.kdl"))
+      check parsed.isOk
+      check parsed.get.packages[0].versions[0].bundlePin.isNone
+
   test "pull failure refuses to commit (exit 3)":
     withTempProject(tmp):
       writeFile(tmp / "index.kdl", "schema_version 1\n")

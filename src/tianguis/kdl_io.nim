@@ -255,10 +255,13 @@ proc parseRekor(doc: KdlDoc, node: KdlNode): Result[RekorRef, IdxError] =
     integratedTime: node.childText("integrated_time"),
   ))
 
-proc isHex64(s: string): bool =
+proc isHex64*(s: string): bool =
   ## True iff `s` is exactly 64 lowercase hex characters — the bundle-pin
   ## wire format (registry-protocol §3.2 NORMATIVE). Single source of truth
   ## for the format on the write side; mirrors milpa's `_RE_HEX64` on read.
+  ## Exported so admission paths (e.g. `add-entry --bundle-pin`) validate
+  ## against the exact same rule the serializer enforces — no second
+  ## regex/allowlist copy (rfc-attestation-delivery S7a).
   if s.len != 64: return false
   for c in s:
     if c notin {'0'..'9', 'a'..'f'}: return false

@@ -37,6 +37,13 @@ type
     rekorUuid*:           string  ## Rekor entry UUID (content-addressed)
     rekorLogIndex*:       string  ## Rekor logIndex
     rekorIntegratedTime*: string  ## inclusion timestamp (epoch seconds)
+    ## Delivery-integrity pin (rfc-attestation-delivery S1/S7a): sha256 hex
+    ## of the per-entry attestation bundle's BYTES, minted by the workflow
+    ## (S7b — cosign attest-blob over the S3 in-toto statement → S4
+    ## content-addressed store → pin). Empty string == no pin (pre-epoch or
+    ## not-yet-wired callers); threaded into `Version.bundlePin` as
+    ## `none(string)` in that case.
+    bundlePin*:           string
 
   ## AddEntryDriver — injectable I/O for testability. Real impl pulls
   ## the OCI artifact via oras and computes content_hash via the
@@ -71,10 +78,12 @@ proc normalizeVersion*(v: string): string =
   if v.startsWith("v") and v.len > 1 and v[1] in '0'..'9': v[1 .. ^1]
   else: v
 
-## isValidPackageName is defined in kdl_io (the serialization boundary) and
-## re-exported here so tests and the CLI layer can access it without a
-## separate import. The canonical definition lives in one place only.
+## isValidPackageName and isHex64 are defined in kdl_io (the serialization
+## boundary) and re-exported here so tests and the CLI layer can access them
+## without a separate import. Each canonical definition lives in one place
+## only — the write-side validator IS the parse-side format check.
 export kdl_io.isValidPackageName
+export kdl_io.isHex64
 
 proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver): int =
   ## Read index.kdl, pull + hash the OCI artifact, merge the author-signed
@@ -85,8 +94,10 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
   ##   1 — index.kdl missing or malformed
   ##   3 — OCI pull or hash failed
   ##   4 — namespace could not be derived from signedBy (underivable OIDC SAN),
-  ##       OR package name is not in the strict allowlist [A-Za-z0-9_.-]+.
-  ##       No mutation performed, alerts.kdl appended with reject entry.
+  ##       OR package name is not in the strict allowlist [A-Za-z0-9_.-]+,
+  ##       OR --bundle-pin was supplied but is not 64 lowercase hex characters.
+  ##       No mutation performed; the namespace-underivable case additionally
+  ##       appends alerts.kdl with a reject entry.
   ##       Replaces/promotes the former P1.4 host/org-form guard.
 
   # Name validation — hard-reject BEFORE any network I/O.
@@ -96,6 +107,17 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
   if not isValidPackageName(args.name):
     stderr.writeLine("tianguis: add-entry: reject: invalid package name '" &
       args.name & "' (must match [A-Za-z0-9_.-]+)")
+    return 4
+
+  # Bundle-pin validation (rfc-attestation-delivery S7a) — hard-reject BEFORE
+  # any network I/O, same discipline as the name check above. Empty is valid
+  # (means "no pin yet"); non-empty MUST be exactly 64 lowercase hex chars —
+  # the same `isHex64` the KDL serializer enforces on write (single source
+  # of truth; see kdl_io.isHex64), so a malformed pin can never reach
+  # `formatKdl` in the first place.
+  if args.bundlePin.len > 0 and not isHex64(args.bundlePin):
+    stderr.writeLine("tianguis: add-entry: reject: invalid bundle pin '" &
+      args.bundlePin & "' (must be 64 lowercase hex characters)")
     return 4
 
   # P2.1 — derive namespace from the verified OIDC SAN.
@@ -167,6 +189,12 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
           ))
         else:
           none(RekorRef),
+      # Delivery-integrity pin (S7a): some(pin) iff the caller supplied one;
+      # already validated as 64-lowercase-hex above. `none` otherwise — the
+      # unchanged, pre-slice default.
+      bundlePin:
+        if args.bundlePin.len > 0: some(args.bundlePin)
+        else: none(string),
     ),
   )
 
