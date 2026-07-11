@@ -209,16 +209,34 @@ needs Actions OIDC; the dispatch Cloud Function is a separate deploy). They
 must be verified in CI (push + watch Actions) or by careful review.
 
 **S8 open design sub-decision (needs Corey):** how the author's
-content_hash-bound attestation reaches tianguis. Recommended shape: the author
-runs `cosign attest-blob` over the S3 statement locally (or via a thin helper),
-and the `repository_dispatch: tianguis-publish` payload carries the resulting
-bundle bytes (base64) alongside the existing fields; `commit-entry.yaml`
-verifies the author cert SAN + Rekor inclusion over the §1 subject
-(content_hash + pkg name, not just the OCI digest it checks today), persists
-the bundle via S4, and records the pin. This changes the dispatch payload
-schema + the author-side publish UX + `dispatch/` Cloud Function — the piece
-Corey chose "full scope" for. Resolve the exact author-side ergonomics before
-implementing S8.
+content_hash-bound attestation reaches tianguis.
+
+**SHARPENED 2026-07-11 by the minting resolution — the "author runs cosign
+locally" shape is now RULED OUT.** milpa hardcodes issuer
+`https://token.actions.githubusercontent.com` (entry_trust.py:347), so a bundle
+minted from an author's *local* OAuth session (issuer github.com / google /
+etc.) fails `SignerMismatch` regardless of SAN. Therefore the author's
+attestation MUST be produced inside the **author's own GitHub Actions workflow**
+via ambient OIDC — the workflow's SAN becomes `signed_by`, and milpa's stage-6
+`author-signed` gate trusts that identity. Local-cosign is not merely worse
+ergonomics; it's non-verifiable by milpa. This is a forced consequence, not a
+fork.
+
+**Resulting recommended shape (the actual open piece):** the author's release
+workflow (a) computes `content_hash` (via `milpa hash` over the source tree),
+(b) builds the S3 in-toto statement, (c) signs it with sigstore-python
+`sign_dsse` under ambient Actions OIDC, (d) sends the resulting BUNDLE_0_3
+bytes (base64) in the `repository_dispatch: tianguis-publish` payload alongside
+today's fields. `commit-entry.yaml` then RECOMPUTES content_hash from the
+fetched source, fully verifies the bundle (author SAN + Rekor inclusion +
+§1 subject binding: content_hash digest AND pkg name, not just the OCI digest
+it checks today), persists via S4, records the pin. The genuinely
+under-determined bit left for Corey: **author-side UX** — do we ship a reusable
+composite GH Action (`coreyleavitt/tianguis-publish-action`) the author drops
+into their release workflow, or hand-rolled YAML in a docs template? (Lean:
+reusable composite action — one pinned ref, no copy-paste drift.) This changes
+the dispatch payload schema + `dispatch/` Cloud Function passthrough + author
+onboarding docs — the piece Corey chose "full scope" for.
 
 ## Open forks awaiting Corey
 
