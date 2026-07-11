@@ -66,6 +66,10 @@ proc versionToJson(v: Version): JsonNode =
       "log_index":       rk.logIndex,
       "integrated_time": rk.integratedTime,
     }
+  # Delivery-integrity pin: sha256 of the attestation bundle BYTES. Emitted
+  # only when present, mirroring `rekor` (absent = not yet minted).
+  if v.bundlePin.isSome:
+    obj["bundle_pin"] = %v.bundlePin.get
   obj
 
 proc packageToJson(pkg: Package): JsonNode =
@@ -133,6 +137,10 @@ proc versionFromJson(node: JsonNode): Version =
       logIndex:       rkNode{"log_index"}.getStr(""),
       integratedTime: rkNode{"integrated_time"}.getStr(""),
     ))
+  var bundlePin = none(string)
+  let bpNode = node{"bundle_pin"}
+  if bpNode != nil and bpNode.kind == JString:
+    bundlePin = some(bpNode.getStr(""))
   Version(
     version:     node{"version"}.getStr(""),
     contentHash: node{"content_hash"}.getStr(""),
@@ -141,6 +149,7 @@ proc versionFromJson(node: JsonNode): Version =
     publishedAt: node{"published_at"}.getStr(""),
     provenances: provs,
     rekor:       rekor,
+    bundlePin:   bundlePin,
     requires:    reqs,
   )
 
@@ -170,7 +179,8 @@ const
   TopLevelKeys       = ["schema_version", "packages"]
   JsonPackageKeys    = ["name", "namespace", "upstream", "versions"]
   JsonVersionKeys    = ["version", "content_hash", "requires", "provenances",
-                        "attestation", "signed_by", "published_at", "rekor"]
+                        "attestation", "signed_by", "published_at", "rekor",
+                        "bundle_pin"]
   JsonProvenanceKeys = ["kind", "url", "ref", "commit_sha",
                         "registry", "repository", "digest"]
   JsonRekorKeys      = ["uuid", "log_index", "integrated_time"]

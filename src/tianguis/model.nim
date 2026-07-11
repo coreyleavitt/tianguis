@@ -58,6 +58,12 @@ type
     rekor*:            Option[RekorRef] ## author-signed: durable Rekor entry pointer
                                         ## captured at publish (see RekorRef). `none`
                                         ## on milpa-vendored versions.
+    bundlePin*:        Option[string]  ## sha256 hex (64 lowercase hex chars) of the
+                                        ## per-entry attestation bundle's BYTES — the
+                                        ## delivery-integrity pin milpa parses as the
+                                        ## 4th attestation sibling (registry-protocol
+                                        ## §3.2). `none` until the bundle is minted and
+                                        ## persisted (rfc-attestation-delivery S1).
     partiallyResolved*: bool           ## true when ≥1 bare `requires` entry could not
                                        ## be mapped to a qualified (namespace, name) pair;
                                        ## gates resolver correctness independently of edge
@@ -96,6 +102,7 @@ proc `==`*(a, b: Version): bool =
     a.publishedAt == b.publishedAt and
     a.provenances == b.provenances and
     a.rekor == b.rekor and
+    a.bundlePin == b.bundlePin and
     a.requires == b.requires and
     a.partiallyResolved == b.partiallyResolved
 

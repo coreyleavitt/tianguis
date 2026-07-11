@@ -125,6 +125,46 @@ suite "json roundtrip":
     check parsed.isOk
     check parsed.get.packages[0].versions[0].rekor.isNone
 
+  test "bundle pin (sha256) round-trips through JSON":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "nkdl", namespace: "github.com/coreyleavitt",
+        upstream: "https://github.com/coreyleavitt/nkdl",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:dd907474",
+          attestation: "milpa-vendored", signedBy: "milpa-bot",
+          publishedAt: "2026-06-08T01:18:24Z",
+          bundlePin: some("ab".repeat(32)),
+        )],
+      )],
+    )
+    let serialized = formatJson(original)
+    check "bundle_pin" in serialized
+    let parsed = parseJson(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.packages[0].versions[0].bundlePin.get == "ab".repeat(32)
+
+  test "bundle pin absent emits no bundle_pin key in JSON":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "vendored", namespace: "ns", upstream: "https://x/v",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:abc",
+          attestation: "milpa-vendored", signedBy: "milpa-bot",
+          publishedAt: "2026-06-06T00:00:00Z",
+          bundlePin: none(string),
+        )],
+      )],
+    )
+    let serialized = formatJson(original)
+    check "bundle_pin" notin serialized
+    let parsed = parseJson(serialized)
+    check parsed.isOk
+    check parsed.get.packages[0].versions[0].bundlePin.isNone
+
   test "one-package zero-versions round-trips through JSON":
     let original = Index(
       schemaVersion: 1,

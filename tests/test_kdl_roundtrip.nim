@@ -331,6 +331,52 @@ suite "kdl roundtrip":
     check parsed.isOk
     check parsed.get.packages[0].versions[0].rekor.isNone
 
+  # ---------------------------------------------------------------------------
+  # Bundle pin (delivery-integrity sha256 of the attestation bundle bytes)
+  # ---------------------------------------------------------------------------
+
+  test "bundle pin (sha256) round-trips through KDL":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "nkdl", namespace: "github.com/coreyleavitt",
+        upstream: "https://github.com/coreyleavitt/nkdl",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:dd907474",
+          attestation: "milpa-vendored", signedBy: "milpa-bot",
+          publishedAt: "2026-06-08T01:18:24Z",
+          bundlePin: some("ab".repeat(32)),
+        )],
+      )],
+    )
+    let serialized = formatKdl(original)
+    check "bundle sha256=\"" & "ab".repeat(32) & "\"" in serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.packages[0].versions[0].bundlePin.isSome
+    check parsed.get.packages[0].versions[0].bundlePin.get == "ab".repeat(32)
+
+  test "bundle pin absent does NOT emit a bundle node":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "vendored", namespace: "github.com/someorg",
+        upstream: "https://github.com/someorg/vendored",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:abc",
+          attestation: "milpa-vendored", signedBy: "milpa-bot",
+          publishedAt: "2026-06-06T00:00:00Z",
+          bundlePin: none(string),
+        )],
+      )],
+    )
+    let serialized = formatKdl(original)
+    check "bundle" notin serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get.packages[0].versions[0].bundlePin.isNone
+
   test "rekor block with only log_index (no uuid) round-trips; absent fields stay empty":
     ## A publish that captured logIndex/integratedTime but could not resolve a
     ## UUID (best-effort Rekor lookup) must still round-trip; omitted sub-fields

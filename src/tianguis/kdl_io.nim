@@ -142,6 +142,11 @@ proc formatVersion(v: Version, indent: string): string =
   result.add(indent & "    published_at \"" & kdlEscapeString(v.publishedAt) & "\"\n")
   if v.rekor.isSome:
     result.add(formatRekor(v.rekor.get, indent & "    "))
+  if v.bundlePin.isSome:
+    # Delivery-integrity pin: sha256 of the attestation bundle BYTES, as a
+    # property (not a scalar child) — matches milpa's wire format exactly
+    # (registry-protocol §3.2 NORMATIVE: `bundle sha256="<64-hex>"`).
+    result.add(indent & "    bundle sha256=\"" & kdlEscapeString(v.bundlePin.get) & "\"\n")
   if v.partiallyResolved:
     result.add(indent & "    partially_resolved #true\n")
   result.add(indent & "}\n")
@@ -172,7 +177,7 @@ const
   VersionChildren = [
     "content_hash", "requires", "provenance",
     "attestation", "signed_by", "published_at",
-    "rekor", "partially_resolved",
+    "rekor", "bundle", "partially_resolved",
   ]
   RekorChildren = ["uuid", "log_index", "integrated_time"]
   ProvenanceChildren = [
@@ -245,6 +250,32 @@ proc parseRekor(doc: KdlDoc, node: KdlNode): Result[RekorRef, IdxError] =
     integratedTime: node.childText("integrated_time"),
   ))
 
+proc isHex64(s: string): bool =
+  ## True iff `s` is exactly 64 lowercase hex characters — the bundle-pin
+  ## wire format (registry-protocol §3.2 NORMATIVE). Single source of truth
+  ## for the format on the write side; mirrors milpa's `_RE_HEX64` on read.
+  if s.len != 64: return false
+  for c in s:
+    if c notin {'0'..'9', 'a'..'f'}: return false
+  true
+
+proc parseBundle(doc: KdlDoc, node: KdlNode): Result[string, IdxError] =
+  ## Parse the `bundle sha256="<64-hex>"` delivery-integrity pin (a KDL
+  ## property, not a scalar child — matches milpa's `node_prop_str(child,
+  ## "sha256")`). Strict: tianguis is the producer, so a missing or
+  ## malformed `sha256` is rejected outright, unlike milpa's lenient
+  ## consumer-side collapse-to-None (a malformed pin must never be written).
+  let raw = node.propStr("sha256")
+  if raw.isNone or not isHex64(raw.get):
+    let (line, col) = doc.lineMap.lineColOf(node.span.offset)
+    return err[string, IdxError](initIndexError(
+      iecBadType,
+      "bundle sha256 must be 64 lowercase hex characters, got " &
+        (if raw.isSome: "'" & raw.get & "'" else: "<missing>"),
+      line = line, col = col,
+    ))
+  ok[string, IdxError](raw.get)
+
 proc parseRequires(node: KdlNode): OrderedTable[string, string] =
   ## A `requires` block: each child is `<dep-name> "<constraint>"` — the
   ## node name is the map key (dynamic-name map shape).
@@ -271,6 +302,10 @@ proc parseVersion(doc: KdlDoc, node: KdlNode): Result[Version, IdxError] =
       let rr = parseRekor(doc, child)
       if rr.isErr: return err[Version, IdxError](rr.getErr)
       v.rekor = some(rr.get)
+    of "bundle":
+      let br = parseBundle(doc, child)
+      if br.isErr: return err[Version, IdxError](br.getErr)
+      v.bundlePin = some(br.get)
     of "provenance":
       let pr = parseProvenance(doc, child)
       if pr.isErr: return err[Version, IdxError](pr.getErr)

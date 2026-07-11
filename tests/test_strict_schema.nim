@@ -67,6 +67,63 @@ package "x" {
     check parsed.isErr
     check parsed.getErr.code == iecUnknownNode
 
+  test "bundle node with malformed sha256 (non-64-hex) rejected with IDX-TYPE-MISMATCH":
+    let src = """
+schema_version 1
+package "x" {
+    namespace "ns"
+    upstream "https://x"
+    version "0.1.0" {
+        content_hash "sha256:a"
+        attestation "milpa-vendored"
+        signed_by "milpa-bot"
+        published_at "2026-01-01T00:00:00Z"
+        bundle sha256="not-hex"
+    }
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isErr
+    check parsed.getErr.code == iecBadType
+
+  test "bundle node missing sha256 property rejected with IDX-TYPE-MISMATCH":
+    let src = """
+schema_version 1
+package "x" {
+    namespace "ns"
+    upstream "https://x"
+    version "0.1.0" {
+        content_hash "sha256:a"
+        attestation "milpa-vendored"
+        signed_by "milpa-bot"
+        published_at "2026-01-01T00:00:00Z"
+        bundle
+    }
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isErr
+    check parsed.getErr.code == iecBadType
+
+  test "bundle node with valid 64-hex sha256 parses without error":
+    let src = """
+schema_version 1
+package "x" {
+    namespace "ns"
+    upstream "https://x"
+    version "0.1.0" {
+        content_hash "sha256:a"
+        attestation "milpa-vendored"
+        signed_by "milpa-bot"
+        published_at "2026-01-01T00:00:00Z"
+        bundle sha256="ab00000000000000000000000000000000000000000000000000000000000000"
+    }
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isOk
+    check parsed.get.packages[0].versions[0].bundlePin.isSome
+
   test "valid index with rekor block parses without error":
     let src = """
 schema_version 1
