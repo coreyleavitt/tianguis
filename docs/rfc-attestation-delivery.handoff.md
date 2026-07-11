@@ -249,8 +249,56 @@ onboarding docs — the piece Corey chose "full scope" for.
 
 ## Open forks awaiting Corey
 
-- None blocking S1–S6. S8 carries its own design sub-decision (above) — resolve
-  when reached, escalate only if genuinely goal-underdetermined.
+### ⚠️ S8 IDENTITY-MODEL FORK (BLOCKING — held uncommitted 2026-07-11)
+
+**Discovery during S8 build:** the existing OCI-cosign path (`publish.yaml`) is a
+`workflow_call` **reusable workflow** that *deliberately* self-derives the cosign
+signer from its own `job_workflow_ref` (#30, lines 117–148). Fulcio therefore
+stamps EVERY author's OCI signature — and today's `signed_by` in index.kdl — with
+the SHARED identity `coreyleavitt/tianguis/.github/workflows/publish.yaml@<ref>`,
+NOT the individual author. "author-signed" today really means "produced through
+the official tianguis publish pipeline."
+
+This breaks the composite-action choice: a composite action runs in the AUTHOR's
+own job → SAN = `<author>/<repo>/.github/workflows/<x>.yaml@<ref>`, which ≠ the
+shared publish.yaml SAN that commit-entry.yaml's S8 crypto step matches against
+(`steps.cosign.outputs.san`). **As-built, S8's part D (composite action) produces
+a bundle that S8's part B (SAN-match verify) rejects.** Root cause: my brief
+assumed "OCI cosign and per-entry bundle share a SAN" — false under reusable-wf.
+
+**The fork (registry-wide `signed_by` semantics — needs Corey):**
+- **Model 1 — shared-pipeline identity (consistent w/ today, smaller).** Sign the
+  per-entry bundle INSIDE `publish.yaml` (or a reusable wf) so its SAN == the OCI
+  SAN. `signed_by` stays the publish-workflow ref. S8 part B works unchanged;
+  part D drops the composite action. "author-signed" = "official-pipeline-signed"
+  (weak per-author claim; near-indistinguishable from milpa-vendored in trust).
+- **Model 2 — true per-author identity (faithful to milpa §1, bigger).** Authors
+  sign in their OWN repos (composite action, as built). `signed_by` becomes the
+  author's repo identity. Requires: (a) decoupling per-entry SAN verification from
+  the OCI SAN, and (b) a trust chain establishing that the author's SAN is
+  authorized for the namespace (today that authorization rides the dispatch OIDC
+  cross-check + namespace-from-OCI-SAN derivation — would need rework).
+- **Model 3 — decoupled `signed_by` (middle).** `signed_by` = author's per-entry
+  bundle SAN (composite action); OCI stays publish-wf-signed; commit-entry verifies
+  the per-entry bundle against the author identity carried in the dispatch payload,
+  authorized via the existing dispatch OIDC verify. Smaller than Model 2, keeps
+  per-author attribution, but splits "who signed the artifact" from "who signed the
+  attestation."
+
+**Recommendation:** genuinely goal-underdetermined — it turns on whether milpa's
+"author-signed" tier is meant to be *cryptographic per-author attribution* (→ M2/M3)
+or *proof-of-official-pipeline* (→ M1). If the former (which §1's "author's
+Fulcio/OIDC identity" wording implies), **lean Model 3**: keeps the composite
+action Corey approved, delivers real per-author SANs, and reuses the existing
+dispatch-OIDC authorization instead of inventing a new namespace-authz chain.
+Model 1 is the low-risk fallback if per-author crypto isn't the actual goal.
+
+**S8 build status:** part A (Nim `add-entry --entry-statement` subject-binding,
+exit 5) + part C (Go `entry_bundle_b64` passthrough) are model-INDEPENDENT and
+gate-green. Parts B (SAN-verify target) + D (composite vs reusable signer) are
+model-dependent and HELD. Nothing committed. Also surfaced: `milpa publish`
+subcommand does not exist yet (publish.yaml invokes it — aspirational); milpa-ref
+pin duplicated in composite action; normalizeVersion re-implemented in action bash.
 
 ## Cross-repo coordination
 
