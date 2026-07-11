@@ -9,6 +9,7 @@ import ../model
 import ../namespace
 import ./upstream
 import ./tagselect
+import ./candidates
 
 type
   VendoredEntry* = object
@@ -122,6 +123,42 @@ proc buildVendoredEntry*(
         else: none(string),
     ),
   ))
+
+proc buildVendoredEntryFromCandidate*(candidate: BundleCandidate, bundlePin: string): VendoredEntry =
+  ## Reconstruct the VendoredEntry `buildVendoredEntry` would have produced
+  ## for this (namespace, name, version) — but from PERSISTED candidate data
+  ## (rfc-attestation-delivery S7b candidate→mint→apply flow), with NO
+  ## second upstream fetch. Used by `tianguis vendor --bundle-pins=<path>`
+  ## (orchestrate.applyBundlePins) to admit entries whose bundle was minted
+  ## out-of-process (CI-only cosign/sigstore signing) between the
+  ## candidate-emit pass and this one.
+  ##
+  ## `bundlePin` is threaded in raw (not validated here) — callers
+  ## (`applyBundlePins`) are responsible for supplying an already-validated
+  ## pin; `parsePinsJson` is the validation boundary for pins read from disk.
+  VendoredEntry(
+    package: Package(
+      name:      candidate.name,
+      namespace: candidate.namespace,
+      upstream:  candidate.upstream,
+    ),
+    version: Version(
+      version:     candidate.version,
+      contentHash: candidate.contentHash,
+      attestation: AttestationMilpaVendored,
+      signedBy:    MilpaBotIdentity,
+      publishedAt: candidate.publishedAt,
+      provenances: @[Provenance(
+        kind:      pkGit,
+        url:       candidate.upstream,
+        gitRef:    candidate.gitRef,
+        commitSha: candidate.commitSha,
+      )],
+      bundlePin:
+        if bundlePin.len > 0: some(bundlePin)
+        else: none(string),
+    ),
+  )
 
 proc gitProvenanceRepo(pkg: Package): string =
   ## Return the repo segment from the first git provenance URL recorded

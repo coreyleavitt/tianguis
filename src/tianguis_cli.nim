@@ -19,6 +19,12 @@ proc usage(): int =
   echo ""
   echo "  project [--check]   regenerate index.json from index.kdl"
   echo "  vendor              run one vendor-en-absentia pass against nim-lang/packages.json"
+  echo "    [--emit-bundle-candidates=<path>] write post-epoch entries still needing a"
+  echo "      minted attestation bundle to <path> as JSON (rfc-attestation-delivery S7b;"
+  echo "      consumed by vendor.yaml's mint loop, never re-fetched from upstream)"
+  echo "    [--bundle-pins=<path>]      apply-only pass: NO network, merges entries from a"
+  echo "      previously-minted pins file (produced from the candidates above) into"
+  echo "      index.kdl; takes precedence over --emit-bundle-candidates if both are given"
   echo "  reindex             epoch-migration: re-vendor all packages and re-baseline content_hash to dag-sha256"
   echo "  add-entry           add an author-signed entry; consumed from commit-entry.yaml"
   echo "    --name --version --oci-ref --upstream --signed-by [--published-at]"
@@ -88,6 +94,8 @@ proc main(): int =
   var check = false
   var showUrl = ""
   var execute = false
+  var emitCandidatesPath = ""
+  var bundlePinsPath = ""
   for kind, key, val in p.getopt():
     case kind
     of cmdArgument:
@@ -100,6 +108,8 @@ proc main(): int =
       case key
       of "check": check = true
       of "execute": execute = true
+      of "emit-bundle-candidates": emitCandidatesPath = val
+      of "bundle-pins": bundlePinsPath = val
       of "help", "h":
         discard usage()
         return 0
@@ -115,7 +125,9 @@ proc main(): int =
   of "project":
     return cmdProject(getCurrentDir(), check = check)
   of "vendor":
-    return cmdVendor(getCurrentDir())
+    return cmdVendor(getCurrentDir(),
+      emitCandidatesPath = emitCandidatesPath,
+      bundlePinsPath = bundlePinsPath)
   of "reindex":
     return cmdReindex(getCurrentDir())
   of "show":

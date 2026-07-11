@@ -10,7 +10,7 @@ import ./kdl_io
 import ./json_io
 import ./namespace
 import ./attestation
-import ./vendor/[denylist, orchestrate, driver]
+import ./vendor/[denylist, orchestrate, driver, candidates, merge]
 
 type
   AttestStatementArgs* = object
@@ -124,13 +124,37 @@ proc cmdProject*(projectDir: string, check: bool): int =
     writeFile(jsonPath, formatJson(kdlResult.get))
     return 0
 
-proc cmdVendor*(projectDir: string): int =
+proc cmdVendor*(
+    projectDir: string,
+    emitCandidatesPath: string = "",
+    bundlePinsPath:     string = "",
+): int =
   ## Run one vendoring pass: fetch nim-lang/packages.json, merge new
   ## entries into index.kdl, append drift alerts to alerts.kdl.
+  ##
+  ## rfc-attestation-delivery S7b (tianguis#42): sigstore signing needs
+  ## GitHub Actions OIDC and cannot happen inline in this binary, so
+  ## post-epoch entries that lack a bundle pin are minted out-of-process
+  ## (the vendor.yaml workflow) via two extra, mutually exclusive modes:
+  ##
+  ##   --bundle-pins=<path>        apply-only pass. NO network, NO Driver —
+  ##                                reads <path> (a pins file the workflow's
+  ##                                mint loop wrote) and index.kdl, merges
+  ##                                each now-pinned entry in, writes
+  ##                                index.kdl back. Takes precedence over
+  ##                                --emit-bundle-candidates if both given.
+  ##   --emit-bundle-candidates=<path>
+  ##                                on a normal (network) vendor pass,
+  ##                                additionally write the set of post-epoch
+  ##                                entries that still need a bundle minted
+  ##                                to <path> as JSON (consumed by the
+  ##                                workflow's mint loop).
+  ##
   ## Exit codes:
   ##   0 — pass completed (entries may or may not have been added; check
   ##       git diff)
-  ##   1 — fatal I/O failure (network, malformed manifest, etc.)
+  ##   1 — fatal I/O failure (network, malformed manifest, missing/malformed
+  ##       --bundle-pins file, etc.)
   let indexPath    = projectDir / "index.kdl"
   let denylistPath = projectDir / "denylist.kdl"
   let alertsPath   = projectDir / "alerts.kdl"
@@ -144,6 +168,30 @@ proc cmdVendor*(projectDir: string): int =
     let e = kdlResult.getErr
     stderr.writeLine("tianguis: " & indexPath & ": " & $e.code & ": " & e.message)
     return 1
+
+  if bundlePinsPath.len > 0:
+    if not fileExists(bundlePinsPath):
+      stderr.writeLine("tianguis: " & bundlePinsPath & " not found")
+      return 1
+    let pinsResult = parsePinsJson(readFile(bundlePinsPath))
+    if pinsResult.isErr:
+      stderr.writeLine("tianguis: vendor --bundle-pins: " & pinsResult.error)
+      return 1
+    let (newIdx, outcomes) = applyBundlePins(kdlResult.get, pinsResult.get)
+    writeFile(indexPath, formatKdl(newIdx))
+    for outcome in outcomes:
+      case outcome.kind
+      of mokMissingAttestation:
+        # Should not happen — a parsed pin is always non-empty/valid — but
+        # surface it rather than silently drop the entry if it ever does.
+        let ma = outcome.missingAttestation
+        stderr.writeLine("tianguis: vendor --bundle-pins: still missing attestation: " &
+          ma.namespace & "/" & ma.packageName & "@" & ma.version)
+      of mokIdentityDrift, mokCollision, mokContentDrift:
+        stderr.writeLine("tianguis: vendor --bundle-pins: rejected (" & $outcome.kind & ")")
+      of mokAdded, mokIdempotent, mokRebaselined:
+        discard
+    return 0
 
   let dl = if fileExists(denylistPath):
              parseDenylist(readFile(denylistPath))
@@ -170,6 +218,8 @@ proc cmdVendor*(projectDir: string): int =
     writeFile(alertsPath, res.alerts)
   for skipped in res.skipped:
     stderr.writeLine("tianguis: skipped denylisted package " & skipped)
+  if emitCandidatesPath.len > 0:
+    writeFile(emitCandidatesPath, candidatesToJson(res.candidates))
   return 0
 
 proc cmdReindex*(projectDir: string): int =

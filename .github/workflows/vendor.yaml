@@ -72,8 +72,91 @@ jobs:
         with:
           cosign-release: "v2.4.0"
 
-      - name: Run vendor pass
-        run: ./tianguis vendor
+      # --- rfc-attestation-delivery S7b (tianguis#42) --------------------
+      # Per-entry attestation bundles (the DSSE/Sigstore bundle a milpa
+      # `entry-trust "strict"` client verifies per-package) can only be
+      # MINTED under real GitHub Actions OIDC — signing needs a Fulcio cert
+      # + Rekor inclusion, and milpa's verifier hardcodes issuer
+      # `https://token.actions.githubusercontent.com` (see the handoff's
+      # "HARD CONSTRAINT" note). The `tianguis` binary itself therefore
+      # never signs anything; it only decides WHAT needs signing and later
+      # ADMITS the result. Three steps:
+      #
+      #   1. `tianguis vendor --emit-bundle-candidates=candidates.json` runs
+      #      the normal vendor pass (network, git clones, merges everything
+      #      it can) and additionally writes every post-epoch entry that
+      #      still lacks a bundle pin to candidates.json — enough fields to
+      #      both mint AND later re-merge it with NO second upstream fetch
+      #      (src/tianguis/vendor/candidates.nim).
+      #   2. This job mints one Sigstore bundle per candidate via
+      #      scripts/mint_bundle.py (sigstore-python under ambient OIDC —
+      #      cosign CLI cannot set an arbitrary subject digest, see the
+      #      handoff's RESOLVED minting recipe) and writes pins.json: each
+      #      candidate augmented with the minted `bundle_pin`.
+      #   3. `tianguis vendor --bundle-pins=pins.json` re-reads index.kdl
+      #      and the pins file — NO network, NO Driver — and merges each
+      #      now-pinned entry in. The S5 epoch gate passes because the pin
+      #      is present.
+      - name: Run vendor pass (emit bundle candidates)
+        run: ./tianguis vendor --emit-bundle-candidates=candidates.json
+
+      - name: Set up Python (for sigstore signing)
+        if: hashFiles('candidates.json') != ''
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install sigstore
+        if: hashFiles('candidates.json') != ''
+        run: pip install -r scripts/requirements.txt
+
+      # Mint one bundle per candidate. Every value fed to mint_bundle.py
+      # comes from candidates.json (this job's own prior output), not from
+      # any GitHub context — nothing here is `${{ }}`-interpolated into the
+      # shell, so there's no expand-before-shell-parses injection surface;
+      # values are still passed as properly quoted `"$var"` shell
+      # expansions (never string-concatenated into a command) and pins.json
+      # is assembled via `jq --arg`/`--argjson`, never string concatenation,
+      # so no candidate field (all attacker-reachable: they originate from
+      # upstream nim-lang/packages.json entries) can smuggle extra JSON keys
+      # or shell arguments.
+      - name: Mint attestation bundles for pending candidates
+        if: hashFiles('candidates.json') != ''
+        run: |
+          mkdir -p attestation
+          echo '[]' > pins.json
+          count=$(jq 'length' candidates.json)
+          echo "minting ${count} attestation bundle(s)"
+          for i in $(seq 0 $((count - 1))); do
+            ns=$(jq -r ".[$i].namespace" candidates.json)
+            name=$(jq -r ".[$i].name" candidates.json)
+            version=$(jq -r ".[$i].version" candidates.json)
+            content_hash=$(jq -r ".[$i].content_hash" candidates.json)
+            pin=$(python3 scripts/mint_bundle.py \
+              --tianguis-bin ./tianguis \
+              --attestation-dir attestation \
+              --namespace "$ns" \
+              --name "$name" \
+              --version "$version" \
+              --content-hash "$content_hash" \
+              --attestation-kind "milpa-vendored" \
+              --signed-by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)")
+              # NOTE: this string must match `MilpaBotIdentity` in
+              # src/tianguis/vendor/merge.nim (`Version.signedBy` for every
+              # milpa-vendored entry). It is NOT cross-checked by milpa's
+              # verifier — the statement's `predicate.signed_by` is metadata
+              # only (RFC §6: predicate contents are never inspected) — so a
+              # drift here is cosmetic, not a security bug, but keep it in
+              # sync for consistency between the index entry and the bundle.
+            jq --argjson entry "$(jq ".[$i]" candidates.json)" --arg pin "$pin" \
+              '. + [$entry + {bundle_pin: $pin}]' pins.json > pins.json.tmp
+            mv pins.json.tmp pins.json
+          done
+
+      - name: Apply minted bundle pins
+        if: hashFiles('candidates.json') != ''
+        run: ./tianguis vendor --bundle-pins=pins.json
+      # --------------------------------------------------------------------
 
       - name: Keep index.json in parity
         run: ./tianguis project
@@ -92,6 +175,11 @@ jobs:
           # this pass) doesn't make the whole `git add` no-op the others.
           git add index.kdl index.json
           [ -f alerts.kdl ] && git add alerts.kdl || true
+          # Newly minted attestation bundles (S7b) — the content-addressed
+          # tree milpa fetches `<hex>.bundle` files from at serve time
+          # (bundlestore.nim's `writeBundle`). Absent when no post-epoch
+          # entries needed minting this pass.
+          [ -d attestation ] && git add attestation/ || true
           git commit -m "chore(vendor): daily milpa-bot vendoring pass"
           # A vendor pass can take >1h, during which other commits may
           # have landed on main. Rebase before push so we don't lose the

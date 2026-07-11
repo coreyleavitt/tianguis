@@ -12,6 +12,7 @@ import ./tagselect
 import ./merge
 import ./denylist
 import ./alerts
+import ./candidates
 import ../model
 import ../namespace
 import ../kdl_io
@@ -24,9 +25,15 @@ type
   Driver* = ref object of RootObj
 
   VendorRunResult* = object
-    index*:   Index
-    alerts*:  string         ## full alerts.kdl log (existing + new)
-    skipped*: seq[string]    ## denylisted or undrivable packages we skipped
+    index*:      Index
+    alerts*:     string         ## full alerts.kdl log (existing + new)
+    skipped*:    seq[string]    ## denylisted or undrivable packages we skipped
+    candidates*: seq[BundleCandidate]
+        ## rfc-attestation-delivery S7b: post-epoch entries this pass could
+        ## NOT merge purely because they lack a bundle pin (and are not
+        ## already pinned elsewhere in the index — see
+        ## `alreadyPinnedInIndex`). Written to `--emit-bundle-candidates`;
+        ## empty when no epoch is set or nothing needs minting.
 
 # ---------------------------------------------------------------------------
 # Driver protocol — concrete drivers override these.
@@ -47,6 +54,28 @@ method shallowCloneAndHash*(d: Driver, url, refName: string): CloneResult {.base
 # ---------------------------------------------------------------------------
 # Pure orchestrator
 # ---------------------------------------------------------------------------
+
+proc alreadyPinnedInIndex(idx: Index, namespace, name, version, contentHash: string): bool =
+  ## True when `idx` already carries a version at (namespace, name, version)
+  ## with THIS exact content_hash AND a bundle pin already set.
+  ##
+  ## Needed because `mergeVendored`'s epoch gate (S5) checks the pin BEFORE
+  ## the idempotent/content-drift checks — and `buildVendoredEntry` never
+  ## carries a previously-stored pin forward (a live re-vendor pass has no
+  ## reason to know about it; only the index does). Without this guard, a
+  ## package that was already vendored+pinned on a prior run would get
+  ## rebuilt with `bundlePin = none` on today's run, immediately fail the
+  ## gate as `mokMissingAttestation`, and get needlessly re-emitted as a
+  ## bundle candidate every single day — a wasted (and non-idempotent,
+  ## since Sigstore signing embeds a fresh Rekor timestamp) re-mint. This
+  ## check keeps candidate-emission scoped to entries that genuinely still
+  ## need a pin.
+  for p in idx.packages:
+    if p.namespace != namespace or p.name != name: continue
+    for v in p.versions:
+      if v.version == version and v.contentHash == contentHash and v.bundlePin.isSome:
+        return true
+  false
 
 proc runVendor*(
     driver:        Driver,
@@ -69,6 +98,7 @@ proc runVendor*(
   var idx = initialIndex
   var alerts = initialAlerts
   var skipped: seq[string] = @[]
+  var pending: seq[BundleCandidate] = @[]
 
   for pkg in driver.fetchPackagesJson():
     if pkg.`method` != "git":
@@ -164,9 +194,51 @@ proc runVendor*(
         stderr.writeLine("tianguis: vendor: IDX-MISSING-ATTESTATION: " &
           ma.namespace & "/" & ma.packageName & "@" & ma.version &
           " published_at=" & ma.publishedAt & " epoch=" & ma.epoch)
+        # S7b: this entry needs a minted bundle before it can merge. Emit it
+        # as a candidate UNLESS it's already fully pinned elsewhere in the
+        # index (see alreadyPinnedInIndex's docstring for why that check is
+        # necessary, not just an optimization).
+        if not alreadyPinnedInIndex(idx, ns, pkg.name, sel.version, clone.contentHash):
+          pending.add(BundleCandidate(
+            namespace:   ns,
+            name:        pkg.name,
+            version:     sel.version,
+            contentHash: clone.contentHash,
+            upstream:    pkg.url,
+            commitSha:   clone.commitSha,
+            gitRef:      refName,
+            publishedAt: nowIso,
+          ))
     except CatchableError as e:
       stderr.writeLine("tianguis: vendor: " & pkg.name & " skipped: " & e.msg)
       skipped.add(pkg.name)
       continue
 
-  VendorRunResult(index: idx, alerts: alerts, skipped: skipped)
+  VendorRunResult(index: idx, alerts: alerts, skipped: skipped, candidates: pending)
+
+# ---------------------------------------------------------------------------
+# S7b — apply previously-minted bundle pins (NO Driver, NO network)
+# ---------------------------------------------------------------------------
+
+proc applyBundlePins*(idx: Index, pins: seq[BundlePin]): tuple[index: Index, outcomes: seq[MergeOutcome]] =
+  ## Apply previously-minted bundle pins to the entries they belong to.
+  ##
+  ## Each pin's candidate data was persisted verbatim by the candidate-emit
+  ## pass (`runVendor`'s `pending`/`res.candidates`), so it's enough to
+  ## reconstruct the exact `VendoredEntry` `buildVendoredEntry` would have
+  ## produced — no Driver, no re-clone, no re-fetch. Threading the
+  ## now-minted pin through `buildVendoredEntryFromCandidate` makes the S5
+  ## epoch gate pass on this pass's `mergeVendored` call.
+  ##
+  ## Reuses `mergeVendored` (not a bespoke insert) so every existing
+  ## invariant — identity drift, intra-org collision, content drift,
+  ## idempotency — is enforced identically here as on a live vendor pass.
+  var current = idx
+  var outcomes: seq[MergeOutcome] = @[]
+  for p in pins:
+    let entry = buildVendoredEntryFromCandidate(p.candidate, p.pin)
+    let (newIdx, outcome) = mergeVendored(current, entry)
+    outcomes.add(outcome)
+    if outcome.kind == mokAdded:
+      current = newIdx
+  (index: current, outcomes: outcomes)
