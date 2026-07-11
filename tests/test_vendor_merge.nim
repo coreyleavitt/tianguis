@@ -1,6 +1,6 @@
 ## Vendored-entry construction + merge-into-index tests.
 
-import std/[unittest, strutils]
+import std/[unittest, strutils, options]
 import tianguis/[model, kdl_io]
 import tianguis/vendor/[upstream, tagselect, merge]
 import tianguis/namespace
@@ -429,6 +429,83 @@ suite "M5: identity guard on derivation failure":
     check outcome.kind == mokIdentityDrift
     # Index must be unchanged
     check returnedIdx == storedIdx
+
+suite "attestation epoch gate (S5)":
+  ## rfc-attestation-delivery S5 / tianguis#42 deliverable 5: once the index
+  ## carries a root attestation-epoch, every entry whose published_at is on
+  ## or after it MUST carry a recognized attestation kind AND a bundle pin,
+  ## or the merge is rejected as mokMissingAttestation.
+  const epoch = "2026-06-01T00:00:00Z"
+
+  test "post-epoch entry with no attestation is rejected":
+    let entry = VendoredEntry(
+      package: Package(name: "gate1", namespace: "github.com/acme",
+                        upstream: "https://github.com/acme/gate1"),
+      version: Version(version: "1.0.0", contentHash: "sha256:aaa",
+                        attestation: "", publishedAt: "2026-06-15T00:00:00Z"),
+    )
+    let idx = Index(schemaVersion: 1, attestationEpoch: some(epoch), packages: @[])
+    let (returned, outcome) = mergeVendored(idx, entry)
+    check outcome.kind == mokMissingAttestation
+    check outcome.missingAttestation.packageName == "gate1"
+    check outcome.missingAttestation.namespace == "github.com/acme"
+    check outcome.missingAttestation.version == "1.0.0"
+    check outcome.missingAttestation.publishedAt == "2026-06-15T00:00:00Z"
+    check outcome.missingAttestation.epoch == epoch
+    check returned == idx  # unchanged
+
+  test "post-epoch entry with attestation but no bundle pin is rejected":
+    let entry = VendoredEntry(
+      package: Package(name: "gate2", namespace: "github.com/acme",
+                        upstream: "https://github.com/acme/gate2"),
+      version: Version(version: "1.0.0", contentHash: "sha256:aaa",
+                        attestation: "milpa-vendored",
+                        publishedAt: "2026-06-15T00:00:00Z",
+                        bundlePin: none(string)),
+    )
+    let idx = Index(schemaVersion: 1, attestationEpoch: some(epoch), packages: @[])
+    let (returned, outcome) = mergeVendored(idx, entry)
+    check outcome.kind == mokMissingAttestation
+    check returned == idx
+
+  test "post-epoch entry with attestation AND bundle pin is accepted":
+    let entry = VendoredEntry(
+      package: Package(name: "gate3", namespace: "github.com/acme",
+                        upstream: "https://github.com/acme/gate3"),
+      version: Version(version: "1.0.0", contentHash: "sha256:aaa",
+                        attestation: "milpa-vendored",
+                        publishedAt: "2026-06-15T00:00:00Z",
+                        bundlePin: some("d" & "e".repeat(63))),
+    )
+    let idx = Index(schemaVersion: 1, attestationEpoch: some(epoch), packages: @[])
+    let (after, outcome) = mergeVendored(idx, entry)
+    check outcome.kind == mokAdded
+    check after.packages.len == 1
+    check after.packages[0].versions[0].bundlePin.isSome
+
+  test "pre-epoch entry with no attestation is unaffected (gate is forward-only)":
+    let entry = VendoredEntry(
+      package: Package(name: "gate4", namespace: "github.com/acme",
+                        upstream: "https://github.com/acme/gate4"),
+      version: Version(version: "1.0.0", contentHash: "sha256:aaa",
+                        attestation: "", publishedAt: "2026-01-01T00:00:00Z"),
+    )
+    let idx = Index(schemaVersion: 1, attestationEpoch: some(epoch), packages: @[])
+    let (after, outcome) = mergeVendored(idx, entry)
+    check outcome.kind == mokAdded
+    check after.packages.len == 1
+
+  test "no epoch set — gate is inert regardless of attestation":
+    let entry = VendoredEntry(
+      package: Package(name: "gate5", namespace: "github.com/acme",
+                        upstream: "https://github.com/acme/gate5"),
+      version: Version(version: "1.0.0", contentHash: "sha256:aaa",
+                        attestation: "", publishedAt: "2026-06-15T00:00:00Z"),
+    )
+    let idx = Index(schemaVersion: 1, attestationEpoch: none(string), packages: @[])
+    let (after, outcome) = mergeVendored(idx, entry)
+    check outcome.kind == mokAdded
+    check after.packages.len == 1
 
 suite "checkIdentityStable":
   test "returns none when stored equals rederived":

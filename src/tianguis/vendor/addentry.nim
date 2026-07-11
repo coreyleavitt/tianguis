@@ -191,6 +191,13 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
     stderr.writeLine("tianguis: add-entry: IDX-CONTENT-DRIFT: " &
       outcome.content.packageName & " " & outcome.content.version)
     return 1
+  of mokMissingAttestation:
+    stderr.writeLine("tianguis: add-entry: IDX-MISSING-ATTESTATION: " &
+      outcome.missingAttestation.namespace & "/" & outcome.missingAttestation.packageName &
+      "@" & outcome.missingAttestation.version &
+      " published_at=" & outcome.missingAttestation.publishedAt &
+      " epoch=" & outcome.missingAttestation.epoch)
+    return 1
   of mokRebaselined:
     # mergeVendored never returns mokRebaselined (only mergeRebaseline does);
     # this branch is unreachable here but required for exhaustive coverage.

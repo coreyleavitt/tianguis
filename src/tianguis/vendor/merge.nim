@@ -31,24 +31,39 @@ type
     existingRepo*: string   ## repo segment from the already-stored entry's git URL
     newRepo*:      string   ## repo segment from the incoming entry's git URL
 
+  MissingAttestationAlert* = object
+    ## Publish-time epoch-gate rejection (rfc-attestation-delivery S5 /
+    ## tianguis#42 deliverable 5): the entry's published_at is on/after the
+    ## root attestation-epoch but it lacks a recognized attestation kind
+    ## and/or a bundle pin.
+    packageName*: string
+    namespace*:   string
+    version*:     string
+    publishedAt*: string
+    epoch*:       string
+
   MergeOutcomeKind* = enum
-    mokAdded          ## new package or new version inserted
-    mokIdempotent     ## identical re-ingest; index unchanged
-    mokIdentityDrift  ## stored host/org namespace != re-derived (immutability violation; reject)
-    mokCollision      ## intra-org leaf-name collision, different repo (reject-new/preserve-existing)
-    mokContentDrift   ## same (namespace,name,version), different content_hash (reject incoming, warn)
-    mokRebaselined    ## epoch-migration: content_hash updated from old scheme to new (audit only)
+    mokAdded               ## new package or new version inserted
+    mokIdempotent          ## identical re-ingest; index unchanged
+    mokIdentityDrift       ## stored host/org namespace != re-derived (immutability violation; reject)
+    mokCollision           ## intra-org leaf-name collision, different repo (reject-new/preserve-existing)
+    mokContentDrift        ## same (namespace,name,version), different content_hash (reject incoming, warn)
+    mokRebaselined         ## epoch-migration: content_hash updated from old scheme to new (audit only)
+    mokMissingAttestation  ## published_at >= attestation-epoch but no attestation/bundle pin (reject)
 
   MergeOutcome* = object
     case kind*: MergeOutcomeKind
     of mokAdded, mokIdempotent: discard
-    of mokIdentityDrift: identity*:    IdentityDrift      ## defined in namespace.nim
-    of mokCollision:     collision*:   IntraOrgCollision  ## defined in vendor/merge.nim
-    of mokContentDrift:  content*:     DriftAlert         ## defined in vendor/merge.nim
-    of mokRebaselined:   rebaseline*:  DriftAlert         ## old→new hash; audit trail
+    of mokIdentityDrift:       identity*:           IdentityDrift           ## defined in namespace.nim
+    of mokCollision:           collision*:          IntraOrgCollision       ## defined in vendor/merge.nim
+    of mokContentDrift:        content*:            DriftAlert              ## defined in vendor/merge.nim
+    of mokRebaselined:         rebaseline*:         DriftAlert              ## old→new hash; audit trail
+    of mokMissingAttestation:  missingAttestation*: MissingAttestationAlert ## defined in vendor/merge.nim
 
 const
   AttestationMilpaVendored = "milpa-vendored"
+  AttestationAuthorSigned = "author-signed"
+  RecognizedAttestationKinds = [AttestationMilpaVendored, AttestationAuthorSigned]
   MilpaBotIdentity = "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
 
 proc buildVendoredEntry*(
@@ -107,11 +122,48 @@ proc gitProvenanceRepo(pkg: Package): string =
         if r.isOk: return r.get.repo
   ""
 
+proc attestationGateRejects(idx: Index, entry: VendoredEntry): bool =
+  ## Publish-time epoch gate (rfc-attestation-delivery S5 / tianguis#42
+  ## deliverable 5): once the index has a root `attestation-epoch` E set,
+  ## every entry whose `published_at >= E` MUST carry BOTH a recognized
+  ## attestation kind (the closed set `author-signed` | `milpa-vendored` —
+  ## milpa RFC §2) AND a bundle pin. This is what lets milpa's
+  ## `entry-trust "strict"` be epoch-based rather than coverage-based: a
+  ## `milpa-vendored` entry with no pin still rejects post-epoch (the
+  ## vendor bot mints pin + bundle before calling this, S7) — attestation
+  ## kind alone is not sufficient once the epoch is live.
+  ##
+  ## Timestamps are compared lexicographically. This is safe (and matches
+  ## milpa's own ratchet comparison) ONLY because both sides are always the
+  ## single canonical UTC ISO-8601 form tianguis emits at publish time —
+  ## `yyyy-MM-dd'T'HH:mm:ss'Z'` (see `nowStr` in addentry.nim/orchestrate.nim
+  ## and the ratchet in index_ratchet_seam.py on the milpa side) — fixed
+  ## width, zero-padded, always UTC ('Z'), so byte-lexicographic order equals
+  ## chronological order. Entries with no epoch set, or published before it,
+  ## are entirely unaffected (epoch-forward-only; legacy entries pass as-is).
+  if idx.attestationEpoch.isNone: return false
+  if entry.version.publishedAt < idx.attestationEpoch.get: return false
+  entry.version.attestation notin RecognizedAttestationKinds or
+    entry.version.bundlePin.isNone
+
+proc missingAttestationOutcome(idx: Index, entry: VendoredEntry): MergeOutcome =
+  MergeOutcome(kind: mokMissingAttestation, missingAttestation: MissingAttestationAlert(
+    packageName: entry.package.name,
+    namespace:   entry.package.namespace,
+    version:     entry.version.version,
+    publishedAt: entry.version.publishedAt,
+    epoch:       idx.attestationEpoch.get,
+  ))
+
 proc mergeVendored*(idx: Index, entry: VendoredEntry): tuple[index: Index, outcome: MergeOutcome] =
   ## Merge `entry` into `idx`. Returns the (possibly-mutated) index alongside
-  ## a closed-sum outcome. Priority ordering on existing-package path:
-  ##   mokIdentityDrift ▸ mokCollision ▸ mokContentDrift ▸ mokAdded/mokIdempotent
+  ## a closed-sum outcome. Priority ordering:
+  ##   mokMissingAttestation ▸ mokIdentityDrift ▸ mokCollision ▸ mokContentDrift
+  ##   ▸ mokAdded/mokIdempotent
   ## On any reject kind, the returned index == idx (unchanged).
+  if attestationGateRejects(idx, entry):
+    return (index: idx, outcome: missingAttestationOutcome(idx, entry))
+
   var packages = idx.packages
   var foundPkgIdx = -1
   for i, p in packages:
@@ -216,6 +268,13 @@ proc mergeRebaseline*(idx: Index, entry: VendoredEntry): tuple[index: Index, out
   ##
   ## This is the ONLY merge proc that may mutate an existing version's
   ## content_hash. Normal vendoring NEVER does this (see mergeVendored).
+  ##
+  ## The publish-time attestation-epoch gate (S5) applies here too — a
+  ## rebaseline is still an admission of an entry's current state into the
+  ## index, so it is bound by the same post-epoch requirement.
+  if attestationGateRejects(idx, entry):
+    return (index: idx, outcome: missingAttestationOutcome(idx, entry))
+
   var packages = idx.packages
   var foundPkgIdx = -1
   for i, p in packages:

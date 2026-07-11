@@ -158,6 +158,12 @@ proc runVendor*(
           " existing=" & col.existingRepo & " incoming=" & col.newRepo)
       of mokContentDrift:
         alerts = appendAlert(alerts, outcome.content, detectedAt = nowIso)
+      of mokMissingAttestation:
+        let ma = outcome.missingAttestation
+        alerts = appendAlert(alerts, ma, detectedAt = nowIso)
+        stderr.writeLine("tianguis: vendor: IDX-MISSING-ATTESTATION: " &
+          ma.namespace & "/" & ma.packageName & "@" & ma.version &
+          " published_at=" & ma.publishedAt & " epoch=" & ma.epoch)
     except CatchableError as e:
       stderr.writeLine("tianguis: vendor: " & pkg.name & " skipped: " & e.msg)
       skipped.add(pkg.name)

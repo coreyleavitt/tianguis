@@ -81,6 +81,23 @@ proc appendAlert*(existing: string, i: IdentityDrift, detectedAt: string): strin
     result.add('\n')
   result.add(formatAlert(i, detectedAt))
 
+proc formatAlert*(m: MissingAttestationAlert, detectedAt: string): string =
+  ## Format a publish-time attestation-epoch-gate rejection (S5) as a KDL node.
+  ## Distinct node name so triage tooling can filter epoch-gate rejects
+  ## independently of content/identity drift.
+  "missing-attestation namespace=\"" & kdlEscapeString(m.namespace) &
+    "\" name=\"" & kdlEscapeString(m.packageName) &
+    "\" version=\"" & kdlEscapeString(m.version) &
+    "\" published_at=\"" & kdlEscapeString(m.publishedAt) &
+    "\" epoch=\"" & kdlEscapeString(m.epoch) &
+    "\" detected_at=\"" & kdlEscapeString(detectedAt) & "\"\n"
+
+proc appendAlert*(existing: string, m: MissingAttestationAlert, detectedAt: string): string =
+  result = existing
+  if result.len > 0 and result[^1] != '\n':
+    result.add('\n')
+  result.add(formatAlert(m, detectedAt))
+
 # ---------------------------------------------------------------------------
 # Publish-rejection alert — namespace-underivable (P2.1)
 # ---------------------------------------------------------------------------
