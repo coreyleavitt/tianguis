@@ -570,6 +570,114 @@ suite "attestation epoch gate (S5)":
     check outcome.kind == mokAdded
     check after.packages.len == 1
 
+suite "signer-continuity ratchet (S8 Layer 3, tianguis#42)":
+  ## Anti-takeover guard: once a package's first author-signed version pins
+  ## `Package.authorizedSigner`, a DIFFERENT signer cannot publish vN+1 under
+  ## that (namespace, name). Vendored (bot-signed) versions never pin/consult
+  ## the field — they are Layer-1-trusted already.
+  ##
+  ## All entries below share the same git provenance URL
+  ## ("https://github.com/alice/libp2p") so the identity-drift and
+  ## intra-org-collision guards never fire as a side effect — the only
+  ## thing under test is `signed_by` continuity.
+  proc authorSignedEntry(name, namespace, upstream, version, contentHash, signer: string): VendoredEntry =
+    VendoredEntry(
+      package: Package(name: name, namespace: namespace, upstream: upstream),
+      version: Version(
+        version: version, contentHash: contentHash,
+        attestation: "author-signed", signedBy: signer,
+        publishedAt: fixedPublishedAt,
+        provenances: @[Provenance(
+          kind: pkGit, url: upstream, gitRef: "v" & version, commitSha: "c" & version,
+        )],
+      ),
+    )
+
+  const alicePinnedSigner =
+    "https://github.com/alice/libp2p/.github/workflows/publish.yaml@refs/heads/main"
+
+  test "first author-signed version into a fresh package pins authorizedSigner":
+    let entry = authorSignedEntry("libp2p", "github.com/alice",
+                                   "https://github.com/alice/libp2p", "1.0.0",
+                                   "sha256:aaa", alicePinnedSigner)
+    let (after, outcome) = mergeVendored(Index(schemaVersion: 1, packages: @[]), entry)
+    check outcome.kind == mokAdded
+    check after.packages.len == 1
+    check after.packages[0].authorizedSigner == some(alicePinnedSigner)
+
+  test "second author-signed version with the same signer is accepted":
+    let v1 = authorSignedEntry("libp2p", "github.com/alice",
+                                "https://github.com/alice/libp2p", "1.0.0",
+                                "sha256:aaa", alicePinnedSigner)
+    let v2 = authorSignedEntry("libp2p", "github.com/alice",
+                                "https://github.com/alice/libp2p", "2.0.0",
+                                "sha256:bbb", alicePinnedSigner)
+    let (idx1, _) = mergeVendored(Index(schemaVersion: 1, packages: @[]), v1)
+    let (idx2, outcome) = mergeVendored(idx1, v2)
+    check outcome.kind == mokAdded
+    check idx2.packages[0].versions.len == 2
+    check idx2.packages[0].authorizedSigner == some(alicePinnedSigner)
+
+  test "second author-signed version with a different signer is rejected (mokSignerMismatch)":
+    let attackerSigner =
+      "https://github.com/mallory/evil/.github/workflows/publish.yaml@refs/heads/main"
+    let v1 = authorSignedEntry("libp2p", "github.com/alice",
+                                "https://github.com/alice/libp2p", "1.0.0",
+                                "sha256:aaa", alicePinnedSigner)
+    let attack = authorSignedEntry("libp2p", "github.com/alice",
+                                    "https://github.com/alice/libp2p", "2.0.0",
+                                    "sha256:bbb", attackerSigner)
+    let (idx1, _) = mergeVendored(Index(schemaVersion: 1, packages: @[]), v1)
+    let (idx2, outcome) = mergeVendored(idx1, attack)
+    check outcome.kind == mokSignerMismatch
+    check outcome.signerMismatch.packageName == "libp2p"
+    check outcome.signerMismatch.namespace == "github.com/alice"
+    check outcome.signerMismatch.version == "2.0.0"
+    check outcome.signerMismatch.pinnedSigner == alicePinnedSigner
+    check outcome.signerMismatch.incomingSigner == attackerSigner
+    # Package/index left completely unchanged — no takeover, no partial mutation.
+    check idx2 == idx1
+    check idx2.packages[0].versions.len == 1
+    check idx2.packages[0].authorizedSigner == some(alicePinnedSigner)
+
+  test "vendored version into an author-pinned package proceeds and does not alter authorizedSigner":
+    let v1 = authorSignedEntry("libp2p", "github.com/alice",
+                                "https://github.com/alice/libp2p", "1.0.0",
+                                "sha256:aaa", alicePinnedSigner)
+    let vendoredEntry = buildVendoredEntry(
+      UpstreamPackage(name: "libp2p", url: "https://github.com/alice/libp2p", `method`: "git"),
+      TagSelection(kind: tskSemver, tag: "v2.0.0", version: "2.0.0"),
+      "sha256:bbb", "commitsha", fixedPublishedAt,
+    ).get
+    let (idx1, _) = mergeVendored(Index(schemaVersion: 1, packages: @[]), v1)
+    let (idx2, outcome) = mergeVendored(idx1, vendoredEntry)
+    check outcome.kind == mokAdded
+    check idx2.packages[0].versions.len == 2
+    check idx2.packages[0].authorizedSigner == some(alicePinnedSigner)
+
+  test "a package with only vendored versions keeps authorizedSigner none":
+    let pkg = fakeUpstream("purevendored")
+    let sel = TagSelection(kind: tskSemver, tag: "v1.0.0", version: "1.0.0")
+    let e = buildVendoredEntry(pkg, sel, "sha256:a", "c123", fixedPublishedAt).get
+    let (idx, outcome) = mergeVendored(Index(schemaVersion: 1, packages: @[]), e)
+    check outcome.kind == mokAdded
+    check idx.packages[0].authorizedSigner.isNone
+
+  test "author-signed version into a package first seeded by vendored pins on first author-signed ingest":
+    let vendoredFirst = buildVendoredEntry(
+      UpstreamPackage(name: "libp2p", url: "https://github.com/alice/libp2p", `method`: "git"),
+      TagSelection(kind: tskSemver, tag: "v1.0.0", version: "1.0.0"),
+      "sha256:aaa", "commitsha", fixedPublishedAt,
+    ).get
+    let authorEntry = authorSignedEntry("libp2p", "github.com/alice",
+                                         "https://github.com/alice/libp2p", "2.0.0",
+                                         "sha256:bbb", alicePinnedSigner)
+    let (idx1, _) = mergeVendored(Index(schemaVersion: 1, packages: @[]), vendoredFirst)
+    check idx1.packages[0].authorizedSigner.isNone
+    let (idx2, outcome) = mergeVendored(idx1, authorEntry)
+    check outcome.kind == mokAdded
+    check idx2.packages[0].authorizedSigner == some(alicePinnedSigner)
+
 suite "checkIdentityStable":
   test "returns none when stored equals rederived":
     let r = checkIdentityStable("nimkdl", "github.com/coreyleavitt", "github.com/coreyleavitt")

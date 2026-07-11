@@ -172,6 +172,33 @@ package "chronos" {
     check parsed.get.attestationEpoch.isSome
     check parsed.get.attestationEpoch.get == "2026-07-01T00:00:00Z"
 
+  test "package-level authorized-signer node is accepted (not rejected as unknown)":
+    let src = """
+schema_version 1
+package "libp2p" {
+    namespace "github.com/alice"
+    upstream (url)"https://github.com/alice/libp2p"
+    authorized-signer "https://github.com/alice/libp2p/.github/workflows/publish.yaml@refs/heads/main"
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isOk
+    check parsed.get.packages[0].authorizedSigner.isSome
+
+  test "unknown sibling next to authorized-signer in package is still rejected with IDX-NODE-UNKNOWN":
+    let src = """
+schema_version 1
+package "libp2p" {
+    namespace "github.com/alice"
+    upstream (url)"https://github.com/alice/libp2p"
+    authorized-signer "https://github.com/alice"
+    bogus "y"
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isErr
+    check parsed.getErr.code == iecUnknownNode
+
   test "a genuinely unknown root node is still rejected with IDX-NODE-UNKNOWN":
     let src = """
 schema_version 1
@@ -244,6 +271,24 @@ suite "json strict schema":
     check parsed.isErr
     check parsed.getErr.code == iecUnknownNode
     check ".rekor" in parsed.getErr.message
+
+  test "authorized_signer key alone in package object parses fine":
+    let parsed = parseJson("""
+      {"schema_version":1,"packages":[
+        {"name":"x","namespace":"ns","upstream":"https://x",
+         "authorized_signer":"https://x/sign","versions":[]}
+      ]}""")
+    check parsed.isOk
+    check parsed.get.packages[0].authorizedSigner.isSome
+
+  test "unknown key alongside authorized_signer in package object rejected with IDX-NODE-UNKNOWN":
+    let parsed = parseJson("""
+      {"schema_version":1,"packages":[
+        {"name":"x","namespace":"ns","upstream":"https://x",
+         "authorized_signer":"https://x/sign","bogus":1,"versions":[]}
+      ]}""")
+    check parsed.isErr
+    check parsed.getErr.code == iecUnknownNode
 
   test "valid fully-nested index (with rekor) parses without error":
     let parsed = parseJson("""

@@ -44,6 +44,19 @@ type
     publishedAt*: string
     epoch*:       string
 
+  SignerMismatchAlert* = object
+    ## Signer-continuity ratchet rejection (rfc-attestation-delivery S8
+    ## Layer 3 / tianguis#42 — the per-package anti-takeover guard): an
+    ## incoming AUTHOR-SIGNED version's `signed_by` does not match the
+    ## package's already-pinned `authorizedSigner`. Vendored (bot-signed)
+    ## versions never trigger this — they are Layer-1-trusted and do not
+    ## consult or mutate the pin.
+    packageName*:    string
+    namespace*:      string
+    version*:        string
+    pinnedSigner*:   string  ## Package.authorizedSigner at the time of rejection
+    incomingSigner*: string  ## the rejected version's signed_by
+
   MergeOutcomeKind* = enum
     mokAdded               ## new package or new version inserted
     mokIdempotent          ## identical re-ingest; index unchanged
@@ -52,6 +65,8 @@ type
     mokContentDrift        ## same (namespace,name,version), different content_hash (reject incoming, warn)
     mokRebaselined         ## epoch-migration: content_hash updated from old scheme to new (audit only)
     mokMissingAttestation  ## published_at >= attestation-epoch but no attestation/bundle pin (reject)
+    mokSignerMismatch      ## author-signed version whose signed_by != the package's pinned
+                           ## authorizedSigner (reject; anti-takeover guard)
 
   MergeOutcome* = object
     case kind*: MergeOutcomeKind
@@ -61,6 +76,7 @@ type
     of mokContentDrift:        content*:            DriftAlert              ## defined in vendor/merge.nim
     of mokRebaselined:         rebaseline*:         DriftAlert              ## old→new hash; audit trail
     of mokMissingAttestation:  missingAttestation*: MissingAttestationAlert ## defined in vendor/merge.nim
+    of mokSignerMismatch:      signerMismatch*:     SignerMismatchAlert     ## defined in vendor/merge.nim
 
 const
   AttestationMilpaVendored = "milpa-vendored"
@@ -194,6 +210,13 @@ proc attestationGateRejects(idx: Index, entry: VendoredEntry): bool =
   entry.version.attestation notin RecognizedAttestationKinds or
     entry.version.bundlePin.isNone
 
+proc isAuthorSigned(v: Version): bool =
+  ## True iff `v` carries the `author-signed` attestation kind — the only
+  ## kind gated by the signer-continuity ratchet (S8 Layer 3). Vendored
+  ## (`milpa-vendored`, bot-signed) versions are Layer-1-trusted already and
+  ## never consult or mutate `Package.authorizedSigner`.
+  v.attestation == AttestationAuthorSigned
+
 proc missingAttestationOutcome(idx: Index, entry: VendoredEntry): MergeOutcome =
   MergeOutcome(kind: mokMissingAttestation, missingAttestation: MissingAttestationAlert(
     packageName: entry.package.name,
@@ -206,9 +229,18 @@ proc missingAttestationOutcome(idx: Index, entry: VendoredEntry): MergeOutcome =
 proc mergeVendored*(idx: Index, entry: VendoredEntry): tuple[index: Index, outcome: MergeOutcome] =
   ## Merge `entry` into `idx`. Returns the (possibly-mutated) index alongside
   ## a closed-sum outcome. Priority ordering:
-  ##   mokMissingAttestation ▸ mokIdentityDrift ▸ mokCollision ▸ mokContentDrift
-  ##   ▸ mokAdded/mokIdempotent
+  ##   mokMissingAttestation ▸ mokIdentityDrift ▸ mokCollision ▸ mokSignerMismatch
+  ##   ▸ mokContentDrift ▸ mokAdded/mokIdempotent
   ## On any reject kind, the returned index == idx (unchanged).
+  ##
+  ## Signer-continuity ratchet (S8 Layer 3, mokSignerMismatch) sits AFTER the
+  ## identity/collision guards (those settle "is this even the same package"
+  ## before we ask "is this author allowed to publish to it") and BEFORE
+  ## content-drift (so a takeover attempt disguised as a same-version content
+  ## update is reported as the security-relevant signer mismatch, not buried
+  ## under a generic drift warning). It stays AFTER mokMissingAttestation,
+  ## which is a structural delivery-completeness gate that needs no package
+  ## lookup at all and rejects before we ever read `Package.authorizedSigner`.
   if attestationGateRejects(idx, entry):
     return (index: idx, outcome: missingAttestationOutcome(idx, entry))
 
@@ -222,6 +254,10 @@ proc mergeVendored*(idx: Index, entry: VendoredEntry): tuple[index: Index, outco
   if foundPkgIdx < 0:
     var newPkg = entry.package
     newPkg.versions = @[entry.version]
+    # First-ever version of a brand-new package: an author-signed entry pins
+    # the ratchet immediately (TOFU). Vendored entries never pin.
+    if isAuthorSigned(entry.version):
+      newPkg.authorizedSigner = some(entry.version.signedBy)
     packages.add(newPkg)
     return (
       index:   Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch, packages: packages),
@@ -275,14 +311,44 @@ proc mergeVendored*(idx: Index, entry: VendoredEntry): tuple[index: Index, outco
       )),
     )
 
-  # --- Priority 3: content drift (same version, different hash) ---
+  # --- Priority 3: signer-continuity ratchet (S8 Layer 3 anti-takeover guard) ---
+  # Only author-signed incoming versions are gated. Vendored (bot-signed)
+  # versions are Layer-1-trusted already and skip this tier entirely — they
+  # neither pin nor overwrite `authorizedSigner`.
+  if isAuthorSigned(entry.version):
+    let pinned = packages[foundPkgIdx].authorizedSigner
+    if pinned.isNone:
+      # TOFU: first author-signed version ever ingested for this package
+      # (whether brand-new or previously seeded only by vendored versions)
+      # pins the ratchet. Persisted only if the merge ultimately admits the
+      # version (see below) — a rejected ingest must not leave a partial pin.
+      packages[foundPkgIdx].authorizedSigner = some(entry.version.signedBy)
+    elif pinned.get != entry.version.signedBy:
+      return (
+        index:   idx,
+        outcome: MergeOutcome(kind: mokSignerMismatch, signerMismatch: SignerMismatchAlert(
+          packageName:    entry.package.name,
+          namespace:      entry.package.namespace,
+          version:        entry.version.version,
+          pinnedSigner:   pinned.get,
+          incomingSigner: entry.version.signedBy,
+        )),
+      )
+
+  # --- Priority 4: content drift (same version, different hash) ---
   var existingVersions = packages[foundPkgIdx].versions
   for i, v in existingVersions:
     if v.version == entry.version.version:
       if v.contentHash == entry.version.contentHash:
-        # Idempotent — same version + same hash, no change.
+        # Idempotent — same version + same hash, no change. Returns the
+        # ORIGINAL idx: any signer-pin write staged above is discarded along
+        # with the rest of this no-op ingest (it was already pinned, or this
+        # is a pre-ratchet legacy entry that idempotent re-ingest does not
+        # retroactively backfill — only forward admissions establish the pin).
         return (index: idx, outcome: MergeOutcome(kind: mokIdempotent))
-      # Drift — refuse to mutate; surface for human review.
+      # Drift — refuse to mutate; surface for human review. Returns the
+      # ORIGINAL idx, discarding any staged signer-pin write above: a
+      # rejected ingest must not leave a partial mutation.
       return (
         index:   idx,
         outcome: MergeOutcome(kind: mokContentDrift, content: DriftAlert(

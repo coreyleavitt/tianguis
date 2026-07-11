@@ -98,6 +98,26 @@ proc appendAlert*(existing: string, m: MissingAttestationAlert, detectedAt: stri
     result.add('\n')
   result.add(formatAlert(m, detectedAt))
 
+proc formatAlert*(s: SignerMismatchAlert, detectedAt: string): string =
+  ## Format a signer-continuity ratchet rejection (rfc-attestation-delivery
+  ## S8 Layer 3 anti-takeover guard, tianguis#42) as a KDL node. Distinct
+  ## node name so triage tooling can filter takeover-guard rejects
+  ## independently of content/identity drift — this is the highest-severity
+  ## alert kind (a different signer attempted to publish under an
+  ## already-owned package).
+  "signer-mismatch namespace=\"" & kdlEscapeString(s.namespace) &
+    "\" name=\"" & kdlEscapeString(s.packageName) &
+    "\" version=\"" & kdlEscapeString(s.version) &
+    "\" pinned_signer=\"" & kdlEscapeString(s.pinnedSigner) &
+    "\" incoming_signer=\"" & kdlEscapeString(s.incomingSigner) &
+    "\" detected_at=\"" & kdlEscapeString(detectedAt) & "\"\n"
+
+proc appendAlert*(existing: string, s: SignerMismatchAlert, detectedAt: string): string =
+  result = existing
+  if result.len > 0 and result[^1] != '\n':
+    result.add('\n')
+  result.add(formatAlert(s, detectedAt))
+
 # ---------------------------------------------------------------------------
 # Publish-rejection alert — namespace-underivable (P2.1)
 # ---------------------------------------------------------------------------

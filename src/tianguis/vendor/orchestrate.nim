@@ -188,6 +188,17 @@ proc runVendor*(
           " existing=" & col.existingRepo & " incoming=" & col.newRepo)
       of mokContentDrift:
         alerts = appendAlert(alerts, outcome.content, detectedAt = nowIso)
+      of mokSignerMismatch:
+        # Unreachable in practice: runVendor only ever builds milpa-vendored
+        # entries (buildVendoredEntry always sets attestation="milpa-vendored"),
+        # and the ratchet only gates author-signed incoming versions. Kept
+        # exhaustive + logged (not `discard`) so a future author-signed
+        # vendoring path doesn't silently swallow a takeover attempt.
+        let sm = outcome.signerMismatch
+        alerts = appendAlert(alerts, sm, detectedAt = nowIso)
+        stderr.writeLine("tianguis: vendor: IDX-SIGNER-MISMATCH: " &
+          sm.namespace & "/" & sm.packageName & "@" & sm.version &
+          " pinned=" & sm.pinnedSigner & " incoming=" & sm.incomingSigner)
       of mokMissingAttestation:
         let ma = outcome.missingAttestation
         alerts = appendAlert(alerts, ma, detectedAt = nowIso)

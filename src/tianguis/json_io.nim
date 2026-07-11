@@ -76,12 +76,17 @@ proc packageToJson(pkg: Package): JsonNode =
   let versions = newJArray()
   for v in pkg.versions:
     versions.add(versionToJson(v))
-  %*{
+  let obj = %*{
     "name":      pkg.name,
     "namespace": pkg.namespace,
     "upstream":  pkg.upstream,
     "versions":  versions,
   }
+  # Signer-continuity ratchet pin (rfc-attestation-delivery S8 Layer 3).
+  # Emitted only when present, mirroring `rekor`/`bundle_pin`'s convention.
+  if pkg.authorizedSigner.isSome:
+    obj["authorized_signer"] = %pkg.authorizedSigner.get
+  obj
 
 proc formatJson*(idx: Index): string =
   ## Emit canonical JSON for an Index. Canonicalizes ordering first
@@ -164,10 +169,15 @@ proc packageFromJson(node: JsonNode): Package =
   if vNode != nil and vNode.kind == JArray:
     for item in vNode:
       versions.add(versionFromJson(item))
+  var authorizedSigner = none(string)
+  let asNode = node{"authorized_signer"}
+  if asNode != nil and asNode.kind == JString:
+    authorizedSigner = some(asNode.getStr(""))
   Package(
     name:      node{"name"}.getStr(""),
     namespace: node{"namespace"}.getStr(""),
     upstream:  node{"upstream"}.getStr(""),
+    authorizedSigner: authorizedSigner,
     versions:  versions,
   )
 
@@ -182,7 +192,7 @@ proc packageFromJson(node: JsonNode): Package =
 
 const
   TopLevelKeys       = ["schema_version", "attestation_epoch", "packages"]
-  JsonPackageKeys    = ["name", "namespace", "upstream", "versions"]
+  JsonPackageKeys    = ["name", "namespace", "upstream", "authorized_signer", "versions"]
   JsonVersionKeys    = ["version", "content_hash", "requires", "provenances",
                         "attestation", "signed_by", "published_at", "rekor",
                         "bundle_pin"]

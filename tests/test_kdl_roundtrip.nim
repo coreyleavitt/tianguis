@@ -462,6 +462,43 @@ suite "kdl roundtrip":
     check parsed.isOk
     check parsed.get.attestationEpoch.isNone
 
+  # ---------------------------------------------------------------------------
+  # Package-level authorized-signer (rfc-attestation-delivery S8 Layer 3 —
+  # per-package signer-continuity ratchet, tianguis#42)
+  # ---------------------------------------------------------------------------
+
+  test "authorizedSigner round-trips through KDL when set":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "libp2p", namespace: "github.com/alice",
+        upstream: "https://github.com/alice/libp2p",
+        authorizedSigner: some(
+          "https://github.com/alice/libp2p/.github/workflows/publish.yaml@refs/heads/main"),
+      )],
+    )
+    let serialized = formatKdl(original)
+    check "authorized-signer \"https://github.com/alice/libp2p/.github/workflows/publish.yaml@refs/heads/main\"" in serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.packages[0].authorizedSigner.isSome
+
+  test "authorizedSigner absent does NOT emit an authorized-signer node":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "vendoredonly", namespace: "github.com/someorg",
+        upstream: "https://github.com/someorg/vendoredonly",
+        authorizedSigner: none(string),
+      )],
+    )
+    let serialized = formatKdl(original)
+    check "authorized-signer" notin serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get.packages[0].authorizedSigner.isNone
+
   test "same-name two-namespace pair emerges in canonical (namespace, name) order after round-trip":
     ## canonicalize sorts by (namespace, name). "github.com/coreyleavitt" <
     ## "github.com/greenm01" lexicographically, so coreyleavitt comes first

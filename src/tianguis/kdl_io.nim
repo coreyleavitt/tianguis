@@ -155,6 +155,11 @@ proc formatPackage(pkg: Package): string =
   result.add("package \"" & kdlEscapeString(pkg.name) & "\" {\n")
   result.add("    namespace \"" & kdlEscapeString(pkg.namespace) & "\"\n")
   result.add("    upstream (url)\"" & kdlEscapeString(pkg.upstream) & "\"\n")
+  if pkg.authorizedSigner.isSome:
+    # Signer-continuity ratchet pin (rfc-attestation-delivery S8 Layer 3):
+    # the SAN authorized to author-sign this package. Omitted until the
+    # first author-signed version pins it (mergeVendored, vendor/merge.nim).
+    result.add("    authorized-signer \"" & kdlEscapeString(pkg.authorizedSigner.get) & "\"\n")
   for v in pkg.versions:
     result.add(formatVersion(v, "    "))
   result.add("}\n")
@@ -178,7 +183,7 @@ proc formatKdl*(idx: Index): string =
 
 const
   TopLevelNodes  = ["schema_version", "attestation-epoch", "package"]
-  PackageChildren = ["namespace", "upstream", "version"]
+  PackageChildren = ["namespace", "upstream", "authorized-signer", "version"]
   VersionChildren = [
     "content_hash", "requires", "provenance",
     "attestation", "signed_by", "published_at",
@@ -330,6 +335,8 @@ proc parsePackage(doc: KdlDoc, node: KdlNode): Result[Package, IdxError] =
     case child.name
     of "namespace": pkg.namespace = child.argText
     of "upstream":  pkg.upstream  = child.argText
+    of "authorized-signer":
+      pkg.authorizedSigner = some(child.argText)
     of "version":
       let vr = parseVersion(doc, child)
       if vr.isErr: return err[Package, IdxError](vr.getErr)

@@ -187,7 +187,11 @@ proc cmdVendor*(
         let ma = outcome.missingAttestation
         stderr.writeLine("tianguis: vendor --bundle-pins: still missing attestation: " &
           ma.namespace & "/" & ma.packageName & "@" & ma.version)
-      of mokIdentityDrift, mokCollision, mokContentDrift:
+      of mokIdentityDrift, mokCollision, mokContentDrift, mokSignerMismatch:
+        # mokSignerMismatch is unreachable here in practice — applyBundlePins
+        # only ever reconstructs milpa-vendored entries (buildVendoredEntry-
+        # FromCandidate), which the S8 Layer 3 ratchet never gates — but kept
+        # in this exhaustive bucket rather than silently dropped.
         stderr.writeLine("tianguis: vendor --bundle-pins: rejected (" & $outcome.kind & ")")
       of mokAdded, mokIdempotent, mokRebaselined:
         discard

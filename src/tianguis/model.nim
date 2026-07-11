@@ -73,6 +73,14 @@ type
     name*:      string
     namespace*: string           ## OCI/GH namespace owning this name
     upstream*:  string           ## Upstream source URL (for human reference + link)
+    authorizedSigner*: Option[string]  ## SAN identity pinned as the sole author
+        ## authorized to author-sign this package (rfc-attestation-delivery
+        ## S8 Layer 3 — per-package signer-continuity ratchet, tianguis#42).
+        ## `none` until the first author-signed version is admitted; a
+        ## package with only `milpa-vendored` versions never pins (vendored
+        ## ingest is Layer-1-trusted and does not consult or set this field).
+        ## Enforced in `vendor/merge.nim`'s `mergeVendored` (`mokSignerMismatch`
+        ## anti-takeover guard).
     versions*:  seq[Version]
 
   Index* = object
@@ -116,7 +124,8 @@ proc `==`*(a, b: Version): bool =
 
 proc `==`*(a, b: Package): bool =
   a.name == b.name and a.namespace == b.namespace and
-    a.upstream == b.upstream and a.versions == b.versions
+    a.upstream == b.upstream and a.authorizedSigner == b.authorizedSigner and
+    a.versions == b.versions
 
 proc `==`*(a, b: Index): bool =
   a.schemaVersion == b.schemaVersion and

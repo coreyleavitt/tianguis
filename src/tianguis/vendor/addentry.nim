@@ -293,6 +293,17 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
     stderr.writeLine("tianguis: add-entry: IDX-CONTENT-DRIFT: " &
       outcome.content.packageName & " " & outcome.content.version)
     return 1
+  of mokSignerMismatch:
+    # Signer-continuity ratchet (rfc-attestation-delivery S8 Layer 3,
+    # tianguis#42): a different signer attempted to author-sign a version
+    # under a package whose authorizedSigner is already pinned. The
+    # anti-takeover guard this add-entry path exists to enforce.
+    stderr.writeLine("tianguis: add-entry: IDX-SIGNER-MISMATCH: " &
+      outcome.signerMismatch.namespace & "/" & outcome.signerMismatch.packageName &
+      "@" & outcome.signerMismatch.version &
+      " pinned=" & outcome.signerMismatch.pinnedSigner &
+      " incoming=" & outcome.signerMismatch.incomingSigner)
+    return 1
   of mokMissingAttestation:
     stderr.writeLine("tianguis: add-entry: IDX-MISSING-ATTESTATION: " &
       outcome.missingAttestation.namespace & "/" & outcome.missingAttestation.packageName &
