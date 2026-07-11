@@ -1,7 +1,8 @@
 # attestation-delivery (tianguis#42 / milpa P4) — handoff
 
-- **Stage:** TDD (rfc-flow stage 3). Plan approved 2026-07-11; implementation
-  not started. **Full scope incl. author-signed** chosen by Corey.
+- **Stage:** TDD (rfc-flow stage 3), grinding. S1/S2 landed (`6d5ba94`,
+  `54f8baf`); next = S3. **Full scope incl. author-signed** chosen by Corey.
+  Gate = the container command below; orchestrator commits (subagents NO-GIT).
 - **Resume:** `/tdd implement the next slice of docs/rfc-attestation-delivery.handoff.md`
   (start at S1). Grindable via `/loop` once S1–S3 confirm the test rhythm.
 - **Repo:** this is the **tianguis** repo (Nim registry). Cross-references the
@@ -114,14 +115,14 @@ index, so milpa can verify per-entry author/vendor attribution offline.
 
 ## Slices (vertical; TDD-clean first, workflow/infra after)
 
-- [ ] **S1 — per-entry `bundle sha256` pin field.** `model.Version` gains the
+- [x] **S1 (`6d5ba94`) — per-entry `bundle sha256` pin field.** `model.Version` gains the
       pin (shape: a typed `bundlePin: Option[string]`, or fold into an
       EntryAttestation-shaped record mirroring milpa §2 — decide at S1, lean
       Option[string] since the other 3 siblings are already separate fields).
       Emit in `formatVersion` as `bundle sha256="<hex>"`; parse; add to
       `VersionChildren` allowlist + a `BundleChildren`/arg check; update `==`;
       mirror in json_io. Tests: roundtrip (kdl+json) + strict-schema.
-- [ ] **S2 — root `attestation-epoch` field.** `Index` model gains it; emit/parse
+- [x] **S2 (`54f8baf`) — root `attestation-epoch` field.** `Index` model gains it; emit/parse
       at root; add to `TopLevelNodes`; update `==`; mirror json. Roundtrip +
       strict-schema tests. (Must match milpa's parsed name exactly.)
 - [ ] **S3 — §1 in-toto statement builder.** Pure Nim proc:
