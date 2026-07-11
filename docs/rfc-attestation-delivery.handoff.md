@@ -1,7 +1,7 @@
 # attestation-delivery (tianguis#42 / milpa P4) — handoff
 
 - **Stage:** TDD (rfc-flow stage 3), grinding. S1–S3 landed (`6d5ba94`,
-  `54f8baf`, `a9e4343`); next = S4. **Full scope incl. author-signed** chosen by Corey.
+  `54f8baf`, `a9e4343`); next = S6. **Full scope incl. author-signed** chosen by Corey.
   Gate = the container command below; orchestrator commits (subagents NO-GIT).
 - **Resume:** `/tdd implement the next slice of docs/rfc-attestation-delivery.handoff.md`
   (start at S1). Grindable via `/loop` once S1–S3 confirm the test rhythm.
@@ -135,7 +135,7 @@ index, so milpa can verify per-entry author/vendor attribution offline.
 - [x] **S4 — content-addressed bundle store.** Nim proc: given bundle bytes →
       sha256 → write `attestation/<hex>.bundle` → return pin; idempotent.
       Tempdir tests (write, idempotent re-write, returned pin == sha256).
-- [ ] **S5 — publish-time epoch gate.** In add-entry / vendor-merge: if
+- [x] **S5 (this commit) — publish-time epoch gate.** In add-entry / vendor-merge: if
       `published_at >= attestation-epoch` and (no attestation OR no pin) →
       reject with a new `MergeOutcomeKind` (e.g. `mokMissingAttestation`).
       Tests via the merge-outcome pattern (before-epoch ok; after-epoch w/o
