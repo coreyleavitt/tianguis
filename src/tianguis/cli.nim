@@ -259,6 +259,109 @@ proc cmdVendor*(
     writeFile(emitCandidatesPath, candidatesToJson(res.candidates))
   return 0
 
+proc cmdBackfill*(
+    projectDir:         string,
+    emitCandidatesPath: string = "",
+    bundlePinsPath:     string = "",
+    cap:                int    = 0,
+): int =
+  ## `tianguis backfill` (rfc-attestation-delivery.handoff.md S9; tianguis#42):
+  ## batched minting of vendored bundles for entries ALREADY in index.kdl.
+  ## Two mutually exclusive modes (same precedence rule as `tianguis vendor`:
+  ## `--bundle-pins` wins if both are given):
+  ##
+  ##   --bundle-pins=<path>              apply-only pass. NO network. Reads
+  ##                                     <path> (a pins file a mint loop
+  ##                                     wrote) and index.kdl, sets
+  ##                                     `bundlePin` on each matching EXISTING
+  ##                                     entry via `applyBackfillPins`, writes
+  ##                                     index.kdl back.
+  ##   --emit-bundle-candidates=<path>   full-index sweep: write every
+  ##                                     existing entry that lacks a bundle
+  ##                                     pin and is eligible
+  ##                                     (`enumerateBackfillCandidates`,
+  ##                                     orchestrate.nim) to <path> as JSON.
+  ##
+  ## Deliberately DOES NOT reuse `tianguis vendor --bundle-pins` for the
+  ## apply side, even though the candidate JSON shape is identical to S7b's:
+  ## `mergeVendored` (what `vendor --bundle-pins` drives) treats a matching
+  ## (version, content_hash) as fully idempotent and silently discards the
+  ## incoming bundlePin — correct for S7b (whose candidates were NEVER
+  ## admitted, so `mergeVendored` always inserts a genuinely new version) but
+  ## silently wrong for backfill (whose candidates are, by construction,
+  ## entries ALREADY sitting in the index — that's what makes them
+  ## "backfill" rather than "new"). `applyBackfillPins` does the narrower,
+  ## correct operation instead: find the exact existing entry, confirm its
+  ## content_hash still matches, and set the pin in place.
+  ##
+  ## `cap` (0 or negative = unlimited) optionally bounds how many candidates
+  ## a single `--emit-bundle-candidates` pass emits — a full backfill sweep
+  ## can be large, and bounding it keeps one CI mint-loop's runtime
+  ## predictable. Capping never silently truncates: the number of
+  ## eligible-but-skipped candidates is logged to stderr so a re-run is
+  ## visibly still needed.
+  ##
+  ## Exit codes:
+  ##   0 — pass completed (candidates/pins written; entries may or may not
+  ##       have changed — check git diff)
+  ##   1 — fatal I/O failure (index.kdl missing/malformed, missing/malformed
+  ##       --bundle-pins file, or neither flag given)
+  let indexPath = projectDir / "index.kdl"
+
+  if bundlePinsPath.len > 0:
+    if not fileExists(bundlePinsPath):
+      stderr.writeLine("tianguis: " & bundlePinsPath & " not found")
+      return 1
+    let pinsResult = parsePinsJson(readFile(bundlePinsPath))
+    if pinsResult.isErr:
+      stderr.writeLine("tianguis: backfill --bundle-pins: " & pinsResult.error)
+      return 1
+    if not fileExists(indexPath):
+      stderr.writeLine("tianguis: " & indexPath & " not found")
+      return 1
+    let kdlResult = parseKdl(readFile(indexPath))
+    if kdlResult.isErr:
+      let e = kdlResult.getErr
+      stderr.writeLine("tianguis: " & indexPath & ": " & $e.code & ": " & e.message)
+      return 1
+    let (newIdx, outcomes) = applyBackfillPins(kdlResult.get, pinsResult.get)
+    writeFile(indexPath, formatKdl(newIdx))
+    for outcome in outcomes:
+      case outcome.kind
+      of bokPinned, bokAlreadyPinned: discard
+      of bokNotFound:
+        stderr.writeLine("tianguis: backfill --bundle-pins: no matching entry for " &
+          outcome.namespace & "/" & outcome.packageName & "@" & outcome.version)
+      of bokContentMismatch:
+        stderr.writeLine("tianguis: backfill --bundle-pins: content_hash mismatch, " &
+          "refusing to pin " & outcome.namespace & "/" & outcome.packageName &
+          "@" & outcome.version)
+    return 0
+
+  if emitCandidatesPath.len == 0:
+    stderr.writeLine("tianguis: backfill: one of --emit-bundle-candidates=<path> " &
+      "or --bundle-pins=<path> is required")
+    return 1
+
+  if not fileExists(indexPath):
+    stderr.writeLine("tianguis: " & indexPath & " not found")
+    return 1
+
+  let kdlResult = parseKdl(readFile(indexPath))
+  if kdlResult.isErr:
+    let e = kdlResult.getErr
+    stderr.writeLine("tianguis: " & indexPath & ": " & $e.code & ": " & e.message)
+    return 1
+
+  let all = enumerateBackfillCandidates(kdlResult.get)
+  let (kept, skipped) = applyCandidateCap(all, cap)
+  if skipped > 0:
+    stderr.writeLine("tianguis: backfill: capped at " & $kept.len &
+      " candidate(s); " & $skipped &
+      " eligible candidate(s) skipped this pass — re-run to continue backfilling them")
+  writeFile(emitCandidatesPath, candidatesToJson(kept))
+  return 0
+
 proc cmdReindex*(projectDir: string): int =
   ## Epoch-migration pass: re-vendor every package and re-baseline each
   ## content_hash to the epoch-2 dag-sha256 value produced by `milpa hash`.

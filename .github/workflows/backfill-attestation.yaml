@@ -1,0 +1,218 @@
+name: backfill-attestation
+
+# rfc-attestation-delivery.handoff.md S9 (tianguis#42) — batched backfill of
+# per-entry attestation bundles for entries ALREADY in index.kdl (pre-epoch
+# legacy entries the S5 delivery gate never required to carry a pin, or any
+# other milpa-vendored entry that slipped through pinless for some reason).
+#
+# Manual-only (`workflow_dispatch`): unlike `vendor.yaml`'s daily schedule,
+# a backfill sweep is a deliberate, occasional maintenance pass, not a
+# recurring one — most entries need backfilling exactly once, ever.
+#
+# THIS WORKFLOW ALSO DOUBLES AS MILPA'S P4 REAL-CRYPTO FIXTURE SOURCE. The
+# bundles it mints under `attestation/<hex>.bundle` are real Sigstore v0.3
+# DSSE bundles signed under this workflow's own ambient GH-Actions OIDC
+# identity (the same "milpa-bot" identity `vendor.yaml` uses) — milpa's
+# per-entry verifier tests (both Python and Rust reference impls,
+# docs/rfc-per-entry-attestation.md P4) consume these as real, non-synthetic
+# fixtures. A backfill run is therefore also how milpa acquires new
+# known-good/known-bad crypto fixtures whenever the existing set needs
+# refreshing, not just how tianguis retroactively covers legacy entries.
+on:
+  workflow_dispatch:
+    inputs:
+      cap:
+        description: >
+          Optional cap on how many candidates this run mints (0 = unlimited).
+          A full-index sweep can be large; capping bounds this run's mint-loop
+          time. Skipped-beyond-cap candidates are NOT lost — re-run the
+          workflow to continue backfilling them (see the "Emit backfill
+          candidates" step's log for the exact skipped count).
+        required: false
+        default: "0"
+
+permissions:
+  contents: write          # to commit + push updated index.kdl
+  id-token: write          # cosign/sigstore keyless: mint bundles + attest the pass, under workflow identity
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Rewrite every github.com URL form to authenticated https using a
+      # fine-grained PAT scoped to milpa + nimkdl read-only (same as
+      # vendor.yaml — see its comment for the full rationale).
+      - name: Configure git auth for private deps
+        env:
+          PAT: ${{ secrets.TIANGUIS_GIT_READ_PAT }}
+        run: |
+          git config --global url."https://x-access-token:${PAT}@github.com/".insteadOf "https://github.com/"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "ssh://git@github.com/"
+
+      - name: Clone milpa
+        run: git clone --depth 1 https://github.com/coreyleavitt/milpa.git .milpa-tool
+
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: "2.2.0"
+
+      - name: Set up uv (for milpa)
+        uses: astral-sh/setup-uv@v7
+        with:
+          # Cache disabled: see vendor.yaml's identical step for the
+          # cyclic-symlink-conformance-fixture ELOOP rationale.
+          enable-cache: false
+
+      - name: Install milpa deps
+        working-directory: .milpa-tool/impls/python
+        run: uv sync
+
+      - name: Expose milpa on PATH
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          cat > "$HOME/.local/bin/milpa" <<'SH'
+          #!/usr/bin/env bash
+          exec uv run --project "$GITHUB_WORKSPACE/.milpa-tool/impls/python" python -m milpa "$@"
+          SH
+          chmod +x "$HOME/.local/bin/milpa"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch deps via milpa
+        run: uv run --project .milpa-tool/impls/python python -m milpa fetch
+
+      - name: Build tianguis CLI
+        run: nim c -d:release -d:ssl -o:tianguis src/tianguis_cli.nim
+
+      # --- rfc-attestation-delivery S9 (tianguis#42) -----------------------
+      # Full-index sweep: enumerate every EXISTING entry that lacks a bundle
+      # pin and is eligible (milpa-vendored only — author-signed entries are
+      # NEVER backfilled here, see cli.nim's cmdBackfill docstring), mint one
+      # bundle per candidate, then apply via `tianguis backfill --bundle-
+      # pins=<path>` — its OWN apply path (NOT `vendor --bundle-pins`, which
+      # silently no-ops on entries already committed to the index; see
+      # orchestrate.nim's `applyBackfillPins` docstring for why).
+      - name: Emit backfill candidates
+        env:
+          BACKFILL_CAP: ${{ inputs.cap }}
+        run: ./tianguis backfill --emit-bundle-candidates=candidates.json --cap="$BACKFILL_CAP"
+
+      - name: Set up Python (for sigstore signing)
+        if: hashFiles('candidates.json') != ''
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install sigstore
+        if: hashFiles('candidates.json') != ''
+        run: pip install -r scripts/requirements.txt
+
+      # Mint one bundle per candidate — identical shell discipline to
+      # vendor.yaml's mint loop (see its comment for the full injection-
+      # safety rationale: no `${{ }}`-interpolation into the shell, every
+      # candidate field passed as a quoted `"$var"` shell expansion, pins.json
+      # assembled via `jq --arg`/`--argjson` never string concatenation).
+      - name: Mint attestation bundles for pending candidates
+        if: hashFiles('candidates.json') != ''
+        run: |
+          mkdir -p attestation
+          echo '[]' > pins.json
+          count=$(jq 'length' candidates.json)
+          echo "minting ${count} attestation bundle(s)"
+          for i in $(seq 0 $((count - 1))); do
+            ns=$(jq -r ".[$i].namespace" candidates.json)
+            name=$(jq -r ".[$i].name" candidates.json)
+            version=$(jq -r ".[$i].version" candidates.json)
+            content_hash=$(jq -r ".[$i].content_hash" candidates.json)
+            pin=$(python3 scripts/mint_bundle.py \
+              --tianguis-bin ./tianguis \
+              --attestation-dir attestation \
+              --namespace "$ns" \
+              --name "$name" \
+              --version "$version" \
+              --content-hash "$content_hash" \
+              --attestation-kind "milpa-vendored" \
+              --signed-by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)")
+              # NOTE: this string must match `MilpaBotIdentity` in
+              # src/tianguis/vendor/merge.nim, same as vendor.yaml's mint
+              # loop — kept in sync for consistency, not cross-checked by
+              # milpa's verifier (predicate contents are metadata-only).
+            jq --argjson entry "$(jq ".[$i]" candidates.json)" --arg pin "$pin" \
+              '. + [$entry + {bundle_pin: $pin}]' pins.json > pins.json.tmp
+            mv pins.json.tmp pins.json
+          done
+
+      - name: Apply minted bundle pins (backfill's OWN apply path)
+        if: hashFiles('candidates.json') != ''
+        run: ./tianguis backfill --bundle-pins=pins.json
+      # ----------------------------------------------------------------------
+
+      - name: Keep index.json in parity
+        run: ./tianguis project
+
+      - name: Commit + push changes
+        id: commit
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "no changes from this backfill pass"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "milpa-bot"
+          git config user.email "milpa-bot@users.noreply.github.com"
+          git add index.kdl index.json
+          # Newly minted attestation bundles — the content-addressed tree
+          # milpa fetches `<hex>.bundle` files from at serve time.
+          [ -d attestation ] && git add attestation/ || true
+          git commit -m "chore(backfill): batched attestation-bundle backfill pass"
+          # Same rebase-retry discipline as vendor.yaml — a backfill run can
+          # take a while over a large index, during which other commits
+          # (e.g. a concurrent vendor pass) may have landed on main.
+          pushed=false
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin main && git push; then
+              pushed=true; break
+            fi
+            echo "push attempt $i failed; will retry"
+            sleep $((i * 2))
+          done
+          if [[ "$pushed" != true ]]; then
+            echo "::error::backfill push failed after 3 attempts"; exit 1
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up cosign
+        if: steps.commit.outputs.changed == 'true'
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: "v2.4.0"
+
+      # Attest the backfill pass to Rekor under milpa-bot's GH Actions OIDC
+      # identity — same audit trail vendor.yaml records for its own passes,
+      # so a backfill-produced commit is equally traceable to a real
+      # workflow run.
+      - name: Cosign attest backfill pass
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          COMMIT_SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          cat > predicate.json <<EOF
+          {
+            "pass_kind": "backfill",
+            "tianguis_repo": "${{ github.repository }}",
+            "workflow_run": "${{ github.run_id }}",
+            "commit_sha": "${COMMIT_SHA}",
+            "backfilled_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cosign attest-blob \
+            --yes \
+            --type custom \
+            --predicate predicate.json \
+            --bundle backfill-attest.bundle \
+            index.kdl
+          echo "Rekor bundle written to backfill-attest.bundle"

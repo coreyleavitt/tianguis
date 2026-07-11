@@ -253,3 +253,142 @@ proc applyBundlePins*(idx: Index, pins: seq[BundlePin]): tuple[index: Index, out
     if outcome.kind == mokAdded:
       current = newIdx
   (index: current, outcomes: outcomes)
+
+# ---------------------------------------------------------------------------
+# S9 — backfill candidate enumeration (full-index sweep, no Driver, no network)
+# ---------------------------------------------------------------------------
+
+proc enumerateBackfillCandidates*(idx: Index): seq[BundleCandidate] =
+  ## Full-index sweep (rfc-attestation-delivery.handoff.md S9; tianguis#42):
+  ## every EXISTING entry already in `idx` that lacks a bundle pin and is
+  ## eligible for a bot-minted vendored bundle.
+  ##
+  ## Unlike S7b's `runVendor`, which only captures entries rejected by THIS
+  ## pass's own merge attempt (`pending` above), this walks every
+  ## (namespace, name, version) already committed to the index — the
+  ## backfill for whatever the delivery gate wasn't live to catch when those
+  ## entries were first admitted.
+  ##
+  ## Eligibility is deliberately narrower than "any pinless entry": ONLY
+  ## `milpa-vendored` versions qualify. An `author-signed` version must
+  ## NEVER be given a bot-minted vendored bundle — the bundle's `signed_by`
+  ## would claim the vendor-bot identity, misattributing an entry that
+  ## really has its own author. Author-signed backfill (if ever needed) is
+  ## the S8 author-attested flow, not this one.
+  ##
+  ## Returns `BundleCandidate`s in the SAME shape S7b emits, so the existing
+  ## `tianguis vendor --bundle-pins=<path>` apply path (`applyBundlePins` /
+  ## `buildVendoredEntryFromCandidate`) consumes them completely unchanged —
+  ## no new apply logic, no duplicated merge/gate code.
+  for pkg in idx.packages:
+    for v in pkg.versions:
+      if v.bundlePin.isSome: continue
+      if v.attestation != AttestationMilpaVendored: continue
+      var gitProv: Provenance
+      var hasGit = false
+      for prov in v.provenances:
+        if prov.kind == pkGit:
+          gitProv = prov
+          hasGit = true
+          break
+      if not hasGit:
+        # Every real milpa-vendored entry carries a git Provenance
+        # (buildVendoredEntry always attaches one; it's the only producer
+        # of milpa-vendored entries). Unreachable in practice, but a
+        # candidate can't be reconstructed without it — skip rather than
+        # emit a candidate with fabricated commit/ref fields.
+        continue
+      result.add(BundleCandidate(
+        namespace:   pkg.namespace,
+        name:        pkg.name,
+        version:     v.version,
+        contentHash: v.contentHash,
+        upstream:    pkg.upstream,
+        commitSha:   gitProv.commitSha,
+        gitRef:      gitProv.gitRef,
+        publishedAt: v.publishedAt,
+      ))
+
+type
+  BackfillOutcomeKind* = enum
+    bokPinned          ## matching pinless entry found; bundlePin now set
+    bokAlreadyPinned   ## entry already carried a bundlePin (no-op, not an error —
+                       ## e.g. a re-applied pins file, or another backfill run won the race)
+    bokNotFound        ## no (namespace, name, version) match in the index
+    bokContentMismatch ## version found but contentHash differs from the candidate's —
+                       ## refuse to touch it (content drift; surface for human review)
+
+  BackfillOutcome* = object
+    kind*:        BackfillOutcomeKind
+    namespace*:   string
+    packageName*: string
+    version*:     string
+
+proc applyBackfillPins*(idx: Index, pins: seq[BundlePin]): tuple[index: Index, outcomes: seq[BackfillOutcome]] =
+  ## Apply previously-minted bundle pins onto EXISTING entries (S9 backfill;
+  ## tianguis#42) — deliberately NOT `mergeVendored`/`applyBundlePins` (S7b).
+  ##
+  ## S7b's `applyBundlePins` reuses `mergeVendored` because its candidates
+  ## describe versions that were REJECTED before ever entering the index —
+  ## the pinned re-application always inserts a genuinely new version, so
+  ## `mergeVendored`'s full admission machinery (identity drift, collision,
+  ## signer ratchet, content drift) is exactly what's wanted.
+  ##
+  ## A backfill candidate is the opposite: `enumerateBackfillCandidates`
+  ## only emits entries that are ALREADY committed in the index (that's the
+  ## whole point of "backfill" — legacy pre-epoch entries the delivery gate
+  ## never required to carry a pin). Feeding such a candidate through
+  ## `mergeVendored` hits its same-version/same-contentHash idempotent
+  ## branch, which returns the ORIGINAL index unchanged and silently
+  ## discards the freshly-minted pin — the admission checks were never
+  ## designed to update a field on an entry that already matches. This
+  ## proc instead does the narrower, correct thing: find the exact existing
+  ## (namespace, name, version) entry, confirm its content_hash still
+  ## matches the candidate's (refuse — don't overwrite — on drift), and set
+  ## `bundlePin` in place. No identity/collision/signer re-checks: those
+  ## guard ADMISSION of new/incoming data, and this entry was already
+  ## admitted; only its previously-absent pin is being filled in.
+  var packages = idx.packages
+  var outcomes: seq[BackfillOutcome] = @[]
+  for p in pins:
+    let c = p.candidate
+    var pkgIdx = -1
+    for i, pkg in packages:
+      if pkg.namespace == c.namespace and pkg.name == c.name:
+        pkgIdx = i
+        break
+    if pkgIdx < 0:
+      outcomes.add(BackfillOutcome(kind: bokNotFound, namespace: c.namespace, packageName: c.name, version: c.version))
+      continue
+    var verIdx = -1
+    for i, v in packages[pkgIdx].versions:
+      if v.version == c.version:
+        verIdx = i
+        break
+    if verIdx < 0:
+      outcomes.add(BackfillOutcome(kind: bokNotFound, namespace: c.namespace, packageName: c.name, version: c.version))
+      continue
+    if packages[pkgIdx].versions[verIdx].bundlePin.isSome:
+      outcomes.add(BackfillOutcome(kind: bokAlreadyPinned, namespace: c.namespace, packageName: c.name, version: c.version))
+      continue
+    if packages[pkgIdx].versions[verIdx].contentHash != c.contentHash:
+      outcomes.add(BackfillOutcome(kind: bokContentMismatch, namespace: c.namespace, packageName: c.name, version: c.version))
+      continue
+    packages[pkgIdx].versions[verIdx].bundlePin = some(p.pin)
+    outcomes.add(BackfillOutcome(kind: bokPinned, namespace: c.namespace, packageName: c.name, version: c.version))
+  (
+    index: Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch, packages: packages),
+    outcomes: outcomes,
+  )
+
+proc applyCandidateCap*(candidates: seq[BundleCandidate], cap: int): tuple[kept: seq[BundleCandidate], skipped: int] =
+  ## Optionally cap the number of candidates a single backfill pass emits —
+  ## a full-index sweep can be large, and a CI mint-loop's runtime should
+  ## stay bounded. `cap <= 0` means "no cap" (backfill.nim's CLI wrapper
+  ## treats an absent/zero `--cap` this way). Never silently truncates: the
+  ## caller (`cmdBackfill`) logs the skipped count so a re-run is visibly
+  ## needed, not just inferred from a shorter-than-expected candidates file.
+  if cap <= 0 or candidates.len <= cap:
+    (kept: candidates, skipped: 0)
+  else:
+    (kept: candidates[0 ..< cap], skipped: candidates.len - cap)

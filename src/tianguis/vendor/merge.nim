@@ -79,7 +79,10 @@ type
     of mokSignerMismatch:      signerMismatch*:     SignerMismatchAlert     ## defined in vendor/merge.nim
 
 const
-  AttestationMilpaVendored = "milpa-vendored"
+  AttestationMilpaVendored* = "milpa-vendored"
+      ## Exported: rfc-attestation-delivery S9 backfill enumeration
+      ## (orchestrate.nim's `enumerateBackfillCandidates`) is the single
+      ## other reader — SSOT for the "milpa-vendored" literal stays here.
   AttestationAuthorSigned = "author-signed"
   RecognizedAttestationKinds = [AttestationMilpaVendored, AttestationAuthorSigned]
   MilpaBotIdentity = "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"

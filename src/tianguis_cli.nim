@@ -9,7 +9,7 @@
 ##                       (invoked by .github/workflows/commit-entry.yaml)
 ##   migrate [--execute] one-time #32 namespace migration (dry-run by default)
 
-import std/[os, parseopt]
+import std/[os, parseopt, strutils]
 import tianguis/cli
 import tianguis/cmd_migrate
 import tianguis/vendor/[addentry, realdriver]
@@ -25,6 +25,20 @@ proc usage(): int =
   echo "    [--bundle-pins=<path>]      apply-only pass: NO network, merges entries from a"
   echo "      previously-minted pins file (produced from the candidates above) into"
   echo "      index.kdl; takes precedence over --emit-bundle-candidates if both are given"
+  echo "  backfill            full-index sweep: mint bundles for EXISTING entries that lack"
+  echo "                      a bundle pin (rfc-attestation-delivery S9). NO network/Driver;"
+  echo "                      same two-phase shape as `vendor`'s candidate/pin flow, but its"
+  echo "                      OWN apply path (`--bundle-pins` here, not `vendor --bundle-pins`"
+  echo "                      — that one silently no-ops on already-committed entries)"
+  echo "    --emit-bundle-candidates=<path>  write eligible existing entries as JSON (same"
+  echo "      BundleCandidate shape S7b uses)"
+  echo "    [--cap=<n>]  bound how many candidates this pass emits (0/absent = unlimited);"
+  echo "      skipped-beyond-cap count is logged to stderr, never silently dropped"
+  echo "    --bundle-pins=<path>  apply-only pass: sets bundlePin on each matching EXISTING"
+  echo "      entry from a previously-minted pins file; takes precedence over"
+  echo "      --emit-bundle-candidates if both are given"
+  echo "    (only milpa-vendored, already-pinless entries are eligible; author-signed"
+  echo "     entries are never backfilled — that would misattribute authorship)"
   echo "  reindex             epoch-migration: re-vendor all packages and re-baseline content_hash to dag-sha256"
   echo "  add-entry           add an author-signed entry; consumed from commit-entry.yaml"
   echo "    --name --version --oci-ref --upstream --signed-by [--published-at]"
@@ -123,6 +137,7 @@ proc main(): int =
   var execute = false
   var emitCandidatesPath = ""
   var bundlePinsPath = ""
+  var backfillCap = 0
   for kind, key, val in p.getopt():
     case kind
     of cmdArgument:
@@ -137,6 +152,11 @@ proc main(): int =
       of "execute": execute = true
       of "emit-bundle-candidates": emitCandidatesPath = val
       of "bundle-pins": bundlePinsPath = val
+      of "cap":
+        try: backfillCap = parseInt(val)
+        except ValueError:
+          stderr.writeLine("tianguis: --cap must be an integer, got: " & val)
+          return 4
       of "help", "h":
         discard usage()
         return 0
@@ -155,6 +175,11 @@ proc main(): int =
     return cmdVendor(getCurrentDir(),
       emitCandidatesPath = emitCandidatesPath,
       bundlePinsPath = bundlePinsPath)
+  of "backfill":
+    return cmdBackfill(getCurrentDir(),
+      emitCandidatesPath = emitCandidatesPath,
+      bundlePinsPath = bundlePinsPath,
+      cap = backfillCap)
   of "reindex":
     return cmdReindex(getCurrentDir())
   of "show":
