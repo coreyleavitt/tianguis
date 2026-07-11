@@ -527,16 +527,54 @@ func TestWorkflowDispatch_CalledWithFullPayload(t *testing.T) {
 		t.Fatalf("dispatch workflow wrong: got %q, want commit-entry.yaml", c.workflowFile)
 	}
 	want := map[string]string{
-		"name":      "sample",
-		"version":   "v1.0.0",
-		"oci_ref":   "ghcr.io/x/sample@sha256:abc123",
-		"upstream":  "https://github.com/coreyleavitt/sample",
-		"signed_by": "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
+		"name":             "sample",
+		"version":          "v1.0.0",
+		"oci_ref":          "ghcr.io/x/sample@sha256:abc123",
+		"upstream":         "https://github.com/coreyleavitt/sample",
+		"signed_by":        "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
+		"entry_bundle_b64": "", // bodyForRepo doesn't set one — S8 field forwards empty, not omitted
 	}
 	for k, v := range want {
 		if c.inputs[k] != v {
 			t.Errorf("inputs[%q] = %q; want %q", k, c.inputs[k], v)
 		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// S8 (rfc-attestation-delivery, tianguis#42) — entry_bundle_b64 passthrough.
+//
+// Dispatch does not verify this field (see PublishRequest.EntryBundleB64
+// doc comment) — it only has to reach commit-entry.yaml's workflow_dispatch
+// inputs byte-for-byte, since that workflow is the actual crypto boundary.
+// ---------------------------------------------------------------------------
+
+func TestWorkflowDispatch_ForwardsEntryBundleB64(t *testing.T) {
+	ti := newTestIssuer(t); defer ti.close()
+	gh := &fakeGitHub{}
+	tok := ti.signTokenWithRepository(t, "coreyleavitt/sample")
+
+	const bundleB64 = "eyJmYWtlIjoiYnVuZGxlIn0=" // base64 of {"fake":"bundle"} — content is opaque to dispatch
+	req := PublishRequest{
+		Name:           "sample",
+		Version:        "v1.0.0",
+		OciRef:         "ghcr.io/coreyleavitt/sample@sha256:abc123",
+		Provider:       "github",
+		RepoURL:        "https://github.com/coreyleavitt/sample",
+		SignedBy:       "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
+		EntryBundleB64: bundleB64,
+	}
+	body, _ := json.Marshal(req)
+
+	rec := doRequest(t, NewRouterWithDeps(fullDeps(t, ti, gh)), body, "Bearer "+tok)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200; got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if len(gh.calls) != 1 {
+		t.Fatalf("GitHub API should be called exactly once; got %d", len(gh.calls))
+	}
+	if got := gh.calls[0].inputs["entry_bundle_b64"]; got != bundleB64 {
+		t.Fatalf("inputs[entry_bundle_b64] = %q; want %q", got, bundleB64)
 	}
 }
 

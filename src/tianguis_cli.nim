@@ -28,10 +28,15 @@ proc usage(): int =
   echo "  reindex             epoch-migration: re-vendor all packages and re-baseline content_hash to dag-sha256"
   echo "  add-entry           add an author-signed entry; consumed from commit-entry.yaml"
   echo "    --name --version --oci-ref --upstream --signed-by [--published-at]"
-  echo "    [--rekor-uuid --rekor-log-index --rekor-integrated-time] [--bundle-pin]"
+  echo "    [--rekor-uuid --rekor-log-index --rekor-integrated-time]"
+  echo "    [--bundle-pin --entry-statement]"
   echo "    (namespace is derived inside the binary from the verified OIDC SAN in --signed-by;"
   echo "     rekor fields are the durable transparency-log pointer captured by commit-entry.yaml;"
-  echo "     --bundle-pin is the sha256 hex of the minted attestation bundle's bytes, S7b)"
+  echo "     --bundle-pin is the sha256 hex of the minted attestation bundle's bytes, S7b/S7a;"
+  echo "     --entry-statement=<path> is a CI-crypto-VERIFIED in-toto statement JSON file (S8) —"
+  echo "     add-entry binds its subject[0].digest.sha256/name to the content_hash it just"
+  echo "     recomputed + the purl it derives, rejecting (exit 5) on any mismatch; must be"
+  echo "     supplied together with --bundle-pin, or neither)"
   echo "  attest-statement    print the S3 in-toto statement JSON for one entry (S7c)"
   echo "    --namespace --name --version --content-hash --attestation-kind --signed-by"
   echo "    (single source of truth for the bytes scripts/sign_statement.py signs;"
@@ -57,6 +62,7 @@ proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
       of "rekor-log-index":       result.rekorLogIndex = val
       of "rekor-integrated-time": result.rekorIntegratedTime = val
       of "bundle-pin":            result.bundlePin = val
+      of "entry-statement":       result.entryStatementPath = val
       of "namespace":
         stderr.writeLine("tianguis add-entry: --namespace is no longer accepted;" &
           " namespace is derived from --signed-by (P2.1)")

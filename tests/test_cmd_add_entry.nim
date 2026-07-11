@@ -3,7 +3,7 @@
 ## artifact, merges into index.kdl, writes back.
 
 import std/[unittest, options, os, strutils, tempfiles]
-import tianguis/[model, kdl_io]
+import tianguis/[model, kdl_io, attestation]
 import tianguis/vendor/[addentry]
 
 template withTempProject(name: untyped, body: untyped) =
@@ -286,6 +286,9 @@ suite "cli add-entry":
   # ---------------------------------------------------------------------------
 
   test "--bundle-pin=<valid 64hex> sets bundlePin and emits bundle sha256 in KDL":
+    ## Post-S8, --bundle-pin is atomic with --entry-statement (both-or-neither);
+    ## this test now supplies a matching statement alongside the pin. See the
+    ## dedicated both-or-neither tests below for the rejection cases.
     withTempProject(tmp):
       writeFile(tmp / "index.kdl", "schema_version 1\n")
       let driver = FakeAddDriver(
@@ -293,14 +296,21 @@ suite "cli add-entry":
         contentHash: "sha256:zzz", commitSha: "",
       )
       let pin = "a".repeat(64)
+      let san = "https://github.com/x/y/.github/workflows/publish.yaml@refs/heads/main"
+      let stmtPath = tmp / "entry-statement.json"
+      writeFile(stmtPath, buildEntryStatement(
+        namespace = "github.com/x", name = "y", version = "1.0.0",
+        contentHash = "sha256:zzz", attestationKind = "author-signed", signedBy = san,
+      ))
       let code = cmdAddEntry(
         projectDir = tmp,
         args = AddEntryArgs(
           name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
           upstream: "https://github.com/x/y",
-          signedBy: "https://github.com/x/y/.github/workflows/publish.yaml@refs/heads/main",
+          signedBy: san,
           publishedAt: "2026-06-01T12:00:00Z",
           bundlePin: pin,
+          entryStatementPath: stmtPath,
         ),
         driver = driver,
       )
@@ -354,6 +364,186 @@ suite "cli add-entry":
       let parsed = parseKdl(readFile(tmp / "index.kdl"))
       check parsed.isOk
       check parsed.get.packages[0].versions[0].bundlePin.isNone
+
+  # ---------------------------------------------------------------------------
+  # S8 — author-signed subject-binding: --entry-statement (must accompany
+  # --bundle-pin) binds the CI-crypto-verified statement's claimed subject
+  # to the content_hash add-entry itself just recomputed + the purl it
+  # itself derives. THE SECURITY INVARIANT: never trust the author's claim.
+  # ---------------------------------------------------------------------------
+
+  test "--entry-statement matching digest+name + --bundle-pin: entry written with bundle sha256=":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let contentHash = "dag-sha256:" & "f".repeat(64)
+      let driver = FakeAddDriver(
+        expectedRef: "ghcr.io/coreyleavitt/sample@sha256:abc123",
+        contentHash: contentHash,
+        commitSha:   "",
+      )
+      let san = "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0"
+      # namespace derived from san == "github.com/coreyleavitt" (per the
+      # P2.1 test above); version normalizes "v1.0.0" -> "1.0.0".
+      let stmt = buildEntryStatement(
+        namespace = "github.com/coreyleavitt", name = "sample", version = "1.0.0",
+        contentHash = contentHash, attestationKind = "author-signed", signedBy = san,
+      )
+      let stmtPath = tmp / "entry-statement.json"
+      writeFile(stmtPath, stmt)
+      let pin = "b".repeat(64)
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "sample", version: "v1.0.0",
+          ociRef: "ghcr.io/coreyleavitt/sample@sha256:abc123",
+          upstream: "https://github.com/coreyleavitt/sample",
+          signedBy: san,
+          publishedAt: "2026-06-01T12:00:00Z",
+          bundlePin: pin,
+          entryStatementPath: stmtPath,
+        ),
+        driver = driver,
+      )
+      check code == 0
+      let kdlText = readFile(tmp / "index.kdl")
+      check ("bundle sha256=\"" & pin & "\"") in kdlText
+      let parsed = parseKdl(kdlText)
+      check parsed.isOk
+      check parsed.get.packages[0].versions[0].contentHash == contentHash
+
+  test "--entry-statement digest != recomputed content_hash: reject (exit 5), no entry":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      let realContentHash = "dag-sha256:" & "1".repeat(64)
+      let driver = FakeAddDriver(
+        expectedRef: "ghcr.io/coreyleavitt/sample@sha256:abc123",
+        contentHash: realContentHash,
+        commitSha:   "",
+      )
+      let san = "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0"
+      # Statement binds a DIFFERENT digest than what tianguis actually pulled
+      # and recomputed — the "malicious/stale author bundle" scenario.
+      let stmt = buildEntryStatement(
+        namespace = "github.com/coreyleavitt", name = "sample", version = "1.0.0",
+        contentHash = "dag-sha256:" & "2".repeat(64),
+        attestationKind = "author-signed", signedBy = san,
+      )
+      let stmtPath = tmp / "entry-statement.json"
+      writeFile(stmtPath, stmt)
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "sample", version: "v1.0.0",
+          ociRef: "ghcr.io/coreyleavitt/sample@sha256:abc123",
+          upstream: "https://github.com/coreyleavitt/sample",
+          signedBy: san,
+          publishedAt: "2026-06-01T12:00:00Z",
+          bundlePin: "b".repeat(64),
+          entryStatementPath: stmtPath,
+        ),
+        driver = driver,
+      )
+      check code == 5
+      check readFile(tmp / "index.kdl") == originalBytes
+
+  test "--entry-statement name != derived purl: reject (exit 5), no entry":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      let contentHash = "dag-sha256:" & "3".repeat(64)
+      let driver = FakeAddDriver(
+        expectedRef: "ghcr.io/coreyleavitt/sample@sha256:abc123",
+        contentHash: contentHash,
+        commitSha:   "",
+      )
+      let san = "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0"
+      # Digest matches, but the statement was signed for a DIFFERENT package
+      # (cross-package bundle replay: content_hash alone is name-independent).
+      let stmt = buildEntryStatement(
+        namespace = "github.com/coreyleavitt", name = "other-package", version = "1.0.0",
+        contentHash = contentHash, attestationKind = "author-signed", signedBy = san,
+      )
+      let stmtPath = tmp / "entry-statement.json"
+      writeFile(stmtPath, stmt)
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "sample", version: "v1.0.0",
+          ociRef: "ghcr.io/coreyleavitt/sample@sha256:abc123",
+          upstream: "https://github.com/coreyleavitt/sample",
+          signedBy: san,
+          publishedAt: "2026-06-01T12:00:00Z",
+          bundlePin: "b".repeat(64),
+          entryStatementPath: stmtPath,
+        ),
+        driver = driver,
+      )
+      check code == 5
+      check readFile(tmp / "index.kdl") == originalBytes
+
+  test "--entry-statement supplied without --bundle-pin: reject (exit 5), no entry, pull not attempted":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      let stmtPath = tmp / "entry-statement.json"
+      writeFile(stmtPath, buildEntryStatement(
+        namespace = "github.com/coreyleavitt", name = "sample", version = "1.0.0",
+        contentHash = "dag-sha256:" & "4".repeat(64),
+        attestationKind = "author-signed", signedBy = "irrelevant",
+      ))
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "sample", version: "v1.0.0",
+          ociRef: "ghcr.io/coreyleavitt/sample@sha256:abc123",
+          upstream: "https://github.com/coreyleavitt/sample",
+          signedBy: "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
+          entryStatementPath: stmtPath,
+          # bundlePin deliberately omitted
+        ),
+        driver = FailingPullDriver(),  # must NOT be reached
+      )
+      check code == 5
+      check readFile(tmp / "index.kdl") == originalBytes
+
+  test "--bundle-pin supplied without --entry-statement: reject (exit 5), no entry":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "sample", version: "v1.0.0",
+          ociRef: "ghcr.io/coreyleavitt/sample@sha256:abc123",
+          upstream: "https://github.com/coreyleavitt/sample",
+          signedBy: "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
+          bundlePin: "b".repeat(64),
+          # entryStatementPath deliberately omitted
+        ),
+        driver = FailingPullDriver(),  # must NOT be reached
+      )
+      check code == 5
+      check readFile(tmp / "index.kdl") == originalBytes
+
+  test "--entry-statement path does not exist: reject (exit 5), no entry":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let originalBytes = readFile(tmp / "index.kdl")
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "sample", version: "v1.0.0",
+          ociRef: "ghcr.io/coreyleavitt/sample@sha256:abc123",
+          upstream: "https://github.com/coreyleavitt/sample",
+          signedBy: "https://github.com/coreyleavitt/sample/.github/workflows/publish.yaml@refs/tags/v1.0.0",
+          bundlePin: "b".repeat(64),
+          entryStatementPath: tmp / "does-not-exist.json",
+        ),
+        driver = FailingPullDriver(),  # must NOT be reached
+      )
+      check code == 5
+      check readFile(tmp / "index.kdl") == originalBytes
 
   test "pull failure refuses to commit (exit 3)":
     withTempProject(tmp):

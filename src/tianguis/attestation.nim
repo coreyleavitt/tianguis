@@ -38,6 +38,11 @@
 ##     registry-domain data, not a Sigstore concept).
 
 import std/[json, strutils]
+import nkdl  # for Result[T,E], ok(), err() — matches namespace.nim/merge.nim convention
+export nkdl  # so callers of extractStatementSubject get .isOk/.isErr/.get without a separate import
+
+type
+  StatementSubject* = tuple[name, digestSha256: string]
 
 proc extractContentHashHex*(contentHash: string): string =
   ## Scheme-agnostic hex extraction from a `content_hash` string.
@@ -95,3 +100,43 @@ proc buildEntryStatement*(
   statement["predicate"] = predicate
 
   $statement
+
+proc extractStatementSubject*(statementJson: string): Result[StatementSubject, string] =
+  ## Parse an in-toto Statement JSON — either this module's own
+  ## `buildEntryStatement` output, or (S8) the byte-identical statement a CI
+  ## crypto-verification step extracted from a cryptographically-verified
+  ## author DSSE envelope — and pull out `subject[0].name` +
+  ## `subject[0].digest.sha256`.
+  ##
+  ## This is the ONLY parsing half of the subject-binding check: the caller
+  ## (`add-entry --entry-statement`, rfc-attestation-delivery S8) compares
+  ## the returned tuple against `buildEntrySubjectName(...)` and
+  ## `extractContentHashHex(...)` computed from tianguis's OWN recomputed
+  ## content_hash — this proc never validates those values against
+  ## anything, it only extracts them.
+  ##
+  ## Total over any string input: never raises. Malformed JSON or a
+  ## missing/mis-shaped subject returns `Err` with a human-readable reason
+  ## rather than letting a JSON exception escape into the CLI layer (the
+  ## statement here is UNTRUSTED — it travelled over `repository_dispatch`
+  ## before any crypto check ran).
+  var j: JsonNode
+  try:
+    j = parseJson(statementJson)
+  except CatchableError as e:
+    return err[StatementSubject, string]("malformed statement JSON: " & e.msg)
+  if j.kind != JObject:
+    return err[StatementSubject, string]("statement is not a JSON object")
+  if not j.hasKey("subject") or j["subject"].kind != JArray or j["subject"].len == 0:
+    return err[StatementSubject, string]("statement missing non-empty 'subject' array")
+  let subj = j["subject"][0]
+  if subj.kind != JObject:
+    return err[StatementSubject, string]("subject[0] is not a JSON object")
+  if not subj.hasKey("name") or subj["name"].kind != JString:
+    return err[StatementSubject, string]("subject[0].name missing or not a string")
+  if not subj.hasKey("digest") or subj["digest"].kind != JObject:
+    return err[StatementSubject, string]("subject[0].digest missing or not an object")
+  let digest = subj["digest"]
+  if not digest.hasKey("sha256") or digest["sha256"].kind != JString:
+    return err[StatementSubject, string]("subject[0].digest.sha256 missing or not a string")
+  ok[StatementSubject, string]((name: subj["name"].getStr, digestSha256: digest["sha256"].getStr))

@@ -96,3 +96,52 @@ suite "buildEntryStatement":
     let j = parseJson(stmt)
     check j["subject"][0]["name"].getStr ==
       "pkg:tianguis/github.com/coreyleavitt/chronos@0.5.0"
+
+suite "extractStatementSubject":
+  ## The parsing half of the S8 subject-binding check (add-entry
+  ## --entry-statement). This is UNTRUSTED-input parsing (the statement
+  ## travels over repository_dispatch before any crypto check runs), so
+  ## every malformed-shape case must return Err, never raise.
+
+  test "round-trips buildEntryStatement's own output":
+    let stmt = buildEntryStatement(
+      namespace = "github.com/coreyleavitt", name = "chronos", version = "0.5.0",
+      contentHash = "dag-sha256:" & "a".repeat(64),
+      attestationKind = "author-signed", signedBy = "https://example/identity",
+    )
+    let r = extractStatementSubject(stmt)
+    check r.isOk
+    check r.get.name == "pkg:tianguis/github.com/coreyleavitt/chronos@0.5.0"
+    check r.get.digestSha256 == "a".repeat(64)
+
+  test "malformed JSON is Err, not a raised exception":
+    let r = extractStatementSubject("not json at all")
+    check r.isErr
+
+  test "empty string is Err":
+    let r = extractStatementSubject("")
+    check r.isErr
+
+  test "JSON object with no 'subject' key is Err":
+    let r = extractStatementSubject("""{"_type": "https://in-toto.io/Statement/v1"}""")
+    check r.isErr
+
+  test "'subject' present but empty array is Err":
+    let r = extractStatementSubject("""{"subject": []}""")
+    check r.isErr
+
+  test "subject[0] missing 'name' is Err":
+    let r = extractStatementSubject("""{"subject": [{"digest": {"sha256": "abc"}}]}""")
+    check r.isErr
+
+  test "subject[0] missing 'digest' is Err":
+    let r = extractStatementSubject("""{"subject": [{"name": "pkg:x"}]}""")
+    check r.isErr
+
+  test "subject[0].digest missing 'sha256' key is Err":
+    let r = extractStatementSubject("""{"subject": [{"name": "pkg:x", "digest": {"sha512": "abc"}}]}""")
+    check r.isErr
+
+  test "a JSON array (not object) at top level is Err":
+    let r = extractStatementSubject("""[1, 2, 3]""")
+    check r.isErr

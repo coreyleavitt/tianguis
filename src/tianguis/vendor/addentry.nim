@@ -18,6 +18,7 @@ import ../model
 import ../kdl_io
 import ../namespace
 import ../fileutil
+import ../attestation
 import ./merge
 import ./alerts
 
@@ -44,6 +45,19 @@ type
     ## not-yet-wired callers); threaded into `Version.bundlePin` as
     ## `none(string)` in that case.
     bundlePin*:           string
+    ## Subject-binding proof (rfc-attestation-delivery S8): path to a
+    ## CRYPTOGRAPHICALLY-VERIFIED in-toto statement JSON file (author-signed
+    ## bundle DSSE payload, extracted + verified by the CI crypto step —
+    ## SAN + OIDC issuer + Rekor inclusion — BEFORE add-entry ever runs).
+    ## add-entry re-derives `subject[0].digest.sha256` /
+    ## `subject[0].name` expectations from its OWN recomputed content_hash +
+    ## the verified (namespace,name,version) tuple and rejects on any
+    ## mismatch — crypto proves "the author signed THIS statement";
+    ## add-entry proves "this statement matches what we actually admit."
+    ## Empty string == not supplied. MUST be supplied together with
+    ## `bundlePin` (both-or-neither, post-epoch admission is atomic) — see
+    ## the exit-4 check in `cmdAddEntry`.
+    entryStatementPath*:  string
 
   ## AddEntryDriver — injectable I/O for testability. Real impl pulls
   ## the OCI artifact via oras and computes content_hash via the
@@ -99,6 +113,12 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
   ##       No mutation performed; the namespace-underivable case additionally
   ##       appends alerts.kdl with a reject entry.
   ##       Replaces/promotes the former P1.4 host/org-form guard.
+  ##   5 — --entry-statement / --bundle-pin subject-binding admission failure
+  ##       (rfc-attestation-delivery S8): either only one of the two flags was
+  ##       supplied (both-or-neither), the --entry-statement file is missing
+  ##       or not parseable as an in-toto statement, or the statement's
+  ##       subject[0].digest.sha256 / subject[0].name does NOT match tianguis's
+  ##       own recomputed content_hash / derived purl. No mutation performed.
 
   # Name validation — hard-reject BEFORE any network I/O.
   # The allowlist keeps package names safe as KDL identifiers and prevents
@@ -119,6 +139,38 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
     stderr.writeLine("tianguis: add-entry: reject: invalid bundle pin '" &
       args.bundlePin & "' (must be 64 lowercase hex characters)")
     return 4
+
+  # Entry-statement / bundle-pin both-or-neither (rfc-attestation-delivery
+  # S8) — hard-reject BEFORE any network I/O, same discipline as the checks
+  # above. A minted bundle pin with no verified statement to back it (or a
+  # verified statement with no pin recorded) is a half-wired admission: the
+  # pin is what milpa parses off the entry, the statement is what proves
+  # the pin is trustworthy. Post-epoch admission is atomic — both or
+  # neither. Pre-epoch/legacy callers that supply neither are unaffected.
+  if (args.bundlePin.len > 0) != (args.entryStatementPath.len > 0):
+    stderr.writeLine("tianguis: add-entry: reject: --bundle-pin and " &
+      "--entry-statement must both be supplied together, or neither " &
+      "(bundle-pin=" & (if args.bundlePin.len > 0: "set" else: "unset") &
+      " entry-statement=" & (if args.entryStatementPath.len > 0: "set" else: "unset") & ")")
+    return 5
+
+  # Read + parse the (untrusted, pre-crypto-check-only-locally-visible)
+  # statement file up front. The CI crypto step already verified this
+  # statement's DSSE envelope (SAN + OIDC issuer + Rekor inclusion) before
+  # add-entry ever runs — add-entry's job is ONLY to bind the statement's
+  # claimed subject to what it is actually about to admit (below, after
+  # the OCI pull + recomputed content_hash are available).
+  var parsedSubject: StatementSubject
+  if args.entryStatementPath.len > 0:
+    if not fileExists(args.entryStatementPath):
+      stderr.writeLine("tianguis: add-entry: reject: --entry-statement file not found: " &
+        args.entryStatementPath)
+      return 5
+    let subjResult = extractStatementSubject(readFile(args.entryStatementPath))
+    if subjResult.isErr:
+      stderr.writeLine("tianguis: add-entry: reject: --entry-statement: " & subjResult.getErr)
+      return 5
+    parsedSubject = subjResult.get
 
   # P2.1 — derive namespace from the verified OIDC SAN.
   # Hard-reject BEFORE any network I/O if derivation fails.
@@ -154,6 +206,28 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
     stderr.writeLine("tianguis: pull+hash failed: " & e.msg)
     return 3
 
+  let normalizedVersion = normalizeVersion(args.version)
+
+  # THE SECURITY INVARIANT (rfc-attestation-delivery S8): never trust the
+  # author's claimed subject. tianguis just recomputed content_hash itself
+  # (above); bind the CI-crypto-verified statement's claimed subject to
+  # THAT value + the purl tianguis itself derives from the verified
+  # (namespace, name, version) — not to anything the author asserted.
+  # A malicious author who signs a statement bound to a DIFFERENT
+  # content_hash than what they actually published (or to a different
+  # package's purl, replaying a bundle cross-package) is rejected here.
+  if args.entryStatementPath.len > 0:
+    let expectedDigest = extractContentHashHex(pulled.hash)
+    let expectedName = buildEntrySubjectName(namespace, args.name, normalizedVersion)
+    if parsedSubject.digestSha256 != expectedDigest:
+      stderr.writeLine("tianguis: add-entry: reject: entry-statement digest mismatch " &
+        "(statement=" & parsedSubject.digestSha256 & " recomputed=" & expectedDigest & ")")
+      return 5
+    if parsedSubject.name != expectedName:
+      stderr.writeLine("tianguis: add-entry: reject: entry-statement subject-name mismatch " &
+        "(statement=" & parsedSubject.name & " expected=" & expectedName & ")")
+      return 5
+
   let publishedAt =
     if args.publishedAt.len > 0: args.publishedAt
     else: nowStr
@@ -165,7 +239,7 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
       upstream: args.upstream,
     ),
     version: Version(
-      version:     normalizeVersion(args.version),
+      version:     normalizedVersion,
       contentHash: pulled.hash,
       attestation: "author-signed",
       signedBy:    args.signedBy,

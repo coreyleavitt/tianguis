@@ -31,6 +31,20 @@ type PublishRequest struct {
 	DryRun   bool   `json:"dry_run,omitempty"` // when true, run OIDC + identity checks
 	                                            // but skip the workflow_dispatch (used for
 	                                            // author-side smoke testing)
+
+	// EntryBundleB64 (rfc-attestation-delivery S8, tianguis#42): the
+	// author's per-entry attestation bundle — a Sigstore Bundle JSON
+	// document (a DSSE-signed §1 in-toto statement binding content_hash +
+	// the tianguis purl), base64-encoded. Optional: authors not yet using
+	// per-entry attestation (or dry-run smoke tests) omit it.
+	//
+	// Dispatch does NOT verify this bundle — it is pure transport, same as
+	// every other field here (see the package doc above: dispatch is not a
+	// cryptographic trust authority). The commit-entry.yaml workflow
+	// verifies it under GH Actions' Sigstore-trusted OIDC federation (cert
+	// SAN + issuer + Rekor inclusion) before ever admitting it into the
+	// index.
+	EntryBundleB64 string `json:"entry_bundle_b64,omitempty"`
 }
 
 // Dependencies bundles the injectable collaborators of the publish handler.
@@ -140,6 +154,10 @@ func publishHandler(deps Dependencies) http.HandlerFunc {
 				"oci_ref":   req.OciRef,
 				"upstream":  req.RepoURL,
 				"signed_by": req.SignedBy,
+				// S8 — pure passthrough, empty when the author didn't supply
+				// one; commit-entry.yaml treats an empty value as "no bundle"
+				// (pre-S8/manual-recovery behavior, unchanged).
+				"entry_bundle_b64": req.EntryBundleB64,
 			}
 			if err := deps.GitHub.DispatchWorkflow(r.Context(),
 				indexRepoOwner, indexRepoName, commitEntryWorkflow, inputs); err != nil {
