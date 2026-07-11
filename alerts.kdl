@@ -4,3 +4,9 @@ drift "nim2d" {
     existing_hash "dag-sha256:f9b549031447495b0a76ab7a2aa876df6e1c4e47334bd277f1838cec6bd20a70"
     new_hash      "dag-sha256:22bd5c9cacad210ac6291751fbeec508769e2c43360f917de4d51a4bd33969c1"
 }
+drift "nim2d" {
+    version       "0.8.0"
+    detected_at   "2026-07-11T06:49:52Z"
+    existing_hash "dag-sha256:f9b549031447495b0a76ab7a2aa876df6e1c4e47334bd277f1838cec6bd20a70"
+    new_hash      "dag-sha256:22bd5c9cacad210ac6291751fbeec508769e2c43360f917de4d51a4bd33969c1"
+}
