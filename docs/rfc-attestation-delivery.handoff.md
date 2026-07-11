@@ -1,10 +1,24 @@
 # attestation-delivery (tianguis#42 / milpa P4) — handoff
 
-- **Stage:** TDD (rfc-flow stage 3), grinding. S1–S3 landed (`6d5ba94`,
-  `54f8baf`, `a9e4343`); S1–S7a landed; next = S7b (CI/workflow). **Full scope incl. author-signed** chosen by Corey.
-  Gate = the container command below; orchestrator commits (subagents NO-GIT).
-- **Resume:** `/tdd implement the next slice of docs/rfc-attestation-delivery.handoff.md`
-  (start at S1). Grindable via `/loop` once S1–S3 confirm the test rhythm.
+- **Stage:** TDD (rfc-flow stage 3) COMPLETE — ALL SLICES S1–S9 LANDED (incl.
+  S7c shared core + the Model-3 author-signed trust stack: L1 composite action /
+  L2 per-author namespace SSOT / L3 signer ratchet + A/B/C). Full nim suite:
+  **28/28 green** on the final committed tree (`39e9123`). `closes #42` in the S9
+  commit. **NOTHING PUSHED.**
+- **Resume / next:** push to a branch + drive S7b/S8/S9 workflows through real CI
+  (the sign_dsse keyless seam + dispatch are CI-only — see "CI boundary" below).
+  Then S9 backfill run produces milpa's P4 real-crypto fixtures.
+- **Commits (this grind):** S7c `d848b58`/`58fce52`, S7b `9b9df3e`, S8 A+C
+  `97b97f7`, S8 L3 `0092ebe`, S8 L2+B/D `e8c363b`, S9 `39e9123` (+ docs
+  `e2f71fa`/`ff29a4c`/`0746c47`).
+- **CI-only (cannot local-gate):** the `sign_dsse` keyless signing in
+  vendor.yaml / commit-entry.yaml / backfill-attestation.yaml (needs GH-Actions
+  OIDC), verify_entry_bundle.py against a real Fulcio+Rekor bundle, the composite
+  action end-to-end, and byte-for-byte SAN↔namespace agreement. A real CI run
+  must confirm all of these.
+- **Bugs caught + root-fixed during grind:** S7b stale-pin re-candidating every
+  daily pass; S9 `vendor --bundle-pins` silently dropping the minted pin on
+  already-committed entries (→ dedicated `applyBackfillPins`).
 - **Repo:** this is the **tianguis** repo (Nim registry). Cross-references the
   **milpa** repo at `/home/corey/projects/milpa` (the consumer/resolver).
 
