@@ -1,7 +1,7 @@
 # attestation-delivery (tianguis#42 / milpa P4) — handoff
 
 - **Stage:** TDD (rfc-flow stage 3), grinding. S1–S3 landed (`6d5ba94`,
-  `54f8baf`, `a9e4343`); next = S6. **Full scope incl. author-signed** chosen by Corey.
+  `54f8baf`, `a9e4343`); S1–S7a landed; next = S7b (CI/workflow). **Full scope incl. author-signed** chosen by Corey.
   Gate = the container command below; orchestrator commits (subagents NO-GIT).
 - **Resume:** `/tdd implement the next slice of docs/rfc-attestation-delivery.handoff.md`
   (start at S1). Grindable via `/loop` once S1–S3 confirm the test rhythm.
@@ -140,13 +140,23 @@ index, so milpa can verify per-entry author/vendor attribution offline.
       reject with a new `MergeOutcomeKind` (e.g. `mokMissingAttestation`).
       Tests via the merge-outcome pattern (before-epoch ok; after-epoch w/o
       pin rejected; after-epoch w/ pin ok).
-- [ ] **S6 — serve the tree.** `site/scripts/build.py` copies `attestation/`
+- [x] **S6 (`979af13`) — serve the tree.** `site/scripts/build.py` copies `attestation/`
       into `site/_build/`. Python test (tree copied, flat layout preserved).
-- [ ] **S7 — vendored minting (workflow + wiring).** vendor path: build S3
+- [x] **S7a (pending-commit) — bundle-pin admission wiring (Nim core of S7).**
+      `add-entry --bundle-pin=<64hex>` + `buildVendoredEntry(bundlePin=...)`
+      thread a minted pin into `Version.bundlePin`; validated 64-hex; ties to
+      S5 (pin present ⇒ post-epoch accept). Full nim suite green.
+- [ ] **S7b — vendored minting WORKFLOW (CI-verified, NOT local-gate-able).**
+      In the vendor workflow / commit path: build the S3 statement, run
+      `cosign attest-blob` keyless (bot identity) over it, persist the bundle
+      via S4 `writeBundle` → pin, pass pin to `buildVendoredEntry`/`--bundle-pin`.
+      **Cannot be gated by the nim container — needs GH Actions OIDC.** Verify
+      by running the workflow in CI or careful manual review, not the local gate.
+- [ ] **S7 (orig, superseded by S7a+S7b).** vendor path: build S3
       statement → cosign attest-blob keyless (bot identity) → bundle → S4 pin →
       add-entry with pin. Test the Nim cores (S3/S4) + wiring via the add-entry
       fake-driver; workflow YAML is integration-tested manually / via backfill.
-- [ ] **S8 — author-signed protocol redesign (the hard slice).** Author produces
+- [ ] **S8 — author-signed protocol redesign (CI + Cloud Function + DESIGN DECISION).** Author produces
       a cosign attestation over the S3 statement; extend `repository_dispatch`
       payload to carry the author's bundle; `commit-entry.yaml` verifies the
       author's cert SAN over the §1 subject (content_hash + name, not just OCI),
@@ -157,6 +167,27 @@ index, so milpa can verify per-entry author/vendor attribution offline.
 - [ ] **S9 — backfill.** Batched `workflow_dispatch` minting vendored bundles for
       existing entries. Doubles as milpa's P4 real-crypto fixture source
       (mirrors milpa `generate-attestation-fixture.yaml`).
+
+## CI boundary + open decision (reached 2026-07-11)
+
+S1–S7a (schema, epoch gate, in-toto statement, bundle store, serve, pin
+admission) are all landed and **locally gate-green** via the nim container.
+S7b/S8/S9 change character — they are GitHub Actions / cosign-keyless /
+cross-service work that the local gate **cannot verify** (keyless signing
+needs Actions OIDC; the dispatch Cloud Function is a separate deploy). They
+must be verified in CI (push + watch Actions) or by careful review.
+
+**S8 open design sub-decision (needs Corey):** how the author's
+content_hash-bound attestation reaches tianguis. Recommended shape: the author
+runs `cosign attest-blob` over the S3 statement locally (or via a thin helper),
+and the `repository_dispatch: tianguis-publish` payload carries the resulting
+bundle bytes (base64) alongside the existing fields; `commit-entry.yaml`
+verifies the author cert SAN + Rekor inclusion over the §1 subject
+(content_hash + pkg name, not just the OCI digest it checks today), persists
+the bundle via S4, and records the pin. This changes the dispatch payload
+schema + the author-side publish UX + `dispatch/` Cloud Function — the piece
+Corey chose "full scope" for. Resolve the exact author-side ergonomics before
+implementing S8.
 
 ## Open forks awaiting Corey
 
