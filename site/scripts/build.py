@@ -353,6 +353,33 @@ def render_md_doc(src: Path, out: Path, repo_rel_path: str) -> None:
     out.write_text(page)
 
 
+def copy_attestation_tree(repo_root: Path, build_dir: Path) -> None:
+    """Copy the content-addressed `attestation/` bundle tree into the build
+    output so GH Pages serves it at `<site>/attestation/<hex>.bundle` — the
+    exact URL milpa derives from a version's `bundle sha256=` pin (S1) to
+    fetch its per-entry attestation (rfc-attestation-delivery.handoff.md §S6;
+    per-entry-attestation.md §7).
+
+    The tree is written at the repo root by the Nim bundlestore
+    (`src/tianguis/bundlestore.writeBundle`), keyed by the sha256 of each
+    bundle's bytes — flat, immutable, content-addressed. A straight
+    clean-copy is therefore always correct: no bundle ever needs to be
+    merged or updated in place, and any file left behind by a previous
+    build that no longer exists in the source tree must not survive.
+
+    Optional: until S7 mints the first vendored bundle, no `attestation/`
+    tree exists at all. That is not a build failure — there's simply
+    nothing to serve yet.
+    """
+    src = repo_root / "attestation"
+    if not src.is_dir():
+        return
+    dest = build_dir / "attestation"
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(src, dest)
+
+
 # ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
@@ -425,6 +452,10 @@ def build() -> None:
     # Raw registry files at canonical URLs.
     shutil.copy(index_kdl, BUILD / "index.kdl")
     shutil.copy(index_json, BUILD / "index.json")
+
+    # Content-addressed per-entry attestation bundles (optional: absent
+    # until S7 mints the first one).
+    copy_attestation_tree(REPO, BUILD)
 
     print(f"built {BUILD}/ — {len(packages)} packages, {len(packages)} detail pages, {rendered_docs} md docs")
 
