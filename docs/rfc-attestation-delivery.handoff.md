@@ -146,6 +146,15 @@ index, so milpa can verify per-entry author/vendor attribution offline.
       `add-entry --bundle-pin=<64hex>` + `buildVendoredEntry(bundlePin=...)`
       thread a minted pin into `Version.bundlePin`; validated 64-hex; ties to
       S5 (pin present ⇒ post-epoch accept). Full nim suite green.
+- [ ] **S7c (shared core, LOCALLY GATE-ABLE) — `tianguis attest-statement` CLI +
+      Python sign seam.** Single-source the S3 statement: a CLI subcommand
+      `tianguis attest-statement --ns --name --version --content-hash` emits the
+      exact `buildEntryStatement` JSON (TDD via nim gate). `scripts/sign_statement.py`
+      reads statement JSON on stdin, calls sigstore-python `sign_dsse` under
+      ambient OIDC, writes BUNDLE_0_3 to stdout; `scripts/mint_bundle.py` wires
+      emit→sign→writeBundle→pin. Only the `sign_dsse` call is CI-only; arg
+      handling + statement passthrough smoke-testable. **Decision: composite
+      action for author UX (Corey approved 2026-07-11); verify S7b/S8/S9 on CI.**
 - [ ] **S7b — vendored minting WORKFLOW (CI-verified, NOT local-gate-able).**
       In the vendor workflow / commit path: build the S3 statement, run
       `cosign attest-blob` keyless (bot identity) over it, persist the bundle
