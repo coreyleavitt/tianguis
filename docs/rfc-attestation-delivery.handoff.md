@@ -132,7 +132,7 @@ index, so milpa can verify per-entry author/vendor attribution offline.
       `pkg:tianguis/<ns>/<name>@<version>`. Unit tests vs RFC §1 (incl.
       dag-sha256 scheme strip, name format, purl escaping). This is the bytes
       the author/bot signs.
-- [ ] **S4 — content-addressed bundle store.** Nim proc: given bundle bytes →
+- [x] **S4 — content-addressed bundle store.** Nim proc: given bundle bytes →
       sha256 → write `attestation/<hex>.bundle` → return pin; idempotent.
       Tempdir tests (write, idempotent re-write, returned pin == sha256).
 - [ ] **S5 — publish-time epoch gate.** In add-entry / vendor-merge: if
