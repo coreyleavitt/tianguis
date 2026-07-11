@@ -42,6 +42,13 @@ proc usage(): int =
   echo "    (single source of truth for the bytes scripts/sign_statement.py signs;"
   echo "     never re-derive this statement in Python)"
   echo "  show <url>          derive and print the namespace (host/org) for an upstream URL"
+  echo "  derive-namespace    print the namespace (host/org) for a --signed-by OIDC SAN (S8 Layer 2a)"
+  echo "    --signed-by=<url-or-SAN>"
+  echo "    (single source of truth for namespace derivation from a signer identity;"
+  echo "     both add-entry and any client-side caller — e.g. the publish composite"
+  echo "     action — MUST derive the exact same namespace from the exact same"
+  echo "     --signed-by value, or the §1 subject-name binding check rejects every"
+  echo "     publish; this subcommand is that shared derivation, exposed over the CLI)"
   echo "  migrate [--execute] one-time #32 namespace migration; --dry-run is default"
   1
 
@@ -69,6 +76,20 @@ proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
         quit(4)
       else:
         stderr.writeLine("tianguis add-entry: unknown option --" & key)
+    of cmdShortOption: discard
+    of cmdEnd: discard
+
+proc parseDeriveNamespaceArgs(parser: var OptParser): string =
+  ## Walk the remaining options; return the `--signed-by` value (empty if
+  ## not supplied — `deriveNamespaceResult` rejects that with exit 4).
+  for kind, key, val in parser.getopt():
+    case kind
+    of cmdArgument: discard
+    of cmdLongOption:
+      case key
+      of "signed-by": result = val
+      else:
+        stderr.writeLine("tianguis derive-namespace: unknown option --" & key)
     of cmdShortOption: discard
     of cmdEnd: discard
 
@@ -161,6 +182,11 @@ proc main(): int =
     var sub = initOptParser()
     let args = parseAttestStatementArgs(sub)
     return cmdAttestStatement(args)
+  of "derive-namespace":
+    # Re-parse for the subcommand's options (parseopt was consumed above).
+    var sub = initOptParser()
+    let signedBy = parseDeriveNamespaceArgs(sub)
+    return cmdDeriveNamespace(signedBy)
   of "migrate":
     return cmdMigrate(getCurrentDir(), execute = execute)
   else:

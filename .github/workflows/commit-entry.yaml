@@ -116,7 +116,17 @@ jobs:
           # NOTE: `namespace` removed from key list in P2.1 — no longer passed to add-entry.
           # M9 fix: use heredoc-delimiter form to prevent multiline values from
           # smuggling extra output keys via GITHUB_OUTPUT newline injection.
-          for k in name version oci_ref upstream signed_by; do
+          #
+          # entry_bundle_b64 (rfc-attestation-delivery S8, tianguis#42): the
+          # author's per-entry attestation bundle (a Sigstore Bundle JSON
+          # document, base64-encoded with NO embedded newlines — the
+          # composite action base64's with `-w0`/single-line output) —
+          # UNTRUSTED until the "Verify author entry-statement bundle" step
+          # below cryptographically verifies it. Optional: empty for
+          # manual workflow_dispatch recovery runs or pre-S8 callers; when
+          # empty, add-entry runs with no --entry-statement/--bundle-pin
+          # (unchanged pre-S8 behavior).
+          for k in name version oci_ref upstream signed_by entry_bundle_b64; do
             v=$(echo "$P" | jq -r --arg k "$k" '.[$k] // ""')
             # Reject values containing newlines before writing — a newline in a
             # payload field would corrupt the GITHUB_OUTPUT format regardless of
@@ -135,10 +145,19 @@ jobs:
       # request claimed in signed_by. If any of those fail, the workflow
       # exits non-zero and nothing gets committed.
       #
-      # P2.1: additionally extract the verified SAN from cosign's JSON output
-      # and export it. The binary derives the namespace from this SAN — the
-      # caller-supplied signed_by input is only used as a regexp prefix for
-      # cosign verify; the extracted SAN is the authoritative identity.
+      # P2.1 / MODEL 3 (rfc-attestation-delivery S8 Layer 2b, tianguis#42):
+      # additionally extract the verified SAN from cosign's JSON output and
+      # export it. This SAN identifies whoever signed the OCI ARTIFACT —
+      # under Model 3 that's `publish.yaml`, a SHARED reusable workflow, so
+      # this SAN is the SAME constant identity for every author (see the
+      # handoff doc's "BOMBSHELL" finding). It therefore NO LONGER feeds
+      # namespace derivation or `signed_by` when an author entry-bundle was
+      # supplied — see the "Verify author entry-statement bundle" step
+      # below, which extracts the true per-author SAN instead. This SAN
+      # remains the fallback `signed_by` ONLY for pre-S8/manual-recovery
+      # callers that supply no entry bundle at all (see the "Add entry"
+      # step's `ARG_SIGNED_BY`), and continues to back the OCI-provenance
+      # Rekor pointer + the commit-decision predicate below.
       - name: Verify author cosign signature
         id: cosign
         env:
@@ -206,6 +225,145 @@ jobs:
             echo "rekor_integrated_time=${REKOR_INTEGRATED_TIME}"
           } >> "$GITHUB_OUTPUT"
 
+      # rfc-attestation-delivery S8 Layer 2b (tianguis#42) — the author-signed
+      # per-entry attestation bundle. This is DISTINCT from the OCI cosign
+      # verification above: that step proves the author signed the OCI
+      # ARTIFACT (bound to the OCI manifest digest, under the SHARED
+      # publish.yaml identity); this step proves the author signed the §1
+      # in-toto STATEMENT (bound to content_hash + the tianguis purl) that
+      # milpa's per-entry verifier actually checks, under the AUTHOR'S OWN
+      # per-repo identity (the publish composite action runs in the
+      # author's own job, not a reusable workflow — see
+      # `.github/actions/publish/action.yaml`'s header comment).
+      #
+      # THE MODEL-3 IDENTITY FLOW (rfc-attestation-delivery.handoff.md
+      # "VERIFIED 2026-07-11 … Model 3 confirmed, scope widened"):
+      #   - `Version.signedBy` / the registry's namespace MUST come from
+      #     THIS bundle's cert SAN (the author's own per-repo identity),
+      #     NEVER from `steps.cosign.outputs.san` (the shared OCI SAN).
+      #   - The CLIENT (the publish composite action, part D) and the
+      #     SERVER (add-entry, via `deriveNamespace`) must derive the exact
+      #     same namespace from the exact same signed-by value, or the §1
+      #     subject-name binding check rejects every publish — both sides
+      #     now share the `tianguis derive-namespace` CLI (Layer 2a) as the
+      #     single source of truth for that derivation.
+      #   - Two verify modes (`scripts/verify_entry_bundle.py`): KNOWN-SAN
+      #     when the target package already has a pinned
+      #     `Package.authorizedSigner` (defense-in-depth — the S8 Layer 3
+      #     Nim ratchet in `mergeVendored` is the authoritative enforcement
+      #     regardless), or ISSUER-ONLY/TOFU for a brand-new package (first
+      #     author-signed version pins the ratchet). Which mode runs is
+      #     decided below from a namespace derived off the dispatch
+      #     payload's `signed_by` field — an UNTRUSTED HINT used only to
+      #     pick a verify mode / do an early pinned-signer lookup, exactly
+      #     like the OCI step's caller-supplied `signed_by` above. Even if
+      #     this hint is wrong or adversarial, the actual admitted identity
+      #     always comes from the cryptographically verified/extracted SAN
+      #     below, and `mergeVendored`'s Layer 3 ratchet independently
+      #     re-checks it against whatever is really pinned — a bad hint can
+      #     only cost this pre-check its defense-in-depth shortcut, never
+      #     bypass the real guard.
+      #
+      # THE SECURITY INVARIANT: crypto here proves "the author identity
+      # verified below signed THIS exact statement, and it reached a real
+      # Rekor transparency-log entry." It does NOT prove the statement's
+      # claimed subject (content_hash + purl) matches what tianguis is
+      # about to admit — `tianguis add-entry --entry-statement` (Nim,
+      # locally gate-able, S8 part A) does that half by recomputing
+      # content_hash itself and rejecting on any mismatch. Skipped entirely
+      # (ARG_ENTRY_STATEMENT/ARG_BUNDLE_PIN stay empty, ARG_SIGNED_BY falls
+      # back to the OCI SAN) when no bundle was supplied in the payload —
+      # add-entry's both-or-neither rule tolerates that (pre-S8 / manual-
+      # recovery callers).
+      - name: Set up Python (for sigstore bundle verification)
+        if: steps.payload.outputs.entry_bundle_b64 != ''
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install sigstore
+        if: steps.payload.outputs.entry_bundle_b64 != ''
+        run: pip install -r scripts/requirements.txt
+
+      # Layer 2b pre-check: derive a CANDIDATE namespace from the untrusted
+      # payload signed_by hint (via the Layer 2a `tianguis derive-namespace`
+      # CLI — the SAME derivation add-entry uses server-side), then look up
+      # whether that (namespace, name) package already has a pinned
+      # `authorizedSigner` in the CURRENT (pre-this-publish) index.json.
+      # Purely a mode-selector / fail-fast optimization — see the security
+      # note above: a wrong candidate here degrades to TOFU mode, it never
+      # weakens what actually gets admitted.
+      - name: Look up pinned signer (Model 3 verify-mode selection)
+        id: pinned_signer
+        if: steps.payload.outputs.entry_bundle_b64 != ''
+        env:
+          SIGNED_BY_HINT: ${{ steps.payload.outputs.signed_by }}
+          PKG_NAME:       ${{ steps.payload.outputs.name }}
+        run: |
+          CANDIDATE_NS=$(./tianguis derive-namespace --signed-by="$SIGNED_BY_HINT" || true)
+          if [[ -z "$CANDIDATE_NS" ]]; then
+            # Underivable hint — treat as "no pin found" (TOFU mode below);
+            # add-entry's OWN --signed-by (from the real extracted SAN)
+            # still has to derive successfully, independently, later.
+            echo "pinned=" >> "$GITHUB_OUTPUT"
+          else
+            PINNED=$(jq -r --arg ns "$CANDIDATE_NS" --arg name "$PKG_NAME" \
+              '.packages[]? | select(.namespace == $ns and .name == $name) | .authorized_signer // empty' \
+              index.json)
+            printf '%s<<%s\n%s\n%s\n' "pinned" "EOF_pinned" "$PINNED" "EOF_pinned" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify author entry-statement bundle
+        id: entry_statement
+        if: steps.payload.outputs.entry_bundle_b64 != ''
+        env:
+          ENTRY_BUNDLE_B64: ${{ steps.payload.outputs.entry_bundle_b64 }}
+          PINNED_SIGNER:    ${{ steps.pinned_signer.outputs.pinned }}
+        run: |
+          # Decode first — the bundle is UNTRUSTED input until
+          # verify_entry_bundle.py's cryptographic check passes below. Not
+          # inlined into a heredoc/JSON: raw bytes only, base64-decoded via
+          # an env var (never a `${{ }}`-interpolated shell string).
+          echo "$ENTRY_BUNDLE_B64" | base64 -d > entry-bundle.json
+
+          # KNOWN-SAN mode (pinned signer found above) or ISSUER-ONLY/TOFU
+          # mode (new package) — see verify_entry_bundle.py's module
+          # docstring. Either way: OIDC issuer == GitHub Actions' token
+          # issuer, and Rekor transparency-log inclusion, checked against
+          # Sigstore's production trusted root. On success, writes the
+          # verified in-toto statement payload to entry-statement.json and
+          # prints the verified/extracted author SAN to stdout — that SAN
+          # (never the OCI cosign SAN) is the AUTHORITATIVE signed_by add-
+          # entry records.
+          if [[ -n "$PINNED_SIGNER" ]]; then
+            AUTHOR_SAN=$(python3 scripts/verify_entry_bundle.py \
+              --bundle entry-bundle.json \
+              --certificate-identity "$PINNED_SIGNER" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              --out entry-statement.json)
+          else
+            AUTHOR_SAN=$(python3 scripts/verify_entry_bundle.py \
+              --bundle entry-bundle.json \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              --out entry-statement.json)
+          fi
+
+          # Content-addressed bundle store (S4) — reuse mint_bundle.py's
+          # write_bundle (same algorithm as bundlestore.nim's writeBundle:
+          # sha256 of the bundle BYTES -> attestation/<hex>.bundle, flat
+          # tree, idempotent, atomic temp+rename) rather than re-deriving
+          # "hash + mkdir + write" a third time in shell.
+          pin=$(python3 -c "
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'scripts')
+          from mint_bundle import write_bundle
+          data = Path('entry-bundle.json').read_bytes()
+          print(write_bundle(Path('attestation'), data))
+          ")
+          echo "pin=${pin}" >> "$GITHUB_OUTPUT"
+          printf '%s<<%s\n%s\n%s\n' "author_san" "EOF_author_san" "$AUTHOR_SAN" "EOF_author_san" >> "$GITHUB_OUTPUT"
+
       - name: Add entry (pulls OCI + content_hash + merges index)
         # P2.1: --namespace removed; the binary derives it from --signed-by (the
         # verified cosign SAN extracted above). --signed-by is now the actual cert
@@ -222,12 +380,27 @@ jobs:
           ARG_VERSION:   ${{ steps.payload.outputs.version }}
           ARG_OCI_REF:   ${{ steps.payload.outputs.oci_ref }}
           ARG_UPSTREAM:  ${{ steps.payload.outputs.upstream }}
-          ARG_SIGNED_BY: ${{ steps.cosign.outputs.san }}
+          # MODEL 3 (rfc-attestation-delivery S8 Layer 2b): the per-entry
+          # `signed_by` — and therefore the namespace add-entry derives from
+          # it — comes from the author entry-bundle's OWN cryptographically
+          # verified/extracted cert SAN (steps.entry_statement.outputs.
+          # author_san), NEVER the shared OCI cosign SAN. The OCI SAN
+          # (steps.cosign.outputs.san) is used ONLY as a fallback for pre-S8
+          # / manual-recovery callers that supplied no entry bundle at all
+          # (steps.entry_statement is then skipped entirely, so its output
+          # is empty and this expression falls through).
+          ARG_SIGNED_BY: ${{ steps.entry_statement.outputs.author_san != '' && steps.entry_statement.outputs.author_san || steps.cosign.outputs.san }}
           # Durable Rekor pointer captured in the cosign step. Empty values are
           # tolerated by the binary (an all-empty trio records no rekor block).
           ARG_REKOR_UUID:            ${{ steps.cosign.outputs.rekor_uuid }}
           ARG_REKOR_LOG_INDEX:       ${{ steps.cosign.outputs.rekor_log_index }}
           ARG_REKOR_INTEGRATED_TIME: ${{ steps.cosign.outputs.rekor_integrated_time }}
+          # S8 — both empty together when no bundle was supplied (add-entry's
+          # both-or-neither rule tolerates that); both set together when the
+          # crypto step above verified one. Never set independently: the
+          # pin and the statement path always come from the same step.
+          ARG_BUNDLE_PIN:       ${{ steps.entry_statement.outputs.pin }}
+          ARG_ENTRY_STATEMENT:  ${{ steps.entry_statement.outputs.pin != '' && 'entry-statement.json' || '' }}
         run: |
           ./tianguis add-entry \
             --name="$ARG_NAME" \
@@ -237,7 +410,9 @@ jobs:
             --signed-by="$ARG_SIGNED_BY" \
             --rekor-uuid="$ARG_REKOR_UUID" \
             --rekor-log-index="$ARG_REKOR_LOG_INDEX" \
-            --rekor-integrated-time="$ARG_REKOR_INTEGRATED_TIME"
+            --rekor-integrated-time="$ARG_REKOR_INTEGRATED_TIME" \
+            --bundle-pin="$ARG_BUNDLE_PIN" \
+            --entry-statement="$ARG_ENTRY_STATEMENT"
 
       - name: Regenerate index.json
         run: ./tianguis project
@@ -317,6 +492,10 @@ jobs:
           git config user.name "tianguis-bot"
           git config user.email "tianguis-bot@users.noreply.github.com"
           git add index.kdl index.json
+          # Newly persisted per-entry attestation bundle (S4/S8) — the
+          # content-addressed tree milpa fetches <hex>.bundle files from.
+          # Absent when this publish carried no entry_bundle_b64.
+          [ -d attestation ] && git add attestation/ || true
           git commit -m "publish: ${{ steps.payload.outputs.name }} ${{ steps.payload.outputs.version }} (run:${{ github.run_id }})"
           # Rebase before push — another commit (vendor pass, parallel
           # publish, etc.) may have landed during this workflow.

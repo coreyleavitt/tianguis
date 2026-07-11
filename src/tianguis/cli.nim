@@ -56,6 +56,39 @@ proc cmdAttestStatement*(args: AttestStatementArgs): int =
     stderr.writeLine("tianguis: attest-statement: " & r.stderr)
   r.code
 
+proc deriveNamespaceResult*(signedBy: string): tuple[code: int, stdout, stderr: string] =
+  ## Pure core for `tianguis derive-namespace --signed-by=<url-or-SAN>`.
+  ## Returns (exit code, stdout text, stderr text) without any I/O side
+  ## effects. `cmdDeriveNamespace` wraps this with actual echo/writeLine.
+  ##
+  ## This is the SINGLE source-of-truth CLI entry point for namespace
+  ## derivation (rfc-attestation-delivery handoff.md S8 Layer 2a,
+  ## tianguis#42): both the author-side composite action (building the purl
+  ## for `attest-statement --namespace=…`) and any other client-side caller
+  ## MUST derive the exact same namespace `add-entry` will independently
+  ## derive server-side from the same `--signed-by` value — that's what
+  ## `deriveNamespace` (namespace.nim) already computes for add-entry; this
+  ## subcommand just exposes it over the CLI so nothing re-derives or
+  ## re-parses the SAN a second, possibly-divergent way.
+  if signedBy.len == 0:
+    return (code: 4, stdout: "", stderr:
+      "missing required argument --signed-by")
+  let derived = deriveNamespace(signedBy)
+  if derived.isErr:
+    return (code: 2, stdout: "", stderr: $derived.error)
+  (code: 0, stdout: namespaceString(derived.get), stderr: "")
+
+proc cmdDeriveNamespace*(signedBy: string): int =
+  ## `tianguis derive-namespace --signed-by=<url-or-SAN>`: print the derived
+  ## namespace (host/org) for a raw upstream URL or OIDC SAN to stdout, or a
+  ## clear error to stderr with a non-zero exit code.
+  let r = deriveNamespaceResult(signedBy)
+  if r.code == 0:
+    echo r.stdout
+  else:
+    stderr.writeLine("tianguis: derive-namespace: " & r.stderr)
+  r.code
+
 proc showResult*(url: string): tuple[code: int, stdout, stderr: string] =
   ## Pure core for `tianguis show <url>`.
   ## Returns (exit code, stdout text, stderr text) without any I/O side effects.
