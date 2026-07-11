@@ -1,7 +1,7 @@
 # attestation-delivery (tianguis#42 / milpa P4) — handoff
 
-- **Stage:** TDD (rfc-flow stage 3), grinding. S1/S2 landed (`6d5ba94`,
-  `54f8baf`); next = S3. **Full scope incl. author-signed** chosen by Corey.
+- **Stage:** TDD (rfc-flow stage 3), grinding. S1–S3 landed (`6d5ba94`,
+  `54f8baf`, `a9e4343`); next = S4. **Full scope incl. author-signed** chosen by Corey.
   Gate = the container command below; orchestrator commits (subagents NO-GIT).
 - **Resume:** `/tdd implement the next slice of docs/rfc-attestation-delivery.handoff.md`
   (start at S1). Grindable via `/loop` once S1–S3 confirm the test rhythm.
@@ -125,7 +125,7 @@ index, so milpa can verify per-entry author/vendor attribution offline.
 - [x] **S2 (`54f8baf`) — root `attestation-epoch` field.** `Index` model gains it; emit/parse
       at root; add to `TopLevelNodes`; update `==`; mirror json. Roundtrip +
       strict-schema tests. (Must match milpa's parsed name exactly.)
-- [ ] **S3 — §1 in-toto statement builder.** Pure Nim proc:
+- [x] **S3 (`a9e4343`) — §1 in-toto statement builder.** Pure Nim proc:
       `buildEntryStatement(ns, name, version, contentHash) -> string` (canonical
       in-toto/DSSE predicate JSON) with `subject[0].digest.sha256` =
       scheme-agnostic hex of contentHash, `subject[0].name` =
