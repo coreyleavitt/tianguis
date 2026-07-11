@@ -293,6 +293,65 @@ action Corey approved, delivers real per-author SANs, and reuses the existing
 dispatch-OIDC authorization instead of inventing a new namespace-authz chain.
 Model 1 is the low-risk fallback if per-author crypto isn't the actual goal.
 
+### VERIFIED 2026-07-11 (two read-only investigations) — Model 3 confirmed, scope widened
+
+**milpa side (ratchet + verifier):**
+- #185 ratchet's `attestation` field is `ATTESTATION_MONOTONE` (`ratchet.py:284`,
+  `_dominates_attestation` 330-347): per-`(ns,name,version)` signer IS frozen —
+  same version can't flip signer (`MONOTONE_REATTRIBUTED`), downgrade
+  author→vendored, or strip. But scope is strictly per-exact-version. **NO
+  per-PACKAGE signer continuity** (v N vs N+1). The `(ns,name)→allowed-signer`
+  "owner registry" is explicitly milpa **Part 3, unbuilt** (`rfc-per-entry-
+  attestation.md` OQ3, lines 64-67/568-581).
+- Verifier (`entry_trust.py:489-493`): author-signed expected signer = the
+  entry's OWN `signed_by` from the index; milpa-vendored = config
+  `expected_vendor_signer` (not per-entry). Issuer hardcoded `:347`. milpa does
+  NO independent authz — it trusts the Layer-1-signed + ratchet-protected index's
+  `signed_by`. **So milpa's authz root = index integrity.** (Confirms the ratchet
+  is the right place for authz.)
+
+**tianguis side (THE BOMBSHELL):**
+- Author-signed OCI path is **effectively SINGLE-NAMESPACE**. `publish.yaml` is a
+  reusable wf → cosign SAN is the CONSTANT `github.com/coreyleavitt/tianguis/
+  .github/workflows/publish.yaml@<ref>` for EVERY author. `deriveNamespace`
+  (`addentry.nim:178`, `namespace.nim:224-286`) parses that URL → org=`coreyleavitt`.
+  **Every author-signed publish lands in namespace `coreyleavitt`, whoever they are.**
+- `rfc-package-identity.md:203-215` intended deriving namespace from the OIDC
+  `repository_owner` claim (caller's own org) — `grep repository_owner` = ZERO
+  hits. **Never implemented.**
+- **NO per-package signer-continuity check** anywhere. `mokIdentityDrift`
+  (`merge.nim:231-258`) compares only namespace (constant → useless);
+  `mokCollision` is structurally inert for OCI-only entries (no pkGit provenance
+  to compare). A different author CAN publish v N+1 under an existing
+  `(ns,name)` → merge just appends (`mokAdded`). **No takeover protection.**
+- `Package` (`model.nim:72-76`) = {name, namespace, upstream, versions}. No
+  package-level signer field. `Version.signedBy` is per-version only.
+- Dispatch (`handler.go`) = pure authenticated relay; `identityMatchesRepoURL`
+  checks token-repo vs caller's SELF-declared RepoURL, never the package name.
+  Zero package-scoped authz. `signed_by`/`entry_bundle_b64` pure passthrough.
+
+**Consequence:** the composite action (Model 3 part D) is not stylistic — it is
+the ONLY thing that produces a real per-author SAN (runs in the caller's job →
+SAN = author's own repo), fixing the single-namespace collapse. But a signer
+ratchet on today's plumbing would pin the same constant `coreyleavitt` for every
+package. So **best-in-class Model 3 is a 3-layer stack, not just B/D:**
+1. composite action → real per-author SAN (S8 part D, BUILT).
+2. `add-entry` derives namespace from the AUTHOR bundle's SAN (not the shared
+   OCI cosign SAN) → genuine per-author namespaces. (small change to what feeds
+   `deriveNamespace`.)
+3. per-package **signer ratchet**: `Package.authorizedSigner: Option[string]`,
+   pinned at first author-signed ingest, checked in `mergeVendored` as a new
+   priority tier (reject v N+1 whose `signedBy` ≠ pinned signer). = milpa's
+   deferred Part-3 owner registry, realized at the tianguis admission boundary.
+   milpa's OWN independent owner-registry enforcement (not trusting the bot)
+   stays a separate milpa Part-3 slice.
+
+This is PyPI-trusted-publishing + TOFU-ratchet — the real best-in-class shape.
+**Scope decision for Corey:** build the full 3-layer stack now (author-signed
+becomes MEANINGFUL) vs ship delivery mechanics + honest labeling and sequence
+the ratchet as Part 3. Lean: full stack now — a per-author tier that collapses
+every author to one identity is not worth shipping.
+
 **S8 build status:** part A (Nim `add-entry --entry-statement` subject-binding,
 exit 5) + part C (Go `entry_bundle_b64` passthrough) are model-INDEPENDENT and
 gate-green. Parts B (SAN-verify target) + D (composite vs reusable signer) are
