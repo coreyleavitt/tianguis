@@ -106,6 +106,7 @@ proc migrateIndex*(idx: Index): Result[Index, MigrationHalt] =
     packages.add(p)
 
   ok[Index, MigrationHalt](canonicalize(Index(
-    schemaVersion: idx.schemaVersion,
-    packages:      packages,
+    schemaVersion:    idx.schemaVersion,
+    attestationEpoch: idx.attestationEpoch,
+    packages:         packages,
   )))

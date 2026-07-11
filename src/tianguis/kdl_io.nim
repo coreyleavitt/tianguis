@@ -164,6 +164,11 @@ proc formatKdl*(idx: Index): string =
   ## (packages alphabetical, versions descending semver).
   let canon = canonicalize(idx)
   result.add("schema_version " & $canon.schemaVersion & "\n")
+  if canon.attestationEpoch.isSome:
+    # Root-level ratchet: milpa's `index_ratchet_seam._raw_attestation_epoch`
+    # parses this exact node name at the document root (rfc-attestation-
+    # delivery S2). Absent when the ratchet has never been set.
+    result.add("attestation-epoch \"" & kdlEscapeString(canon.attestationEpoch.get) & "\"\n")
   for pkg in canon.packages:
     result.add(formatPackage(pkg))
 
@@ -172,7 +177,7 @@ proc formatKdl*(idx: Index): string =
 # ---------------------------------------------------------------------------
 
 const
-  TopLevelNodes  = ["schema_version", "package"]
+  TopLevelNodes  = ["schema_version", "attestation-epoch", "package"]
   PackageChildren = ["namespace", "upstream", "version"]
   VersionChildren = [
     "content_hash", "requires", "provenance",
@@ -348,6 +353,9 @@ proc parseKdl*(s: string): Result[Index, IdxError] =
     case node.name
     of "schema_version":
       idx.schemaVersion = node.argInt(0).get(0).int
+    of "attestation-epoch":
+      let epoch = node.argStr(0)
+      if epoch.isSome: idx.attestationEpoch = epoch
     of "package":
       let pr = parsePackage(doc, node)
       if pr.isErr: return err[Index, IdxError](pr.getErr)

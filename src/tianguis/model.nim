@@ -77,8 +77,16 @@ type
 
   Index* = object
     ## Top-level index document.
-    schemaVersion*: int
-    packages*:      seq[Package]
+    schemaVersion*:     int
+    attestationEpoch*:  Option[string]  ## document-root ratchet timestamp
+        ## (opaque ISO-8601-ish string, matching `published_at`'s shape):
+        ## every version with `published_at >= attestationEpoch` MUST carry
+        ## an attestation + bundle pin (enforcement is a later slice; this
+        ## field is schema-only — rfc-attestation-delivery S2). `none` until
+        ## the ratchet is first set. Wire name is `attestation-epoch` at the
+        ## KDL document root — milpa's `index_ratchet_seam._raw_attestation_epoch`
+        ## parses this exact name; do not rename.
+    packages*:          seq[Package]
 
 # ---------------------------------------------------------------------------
 # Equality for object variants — Nim's auto-derived `==` can't traverse
@@ -111,7 +119,9 @@ proc `==`*(a, b: Package): bool =
     a.upstream == b.upstream and a.versions == b.versions
 
 proc `==`*(a, b: Index): bool =
-  a.schemaVersion == b.schemaVersion and a.packages == b.packages
+  a.schemaVersion == b.schemaVersion and
+    a.attestationEpoch == b.attestationEpoch and
+    a.packages == b.packages
 
 # ---------------------------------------------------------------------------
 # Canonical ordering
@@ -164,4 +174,5 @@ proc canonicalize*(idx: Index): Index =
       sortedVersions[j].requires = canonicalRequires(sortedVersions[j].requires)
     packages[i].versions = sortedVersions
   packages.sort(proc(a, b: Package): int = cmp((a.namespace, a.name), (b.namespace, b.name)))
-  Index(schemaVersion: idx.schemaVersion, packages: packages)
+  Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch,
+        packages: packages)

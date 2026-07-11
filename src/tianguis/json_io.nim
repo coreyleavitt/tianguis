@@ -94,6 +94,11 @@ proc formatJson*(idx: Index): string =
     "schema_version": canon.schemaVersion,
     "packages":       pkgs,
   }
+  # Root-level ratchet epoch — emitted only when set (mirrors `rekor`/
+  # `bundle_pin`'s "absent = not present" convention). rfc-attestation-
+  # delivery S2.
+  if canon.attestationEpoch.isSome:
+    node["attestation_epoch"] = %canon.attestationEpoch.get
   $node
 
 # ---------------------------------------------------------------------------
@@ -176,7 +181,7 @@ proc packageFromJson(node: JsonNode): Package =
 # ---------------------------------------------------------------------------
 
 const
-  TopLevelKeys       = ["schema_version", "packages"]
+  TopLevelKeys       = ["schema_version", "attestation_epoch", "packages"]
   JsonPackageKeys    = ["name", "namespace", "upstream", "versions"]
   JsonVersionKeys    = ["version", "content_hash", "requires", "provenances",
                         "attestation", "signed_by", "published_at", "rekor",
@@ -250,9 +255,14 @@ proc parseJson*(s: string): Result[Index, IdxError] =
   if verr.isSome:
     return err[Index, IdxError](verr.get)
   let sv = node{"schema_version"}.getInt(0)
+  var attestationEpoch = none(string)
+  let aeNode = node{"attestation_epoch"}
+  if aeNode != nil and aeNode.kind == JString:
+    attestationEpoch = some(aeNode.getStr(""))
   var packages: seq[Package] = @[]
   let pkgsNode = node{"packages"}
   if pkgsNode != nil and pkgsNode.kind == JArray:
     for item in pkgsNode:
       packages.add(packageFromJson(item))
-  ok[Index, IdxError](Index(schemaVersion: sv, packages: packages))
+  ok[Index, IdxError](Index(schemaVersion: sv, attestationEpoch: attestationEpoch,
+                            packages: packages))

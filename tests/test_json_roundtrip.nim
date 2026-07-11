@@ -165,6 +165,31 @@ suite "json roundtrip":
     check parsed.isOk
     check parsed.get.packages[0].versions[0].bundlePin.isNone
 
+  test "attestation-epoch round-trips through JSON":
+    let original = Index(
+      schemaVersion: 1,
+      attestationEpoch: some("2026-07-01T00:00:00Z"),
+      packages: @[],
+    )
+    let serialized = formatJson(original)
+    check "attestation_epoch" in serialized
+    let parsed = parseJson(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.attestationEpoch.get == "2026-07-01T00:00:00Z"
+
+  test "attestation-epoch absent emits no attestation_epoch key in JSON":
+    let original = Index(
+      schemaVersion: 1,
+      attestationEpoch: none(string),
+      packages: @[],
+    )
+    let serialized = formatJson(original)
+    check "attestation_epoch" notin serialized
+    let parsed = parseJson(serialized)
+    check parsed.isOk
+    check parsed.get.attestationEpoch.isNone
+
   test "one-package zero-versions round-trips through JSON":
     let original = Index(
       schemaVersion: 1,

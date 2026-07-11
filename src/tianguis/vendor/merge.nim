@@ -124,7 +124,7 @@ proc mergeVendored*(idx: Index, entry: VendoredEntry): tuple[index: Index, outco
     newPkg.versions = @[entry.version]
     packages.add(newPkg)
     return (
-      index:   Index(schemaVersion: idx.schemaVersion, packages: packages),
+      index:   Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch, packages: packages),
       outcome: MergeOutcome(kind: mokAdded),
     )
 
@@ -198,7 +198,7 @@ proc mergeVendored*(idx: Index, entry: VendoredEntry): tuple[index: Index, outco
   existingVersions.add(entry.version)
   packages[foundPkgIdx].versions = existingVersions
   (
-    index:   Index(schemaVersion: idx.schemaVersion, packages: packages),
+    index:   Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch, packages: packages),
     outcome: MergeOutcome(kind: mokAdded),
   )
 
@@ -228,7 +228,7 @@ proc mergeRebaseline*(idx: Index, entry: VendoredEntry): tuple[index: Index, out
     newPkg.versions = @[entry.version]
     packages.add(newPkg)
     return (
-      index:   Index(schemaVersion: idx.schemaVersion, packages: packages),
+      index:   Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch, packages: packages),
       outcome: MergeOutcome(kind: mokAdded),
     )
 
@@ -290,7 +290,7 @@ proc mergeRebaseline*(idx: Index, entry: VendoredEntry): tuple[index: Index, out
       existingVersions[i].contentHash = entry.version.contentHash
       packages[foundPkgIdx].versions = existingVersions
       return (
-        index:   Index(schemaVersion: idx.schemaVersion, packages: packages),
+        index:   Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch, packages: packages),
         outcome: MergeOutcome(kind: mokRebaselined, rebaseline: alert),
       )
 
@@ -298,6 +298,6 @@ proc mergeRebaseline*(idx: Index, entry: VendoredEntry): tuple[index: Index, out
   existingVersions.add(entry.version)
   packages[foundPkgIdx].versions = existingVersions
   (
-    index:   Index(schemaVersion: idx.schemaVersion, packages: packages),
+    index:   Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch, packages: packages),
     outcome: MergeOutcome(kind: mokAdded),
   )

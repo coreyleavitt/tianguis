@@ -158,6 +158,34 @@ package "chronos" {
     let parsed = parseKdl(src)
     check parsed.isOk
 
+  test "root attestation-epoch node is accepted (not rejected as unknown)":
+    let src = """
+schema_version 1
+attestation-epoch "2026-07-01T00:00:00Z"
+package "chronos" {
+    namespace "coreyleavitt"
+    upstream (url)"https://example.com/chronos"
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isOk
+    check parsed.get.attestationEpoch.isSome
+    check parsed.get.attestationEpoch.get == "2026-07-01T00:00:00Z"
+
+  test "a genuinely unknown root node is still rejected with IDX-NODE-UNKNOWN":
+    let src = """
+schema_version 1
+attestation-epoch "2026-07-01T00:00:00Z"
+totally-bogus-root-node "x"
+package "chronos" {
+    namespace "coreyleavitt"
+    upstream (url)"https://example.com/chronos"
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isErr
+    check parsed.getErr.code == iecUnknownNode
+
 suite "json strict schema":
   test "unknown top-level key rejected with IDX-NODE-UNKNOWN":
     let parsed = parseJson("""{"schema_version":1,"packages":[],"bogus":42}""")

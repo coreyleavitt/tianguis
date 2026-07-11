@@ -432,6 +432,36 @@ suite "kdl roundtrip":
       # The namespace must be as supplied, not hijacked
       check parsed.get.packages[0].namespace == "github.com/legit"
 
+  # ---------------------------------------------------------------------------
+  # Root-level attestation-epoch (rfc-attestation-delivery S2)
+  # ---------------------------------------------------------------------------
+
+  test "attestation-epoch round-trips through KDL":
+    let original = Index(
+      schemaVersion: 1,
+      attestationEpoch: some("2026-07-01T00:00:00Z"),
+      packages: @[],
+    )
+    let serialized = formatKdl(original)
+    check "attestation-epoch \"2026-07-01T00:00:00Z\"" in serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.attestationEpoch.isSome
+    check parsed.get.attestationEpoch.get == "2026-07-01T00:00:00Z"
+
+  test "attestation-epoch absent does NOT emit an attestation-epoch node":
+    let original = Index(
+      schemaVersion: 1,
+      attestationEpoch: none(string),
+      packages: @[],
+    )
+    let serialized = formatKdl(original)
+    check "attestation-epoch" notin serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get.attestationEpoch.isNone
+
   test "same-name two-namespace pair emerges in canonical (namespace, name) order after round-trip":
     ## canonicalize sorts by (namespace, name). "github.com/coreyleavitt" <
     ## "github.com/greenm01" lexicographically, so coreyleavitt comes first
