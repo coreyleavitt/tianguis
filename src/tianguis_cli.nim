@@ -26,6 +26,10 @@ proc usage(): int =
   echo "    (namespace is derived inside the binary from the verified OIDC SAN in --signed-by;"
   echo "     rekor fields are the durable transparency-log pointer captured by commit-entry.yaml;"
   echo "     --bundle-pin is the sha256 hex of the minted attestation bundle's bytes, S7b)"
+  echo "  attest-statement    print the S3 in-toto statement JSON for one entry (S7c)"
+  echo "    --namespace --name --version --content-hash --attestation-kind --signed-by"
+  echo "    (single source of truth for the bytes scripts/sign_statement.py signs;"
+  echo "     never re-derive this statement in Python)"
   echo "  show <url>          derive and print the namespace (host/org) for an upstream URL"
   echo "  migrate [--execute] one-time #32 namespace migration; --dry-run is default"
   1
@@ -53,6 +57,27 @@ proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
         quit(4)
       else:
         stderr.writeLine("tianguis add-entry: unknown option --" & key)
+    of cmdShortOption: discard
+    of cmdEnd: discard
+
+proc parseAttestStatementArgs(parser: var OptParser): AttestStatementArgs =
+  ## Walk the remaining options; populate AttestStatementArgs. Unlike
+  ## add-entry, `--namespace` IS accepted here — this command has no OIDC
+  ## SAN to derive it from (it's the pure S3 statement builder, invoked
+  ## before any signing/dispatch has happened).
+  for kind, key, val in parser.getopt():
+    case kind
+    of cmdArgument: discard
+    of cmdLongOption:
+      case key
+      of "namespace":        result.namespace = val
+      of "name":             result.name = val
+      of "version":          result.version = val
+      of "content-hash":     result.contentHash = val
+      of "attestation-kind": result.attestationKind = val
+      of "signed-by":        result.signedBy = val
+      else:
+        stderr.writeLine("tianguis attest-statement: unknown option --" & key)
     of cmdShortOption: discard
     of cmdEnd: discard
 
@@ -113,6 +138,11 @@ proc main(): int =
       args = args,
       driver = newRealAddEntryDriver(),
     )
+  of "attest-statement":
+    # Re-parse for the subcommand's options (parseopt was consumed above).
+    var sub = initOptParser()
+    let args = parseAttestStatementArgs(sub)
+    return cmdAttestStatement(args)
   of "migrate":
     return cmdMigrate(getCurrentDir(), execute = execute)
   else:

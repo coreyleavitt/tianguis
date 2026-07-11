@@ -9,7 +9,52 @@ import std/[os, times]
 import ./kdl_io
 import ./json_io
 import ./namespace
+import ./attestation
 import ./vendor/[denylist, orchestrate, driver]
+
+type
+  AttestStatementArgs* = object
+    ## Args for `tianguis attest-statement` (rfc-attestation-delivery
+    ## handoff.md S7c). All six fields are required — see
+    ## `attestStatementResult` for the exact rejection rule.
+    namespace*:       string
+    name*:            string
+    version*:         string
+    contentHash*:     string
+    attestationKind*: string
+    signedBy*:        string
+
+proc attestStatementResult*(args: AttestStatementArgs): tuple[code: int, stdout, stderr: string] =
+  ## Pure core for `tianguis attest-statement`.
+  ## Returns (exit code, stdout text, stderr text) without any I/O side
+  ## effects. `cmdAttestStatement` wraps this with actual echo/writeLine.
+  ##
+  ## This is the SINGLE source-of-truth CLI entry point for the S3 in-toto
+  ## statement bytes: it does nothing but validate args and delegate to
+  ## `buildEntryStatement` (attestation.nim), so scripts/sign_statement.py
+  ## (the CI-only signing seam, S7c) never re-derives the statement in
+  ## Python — it shells out here for the exact bytes to sign.
+  if args.namespace.len == 0 or args.name.len == 0 or args.version.len == 0 or
+      args.contentHash.len == 0 or args.attestationKind.len == 0 or
+      args.signedBy.len == 0:
+    return (code: 4, stdout: "", stderr:
+      "missing required argument(s); need --namespace --name --version " &
+      "--content-hash --attestation-kind --signed-by")
+  let stmt = buildEntryStatement(
+    args.namespace, args.name, args.version, args.contentHash,
+    args.attestationKind, args.signedBy,
+  )
+  (code: 0, stdout: stmt, stderr: "")
+
+proc cmdAttestStatement*(args: AttestStatementArgs): int =
+  ## `tianguis attest-statement`: print the S3 in-toto statement JSON for one
+  ## entry to stdout, or a clear error to stderr with a non-zero exit code.
+  let r = attestStatementResult(args)
+  if r.code == 0:
+    echo r.stdout
+  else:
+    stderr.writeLine("tianguis: attest-statement: " & r.stderr)
+  r.code
 
 proc showResult*(url: string): tuple[code: int, stdout, stderr: string] =
   ## Pure core for `tianguis show <url>`.

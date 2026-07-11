@@ -1,0 +1,6 @@
+# Runtime deps for the S7c minting scripts (sign_statement.py, mint_bundle.py).
+# sigstore-python provides the `sign_dsse` primitive that lets us set an
+# arbitrary in-toto subject digest — the cosign CLI cannot do this (it always
+# derives the subject digest from a real file's sha256), see
+# docs/rfc-attestation-delivery.handoff.md's RESOLVED minting recipe.
+sigstore==4.3.0
