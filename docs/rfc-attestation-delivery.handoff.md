@@ -168,6 +168,37 @@ index, so milpa can verify per-entry author/vendor attribution offline.
       existing entries. Doubles as milpa's P4 real-crypto fixture source
       (mirrors milpa `generate-attestation-fixture.yaml`).
 
+## RESOLVED: bundle-minting recipe (2026-07-11, verified vs milpa's real verifier)
+
+Gating unknown for S7b/S8 answered — **no milpa spec change needed.**
+
+- milpa's per-entry verifier does a PLAIN OPAQUE STRING compare of
+  `subject[0].digest.sha256` vs the entry content_hash hex, literal `"sha256"`
+  key, NEVER recomputes (Python `entry_trust.py:288`, Rust `entry_trust.rs:311`).
+  `predicateType`/`_type` ignored. So the minted statement just needs that hex.
+- cosign CLI / `sigstore attest` CANNOT set an arbitrary subject digest (they
+  auto-derive it from a file's real sha256). Unusable.
+- **Mint with the sigstore-python LIBRARY** (same lib ≥3.0 milpa verifies with;
+  installed 4.3.0) — `Signer.sign_dsse(StatementBuilder(subjects=[Subject(
+  name="pkg:tianguis/<ns>/<name>@<version>", digest={"sha256":"<dag-sha256-hex>"})],
+  predicate_type=..., predicate={...}).build())` under a `SigningContext.
+  from_trust_config(ClientTrustConfig.production())` with ambient GH-Actions OIDC
+  (`detect_credential()`). `sign_dsse` emits a BUNDLE_0_3 that
+  `SigstoreEntryVerifier` loads/verifies as-is. S3's attestation.nim produces the
+  same statement JSON; the workflow can rebuild it in python or pass fields in.
+- Digest-key overload stays as RFC §1 wrote it: sigstore-python's `Subject`
+  pydantic model REQUIRES a standard `sha*` key (a `dag-sha256` key raises
+  ValidationError) but leaves the VALUE unconstrained — so the "honest" rename
+  would be strictly worse. **Spec change: NO.**
+- **HARD CONSTRAINT — signing must run in GitHub Actions.** milpa's `Identity`
+  policy hardcodes issuer `https://token.actions.githubusercontent.com`
+  (`entry_trust.py:347`); both the bot (S7b) and the author (S8) sign via a
+  GH-Actions workflow (ambient OIDC → workflow SAN = `signed_by`). Local OAuth
+  signing → different issuer → `SignerMismatch`. This is the irreducibly
+  CI-bound seam.
+- P3b (Rust real-crypto) unaffected: the BUNDLE_0_3 + `sha256`-key subject is
+  exactly what both impls' pre-crypto stage expects.
+
 ## CI boundary + open decision (reached 2026-07-11)
 
 S1–S7a (schema, epoch gate, in-toto statement, bundle store, serve, pin
