@@ -9,13 +9,20 @@
   actionlint fix: empty `${{ }}` in a run-block comment invalidated commit-entry.yaml
   (`6fd5b3b`). Artifact `attestation-bundles` = 3 real P4 fixtures. **The keyless
   seam that could never be locally gated is now proven end-to-end.**
-- **REMAINING = operational rollout (Corey's calls, NOT code):** (1) full real
-  backfill of the 2881 remaining eligible entries (`dry_run=false` — mints + commits
-  to main; big production action); (2) set root `attestation-epoch` to activate the
-  S5 gate on NEW publishes (until set, vendor mint loop stays dormant); (3) real
-  author-signed E2E needs a real author repo publishing via the composite action
-  (crypto seam proven via same verify path, but author→dispatch→commit-entry flow
-  unexercised end-to-end).
+- **FULL BACKFILL COMPLETE 2026-07-12** (`ed1691d`→`36a8541`): ran `dry_run=false`
+  in cap=500 batches (5 validation + 6 bulk); **2898/2898 eligible milpa-vendored
+  entries now carry a real Rekor-anchored bundle** (index accounting: 2899
+  content_hash − 2898 pins − 1 author-signed = 0 pinless-non-author). Found+fixed
+  a latent commit-guard bug (`f5f209c`): a no-op pass churns milpa.lock via
+  `milpa fetch` so `git status --porcelain` mis-fires → empty `git commit` fails;
+  now stages index/alerts/attestation then gates on `git diff --cached --quiet`.
+  Fixed in BOTH backfill-attestation.yaml AND vendor.yaml (same latent bug).
+- **REMAINING = operational rollout (Corey's calls, NOT code):** (1) set root
+  `attestation-epoch` to activate the S5 gate on NEW publishes (until set, vendor
+  mint loop stays dormant + newly-vendored entries land pinless → a later backfill
+  re-run covers them); (2) real author-signed E2E needs a real author repo
+  publishing via the composite action (crypto seam proven via same verify path,
+  but author→dispatch→commit-entry flow unexercised end-to-end).
 - **Stage:** TDD (rfc-flow stage 3) COMPLETE — ALL SLICES S1–S9 LANDED (incl.
   S7c shared core + the Model-3 author-signed trust stack: L1 composite action /
   L2 per-author namespace SSOT / L3 signer ratchet + A/B/C). Full nim suite:
