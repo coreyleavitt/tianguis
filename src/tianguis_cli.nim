@@ -12,6 +12,7 @@
 import std/[os, parseopt, strutils]
 import tianguis/cli
 import tianguis/cmd_migrate
+import tianguis/cmd_set_attestation_epoch
 import tianguis/vendor/[addentry, realdriver]
 
 proc usage(): int =
@@ -64,6 +65,12 @@ proc usage(): int =
   echo "     --signed-by value, or the §1 subject-name binding check rejects every"
   echo "     publish; this subcommand is that shared derivation, exposed over the CLI)"
   echo "  migrate [--execute] one-time #32 namespace migration; --dry-run is default"
+  echo "  set-attestation-epoch --epoch=<ISO8601>  arm the S5 strict-attestation gate"
+  echo "    registry-wide (rfc-attestation-delivery S5; tianguis#42). SET-ONCE: refuses"
+  echo "    if attestation-epoch is already set. SAFETY: refuses if arming this epoch"
+  echo "    would make any EXISTING entry violate the gate (pinless/unattested entry"
+  echo "    whose published_at >= epoch) — backfill those first. --epoch must be the"
+  echo "    exact YYYY-MM-DDTHH:MM:SSZ shape (same as published_at)."
   1
 
 proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
@@ -138,6 +145,7 @@ proc main(): int =
   var emitCandidatesPath = ""
   var bundlePinsPath = ""
   var backfillCap = 0
+  var epochArg = ""
   for kind, key, val in p.getopt():
     case kind
     of cmdArgument:
@@ -152,6 +160,7 @@ proc main(): int =
       of "execute": execute = true
       of "emit-bundle-candidates": emitCandidatesPath = val
       of "bundle-pins": bundlePinsPath = val
+      of "epoch": epochArg = val
       of "cap":
         try: backfillCap = parseInt(val)
         except ValueError:
@@ -214,6 +223,8 @@ proc main(): int =
     return cmdDeriveNamespace(signedBy)
   of "migrate":
     return cmdMigrate(getCurrentDir(), execute = execute)
+  of "set-attestation-epoch":
+    return cmdSetAttestationEpoch(getCurrentDir(), epochArg)
   else:
     stderr.writeLine("tianguis: unknown command '" & verb & "'")
     return usage()
