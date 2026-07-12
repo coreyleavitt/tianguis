@@ -323,7 +323,7 @@ jobs:
           # Decode first — the bundle is UNTRUSTED input until
           # verify_entry_bundle.py's cryptographic check passes below. Not
           # inlined into a heredoc/JSON: raw bytes only, base64-decoded via
-          # an env var (never a `${{ }}`-interpolated shell string).
+          # an env var (never a GitHub-expression-interpolated shell string).
           echo "$ENTRY_BUNDLE_B64" | base64 -d > entry-bundle.json
 
           # KNOWN-SAN mode (pinned signer found above) or ISSUER-ONLY/TOFU
