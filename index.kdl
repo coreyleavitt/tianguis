@@ -8474,6 +8474,7 @@ package "vtable" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1a7adbd5a901c68c32574a79a85e1b2a8d9e4f7f2c99159c1a1200adc5cbc5e6"
     }
 }
 package "winres" {
@@ -8490,6 +8491,7 @@ package "winres" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="cc200ffbc581c0f4341bc5910666c9fd334f76ecc1abf52b90f34affc65f2bab"
     }
 }
 package "xmlio" {
@@ -8506,6 +8508,7 @@ package "xmlio" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="024c714a23b062a31aadab59e95a373d8b4f2f557b0d53a6614a5ead0de61887"
     }
 }
 package "prettyterm" {
@@ -8522,6 +8525,7 @@ package "prettyterm" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="89df9db68dc4d6cdad7c8ab7cf50c2833867d85e59d1104b6625ccb649645ae2"
     }
 }
 package "nimsync" {
@@ -8538,6 +8542,7 @@ package "nimsync" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="df3f0d86228b46d5c37918cb643f13837464bf938d5cfe8b7ed0585d3cfec90f"
     }
 }
 package "leveldbstatic" {
@@ -8554,6 +8559,7 @@ package "leveldbstatic" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d700d795bf647092575aa8ba5ed687b2cf780fb563cef5f3272789c8c7a7bc42"
     }
 }
 package "libp2pdht" {
@@ -8570,6 +8576,7 @@ package "libp2pdht" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f1a06791285c56bfa657d5364a2fbc3d7cc875931c7fa4af3e1cf05c4eda2afb"
     }
 }
 package "questionable" {
@@ -8586,6 +8593,7 @@ package "questionable" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="85648b76b18c96ef1c7c2805c0b1127ef89cba28535b762cd0d7fe94d777e234"
     }
 }
 package "serde" {
@@ -8602,6 +8610,7 @@ package "serde" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="122b095b43384c2bbac28eba303536ee2652ee3c4857059194494e13b7cad3f2"
     }
 }
 package "easymail" {
@@ -8618,6 +8627,7 @@ package "easymail" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1674913af378bcdc5e479fd88a7fdd1576762bbe32223aafdf7027272f5493bc"
     }
 }
 package "toon" {
@@ -8634,6 +8644,7 @@ package "toon" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b9d0012845103ce10de86190b6378dd5ac7465cffc0a144f9fd7a8b9b6a32966"
     }
 }
 package "backoff" {
@@ -8650,6 +8661,7 @@ package "backoff" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="09929725fb6be70dff3ed3f8ccdde24beb3a08b218664b500e7f7048159d63bd"
     }
 }
 package "oauth" {
@@ -8666,6 +8678,7 @@ package "oauth" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7ffce57b7a8267022274a89e9a3d1314adf63d3fd2fdb3dd7362bbe3fef5449a"
     }
 }
 package "sha1ext" {
@@ -8682,6 +8695,7 @@ package "sha1ext" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0ec21f72659e4d38e762647c5bf3cf9a4bb86617885055297b42aac835bfb496"
     }
 }
 package "spotify" {
@@ -8698,6 +8712,7 @@ package "spotify" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="08905697e80c3d68b412283881010d979e980f697c33d265b19d2af38c19086b"
     }
 }
 package "nkdl" {
@@ -8735,6 +8750,7 @@ package "pipe" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="345c84a4a1ef37f392f6349fb65359365a3054bce686fc01a5d8cc3d2705eb2c"
     }
 }
 package "libclang" {
@@ -8751,6 +8767,7 @@ package "libclang" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4d515c657216c17297b2966e2d9a76075fd23c750a26b3b493225c219fbf13a4"
     }
 }
 package "openssl_evp" {
@@ -8767,6 +8784,7 @@ package "openssl_evp" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="fde1d96d7f48a9748d18765e37d4a9a171e2a20a521e20124d11a1f726f00877"
     }
 }
 package "cap10" {
@@ -8783,6 +8801,7 @@ package "cap10" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2ed1c501e5a6c923bfc3e2708deb8ea3d6f4ee4b4ad2da844cd6fc6a8c51ffdc"
     }
 }
 package "chalk" {
@@ -8799,6 +8818,7 @@ package "chalk" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-07T07:16:58Z"
+        bundle sha256="6a3a6166c09aff56a79100a85bd666e45cde1024cc70ddfed76aa195223cfae6"
     }
     version "1.1.2" {
         content_hash "dag-sha256:b573b47d344ce143d764a18de7adcbbf45641e20e596bc32ba3383d39a49e278"
@@ -8811,6 +8831,7 @@ package "chalk" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-30T03:37:48Z"
+        bundle sha256="2a26602d8d0a306dfa729c59f619a7709437b63c5601ce25e928f4798cb6fb6d"
     }
     version "1.1.0" {
         content_hash "sha256:34b4a62a1091a0409adc35697268cb2d3ed58b22b5830164077408f9ff01be31"
@@ -8823,6 +8844,7 @@ package "chalk" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-09T07:21:56Z"
+        bundle sha256="98616491a90edeea81e7485e7de891368e062fff3b5401edc167b7d6499c1cbd"
     }
     version "1.0.2" {
         content_hash "sha256:cbfd22de4f7dda75c14151ff999fb7acce5c7663baa05632ecc8895c1fe220f2"
@@ -8835,6 +8857,7 @@ package "chalk" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="807fe04ab547452d1ccef5898ec8a5500409a4fac6d582d853871eab8e45003e"
     }
 }
 package "lumber" {
@@ -8851,6 +8874,7 @@ package "lumber" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-08T06:54:58Z"
+        bundle sha256="3b5bc18e39616f79c8ea11176fdb9c9a41fe7aa910f9450f7bdd7411d1a22527"
     }
 }
 package "hpx" {
@@ -8867,6 +8891,7 @@ package "hpx" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="bb1b027cc83018f0066211c341d6d9ef9fabcc53c3b44cc4fc2e098e7877f1ad"
     }
 }
 package "nofi" {
@@ -8883,6 +8908,7 @@ package "nofi" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2883966db63a2c81f2eea9606fb269e235551363642f4160e6fe8d6fcb27e895"
     }
 }
 package "sos" {
@@ -8899,6 +8925,7 @@ package "sos" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8e85393f885d4f5f222c6b35ce51ee1176ab4c0add4695fcbd9277dd421f385d"
     }
 }
 package "battery_widget" {
@@ -8915,6 +8942,7 @@ package "battery_widget" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="aefa6ded34fa4cfb6afd0a5d856f27c32c37c65b6238676dd4b702bc8b32730f"
     }
 }
 package "murmurhash" {
@@ -8931,6 +8959,7 @@ package "murmurhash" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="832825fabcc0eabe3c1d510a3bff234e72c2f2d18def05ea564bbbc63c250c79"
     }
 }
 package "deceptimeed" {
@@ -8947,6 +8976,7 @@ package "deceptimeed" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5063d95686e9ac29fd44f567d8b7f410a067de8092ceef3f52c207f51ea8f44b"
     }
 }
 package "nimpsort" {
@@ -8963,6 +8993,7 @@ package "nimpsort" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d48f2fa17966d1a46ae5f9c4ed4f5f5748264b4d84e62eaa830dcae087f0cc5e"
     }
 }
 package "nmgr" {
@@ -8979,6 +9010,7 @@ package "nmgr" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3db90c0e3439e11a64c965cfc1c1c8d1102e41de24ecb59866c724d03ab87ad3"
     }
 }
 package "ninit" {
@@ -8995,6 +9027,7 @@ package "ninit" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="218146a6b1a6069dbf880c521bd8c4860476284b4a1ecc8f8cf876cb02246014"
     }
 }
 package "argon2_bind" {
@@ -9011,6 +9044,7 @@ package "argon2_bind" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="bba4d3bebec4adcf4d638d6baab366123986949db4416f907de9bf61bb83b8c9"
     }
 }
 package "nbaser" {
@@ -9027,6 +9061,7 @@ package "nbaser" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6239bec8adc3e40abdca7b6d63addd93ad7dcac966e886a691b03706e040db70"
     }
 }
 package "moss_nim" {
@@ -9043,6 +9078,7 @@ package "moss_nim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f67e79a4be3632ab819c23074e50c43f15f9a5b6efd7875b87613ffb419dfc71"
     }
 }
 package "tlv" {
@@ -9059,6 +9095,7 @@ package "tlv" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1213a9081b9331c1fb25f4f9928a280fe4eddc777633647c3b0909ababa2cad6"
     }
 }
 package "pkgit" {
@@ -9075,6 +9112,7 @@ package "pkgit" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ad8b33e1fd205b57a848a3ee5bf6f6e27e74d98400274bcc1e532cdd57ff2f6e"
     }
 }
 package "ago" {
@@ -9091,6 +9129,7 @@ package "ago" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9bb74996cf8362041c0c0414735038717d3f0246f72b8d37f216b9d7308625c6"
     }
 }
 package "nimatic" {
@@ -9107,6 +9146,7 @@ package "nimatic" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9432cc04d06ca48562a928eadf03593cf1b1dc65b4c3f39ef83947aec2a76a57"
     }
 }
 package "til" {
@@ -9123,6 +9163,7 @@ package "til" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="53aee54c5b8b24a54f54095b68e11fa499cf81fae6ed3345812bff8a9ff68488"
     }
 }
 package "libssh" {
@@ -9139,6 +9180,7 @@ package "libssh" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="71e92be030d4bfada298b3bf58018d7f82aa073f0642c24615f3ab5b318bdd2c"
     }
 }
 package "niup" {
@@ -9155,6 +9197,7 @@ package "niup" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a4da5282bd8138f83c88dd075a34734a0f4319ff588a3f28b3616c2ad4405bf2"
     }
 }
 package "odsreader" {
@@ -9171,6 +9214,7 @@ package "odsreader" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8fa3edff8e7cff61cbf5f68ddeeedac4a6f7f04f8679f06d86591e14901f3c2d"
     }
 }
 package "velcro" {
@@ -9187,6 +9231,7 @@ package "velcro" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f9dabdba7b3732c58475082cbc61e3602b2bca4a454662d58bdb53104f14411d"
     }
 }
 package "nery" {
@@ -9203,6 +9248,7 @@ package "nery" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="107cbf22ce8443e22b5b1a1c0e6683bb084a18ed54aeae63e1c2577480dad0ee"
     }
 }
 package "nimtesseract" {
@@ -9219,6 +9265,7 @@ package "nimtesseract" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8b932f6c04e8e51a0dcffebb026313f7d604b24eefd568475ca27c77bb006939"
     }
 }
 package "forge" {
@@ -9235,6 +9282,7 @@ package "forge" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="dcf841b6f117fc7326a5a604c0a15e027c2438dc605b997acd2cb6af54431476"
     }
 }
 package "hwylterm" {
@@ -9251,6 +9299,7 @@ package "hwylterm" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="28fa15ad07aae7762fa54f72359732845c09e04d5a025d1ceef0546905b630c4"
     }
 }
 package "suru" {
@@ -9267,6 +9316,7 @@ package "suru" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6114c1f486748d1fbf668bcc8649f1a4bca4847476bb22fc85abfa3bd35fe5a1"
     }
 }
 package "owoifynim" {
@@ -9283,6 +9333,7 @@ package "owoifynim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8006baf4d22010879af5dbe0cbd28b28d38122d186961156d11bbeb01467d44d"
     }
 }
 package "nats" {
@@ -9299,6 +9350,7 @@ package "nats" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="072bed3792d74e419ef1f917b13c3278455634ee66cfc5c8e0c06b22f29a1b34"
     }
 }
 package "bpg" {
@@ -9315,6 +9367,7 @@ package "bpg" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f512cc9aa5f26e990d1e3b77bc83c7c95db4d8f9ce5df3151ee1c26f9ede1751"
     }
 }
 package "brainfuck" {
@@ -9331,6 +9384,7 @@ package "brainfuck" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a2a00e98860aebe074717260fb24035c3af21e537418d0812771b3e63b8dcdd6"
     }
 }
 package "iterutils" {
@@ -9347,6 +9401,7 @@ package "iterutils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1fb2faf64aefe25d495bef854b628d45abb85e82dc66092dc342e3bf65060a00"
     }
 }
 package "nanomsg" {
@@ -9363,6 +9418,7 @@ package "nanomsg" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8b95556d4af27918e3050006790ecad619b278a0abbfcb99f1791088e152e12a"
     }
 }
 package "nimes" {
@@ -9379,6 +9435,7 @@ package "nimes" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f14fb4b6b4830da19f9b502562264d74656bc857977634f4892ce28ca77bb542"
     }
 }
 package "platformer" {
@@ -9395,6 +9452,7 @@ package "platformer" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3e9390ead68396ed264d0a0b79b2db9b9b6138cd9629e3895141283cba08f6bc"
     }
 }
 package "rsvg" {
@@ -9411,6 +9469,7 @@ package "rsvg" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5d28af79b2d01a9dcd56b2e0dd4458122aa1a764a5461ae06f9feec2df711051"
     }
 }
 package "syscall" {
@@ -9427,6 +9486,7 @@ package "syscall" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2a16355f2a49b7a3cacf0631343be5775b30b2bc5240dea2fc7f9b0ddf5adca9"
     }
 }
 package "facedetect" {
@@ -9443,6 +9503,7 @@ package "facedetect" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="389667f8df3858a308b20a82a01072fc125ea217ef6b15dad304fd74777d1c83"
     }
 }
 package "hyperloglog" {
@@ -9459,6 +9520,7 @@ package "hyperloglog" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f72f0490118d2b617656a4af69648ab6bf2077ccd4de39ded7afbbb746265130"
     }
 }
 package "perceptual" {
@@ -9475,6 +9537,7 @@ package "perceptual" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="baad12052ac5e5d0d7c87a65f53ac37619a87173263819ea414ca480d95d19ed"
     }
 }
 package "nimlz4" {
@@ -9491,6 +9554,7 @@ package "nimlz4" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="06ef5f26366c8e3fca08a7d990e51500097fd044abb2b880a634a454eda344d5"
     }
 }
 package "nimrdkafka" {
@@ -9507,6 +9571,7 @@ package "nimrdkafka" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0d3bd31d18413dfa5648b50a582e83dbf28e4005df3f6b049d72cae7658b65b3"
     }
 }
 package "nimsnappy" {
@@ -9523,6 +9588,7 @@ package "nimsnappy" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2765dd863617de7ef6c8a03b7dbbdb1141ad523f14395aab186a0601621b05df"
     }
 }
 package "jdec" {
@@ -9539,6 +9605,7 @@ package "jdec" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="dcbf8e42343a63b0b0660c4b7799905b34f37fb4bdd16bc4baf4137334b9dc8a"
     }
 }
 package "otplib" {
@@ -9555,6 +9622,7 @@ package "otplib" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d0ace90e19905b332ed1c47d57d7d4c000a9293f690894960fcacfd3b76d982c"
     }
 }
 package "imguin" {
@@ -9571,6 +9639,7 @@ package "imguin" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="cdbccc060bba21b8294ae3c12b26cc672db8e0c64a4b10fce4424b65393e287a"
     }
 }
 package "implot" {
@@ -9587,6 +9656,7 @@ package "implot" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b6520a92b1068aef103934257adf6e6f932cd392acef2a56a1ce225c5a3fd55d"
     }
 }
 package "sdl3_nim" {
@@ -9603,6 +9673,7 @@ package "sdl3_nim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="956ee48b597fe6df762b696918e02ddedef0223344c541f77e0b2a51e6b9c28e"
     }
 }
 package "bluu" {
@@ -9619,6 +9690,7 @@ package "bluu" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="dc8c7015d8a7931ebb3a0471ebd62575b9e6f3509b4f11be00f9c1e14bfefeca"
     }
 }
 package "bump" {
@@ -9635,6 +9707,7 @@ package "bump" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4c97735473c40a548dccaa79779f9d2e1ded4e8797fd52a290aeae57019732e4"
     }
 }
 package "criterion" {
@@ -9651,6 +9724,7 @@ package "criterion" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6104c540d8150838064230190f807c3b6e08b497e786c79ad375650ba7da7953"
     }
 }
 package "foreach" {
@@ -9667,6 +9741,7 @@ package "foreach" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="edbc0c70f86c7eefa8fafa5f137ab4a02bd625ae9022f0d0473df8ae2e883ca0"
     }
 }
 package "gcplat" {
@@ -9683,6 +9758,7 @@ package "gcplat" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="25cb9095d7dae003cfefc007f51b307fc11606dac7bc09cdfd0d48849588da0f"
     }
 }
 package "github" {
@@ -9699,6 +9775,7 @@ package "github" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ecd7f69c87fa1b1c7bfa0c71cd85cad9b34d4a796c2e55ad720f0bb551aedb1b"
     }
 }
 package "golden" {
@@ -9715,6 +9792,7 @@ package "golden" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1c3b96a459a95a03af56322efe83ae572f86aea1e6a068277b564052b66b11b0"
     }
 }
 package "meow" {
@@ -9731,6 +9809,7 @@ package "meow" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="530b140dd51c4b77207f7a6b38098f670fec900a6a68e9e254657297424bc5ff"
     }
 }
 package "openapi" {
@@ -9747,6 +9826,7 @@ package "openapi" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="02b58518a30d46aa71af4b0f4e71be5d74c19a588f13fd1267abbfb406020825"
     }
 }
 package "sigv4" {
@@ -9763,6 +9843,7 @@ package "sigv4" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="80b31f4b944cc685ce449823efd3b5463d2ae15a850eb1da9a85797f3cc70377"
     }
 }
 package "swayipc" {
@@ -9779,6 +9860,7 @@ package "swayipc" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="97bc17e72d649dc8a47469b2f6ab4d377c9e20371ddeaccc41783fec339fda47"
     }
 }
 package "Rakta" {
@@ -9795,6 +9877,7 @@ package "Rakta" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7e3a26bc753fcf7e0e36289fcc2995b9ab4011f04249abcd7f843e9121d40eff"
     }
 }
 package "docopt" {
@@ -9811,6 +9894,7 @@ package "docopt" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1da278f62b2d077ad0eb32e2b05d6873e8c3181ed52a555ebb2f22f8ee742b3b"
     }
 }
 package "analytics" {
@@ -9827,6 +9911,7 @@ package "analytics" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="55347270e5dcfd8aeb6dc56bd3298807f811db880c8c4342f491c6da4ab82a87"
     }
 }
 package "gamelight" {
@@ -9843,6 +9928,7 @@ package "gamelight" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="bb7b949e2443e00f74e2b6d7d6d705f78ecca818d7979b2a8142fe9c247ce26a"
     }
 }
 package "httpbeast" {
@@ -9859,6 +9945,7 @@ package "httpbeast" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0e21ec240d17da159bdb0479f776f138443c6d97dccc2226be505fd281c39ff6"
     }
 }
 package "ipsumgenera" {
@@ -9875,6 +9962,7 @@ package "ipsumgenera" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="90ee63d359d842919923abef4fc6a2e002761aa7cf61f0d866a497aff6367b12"
     }
 }
 package "jester" {
@@ -9891,6 +9979,7 @@ package "jester" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a54659dadd3c8bc9283424c991d8867d2b3dffc1573a73f11eb64bab30c79a0b"
     }
 }
 package "nimbox" {
@@ -9907,6 +9996,7 @@ package "nimbox" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2533115dd95765fbcc001486941bb918552c876236784bfc4068a178ef548311"
     }
 }
 package "notifications" {
@@ -9923,6 +10013,7 @@ package "notifications" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="06b6f2aa7f74bf26b7a70e829518f174eaae94c4c8d5d3497d5389c77076476b"
     }
 }
 package "opencv" {
@@ -9939,6 +10030,7 @@ package "opencv" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3ced78ac64f6b250b3d0be88b654c7439da7a63103e6d3738bb687ec150e85f7"
     }
 }
 package "prometheus" {
@@ -9955,6 +10047,7 @@ package "prometheus" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="85e002fb84f4ce300c6b9e4d3db829ba7739b26310b508e1c03e37762186a119"
     }
 }
 package "pwned" {
@@ -9971,6 +10064,7 @@ package "pwned" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c2c29da2590fee69a0a2d9bf570d9bc290a9d86a28e24530ae089949990600ae"
     }
 }
 package "sass" {
@@ -9987,6 +10081,7 @@ package "sass" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e4e9397f6c0226fc9ea8542be962004664ab9d0136607f0b0db3c81415725a20"
     }
 }
 package "texttospeech" {
@@ -10003,6 +10098,7 @@ package "texttospeech" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d6152e29a9ea42b64924e01e17eddd6d1b5b62af0f3e0aed39ca6b877ebe0ae7"
     }
 }
 package "untar" {
@@ -10019,6 +10115,7 @@ package "untar" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4b7110dbbc76198768d440f9959822774c282c1449c111d46067fd801a4bac7f"
     }
 }
 package "vec" {
@@ -10035,6 +10132,7 @@ package "vec" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b3b46af665d06a854104772ab54061c121d712a6723a8e8d9d80d4cb09a32f1e"
     }
 }
 package "webdriver" {
@@ -10051,6 +10149,7 @@ package "webdriver" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="58ca00d4ebb20fb8b00d6fcfa107152515eaf13e0227b33e04ee1842e51e878b"
     }
 }
 package "vscds" {
@@ -10067,6 +10166,7 @@ package "vscds" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4368d9f746276c112e0df26135b12ad2ccb612a8555a0767bcafd88d37545e9a"
     }
 }
 package "opencolor" {
@@ -10083,6 +10183,7 @@ package "opencolor" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b3b029c5a138d3fe6a73ec097368338373906291545818dc97169ffb4f973e93"
     }
 }
 package "tinamou" {
@@ -10099,6 +10200,7 @@ package "tinamou" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d97e304c6acbafabd65fcd6ef83e4d7b0fcaea7bec65b62d2c83e011fa5661ac"
     }
 }
 package "urlon" {
@@ -10115,6 +10217,7 @@ package "urlon" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="baf66d57159abf920cbac9f8d0a62a7cca6f95e9ae7bf47d4516766afbcbb680"
     }
 }
 package "z3nim" {
@@ -10131,6 +10234,7 @@ package "z3nim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="548e1fddd347c0a779512edcc9e5ba8ee817fdbabb3a9600b0a19f77ca4c98e4"
     }
 }
 package "dual" {
@@ -10147,6 +10251,7 @@ package "dual" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="453f3effe25bbcc2e1ad06d640d2ad50567852b8ec84a0e9453c9260d9c9c646"
     }
 }
 package "sling" {
@@ -10163,6 +10268,7 @@ package "sling" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0e274886b500c32298045b03621915afc30d0af6caef60b628fbc1887358cc34"
     }
 }
 package "sun_moon" {
@@ -10179,6 +10285,7 @@ package "sun_moon" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7abf619cd6d10f65ef89af34b4a25a1ff761254bc6052bd6ec450b3c139fa7db"
     }
 }
 package "phoon" {
@@ -10195,6 +10302,7 @@ package "phoon" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b19d0e48229da0375f32dc9d6ccbb8249945701f6ec2afbfec3f1c329cb2f1b7"
     }
 }
 package "gnuplot" {
@@ -10211,6 +10319,7 @@ package "gnuplot" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="40933a1e7fe57a143b53a08239deebb46527b8e786fc9eda74f9a6b2541494e0"
     }
 }
 package "matrixsdk" {
@@ -10227,6 +10336,7 @@ package "matrixsdk" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9dd1c914dfb1be4366291ba1270dfae8e835000413dab1309e3d3376c4d55e4e"
     }
 }
 package "grim" {
@@ -10243,6 +10353,7 @@ package "grim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="14c4c00fb8e7a0e9009e09f048920682c8a62a5263359ecd4abaf78f4b298c43"
     }
 }
 package "arraymancer_vision" {
@@ -10259,6 +10370,7 @@ package "arraymancer_vision" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="98c5eab75817a1cdecb3a70150de1ac7b807a0f5a22b2fe1e21009bb6412abc0"
     }
 }
 package "nimFF" {
@@ -10275,6 +10387,7 @@ package "nimFF" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c29433ecb6023b79a30ef730abddfac500d3a4181494a3b59df0459c1209bc61"
     }
 }
 package "fushin" {
@@ -10291,6 +10404,7 @@ package "fushin" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0250f924df38a8241d9c50a5e3231cf6af9032945d7a79a462a7c61f602a324d"
     }
 }
 package "ants" {
@@ -10307,6 +10421,7 @@ package "ants" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d10c643245ec2e0e6ae93e96890f3dab225f5424ebe0446856cbda069db82f78"
     }
 }
 package "bunnery" {
@@ -10323,6 +10438,7 @@ package "bunnery" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3b27598987bc779707196692ed4108c18e57d506a49415b90ee98bda9da0049b"
     }
 }
 package "cborious" {
@@ -10339,6 +10455,7 @@ package "cborious" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-03T07:10:41Z"
+        bundle sha256="1d64d974532852b6d6058b82952f0ab816d9da490f7b38865841a2b940781b0f"
     }
     version "0.0.0+commit-6e18175" {
         content_hash "dag-sha256:116baaaf5511496d3e3dac3532f73ebf208c96b490b192a95c584932badd4e76"
@@ -10351,6 +10468,7 @@ package "cborious" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="dd8ff423c9c06c68f688ce7ab751592e217765a8ba42264dd8e9f08ed621c6ff"
     }
 }
 package "cdecl" {
@@ -10367,6 +10485,7 @@ package "cdecl" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e7032433dde4684f649e8af2710d49d1809cfa3b429dc56bf300014ca49ca80c"
     }
 }
 package "chroniclers" {
@@ -10383,6 +10502,7 @@ package "chroniclers" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="89fab6e07774aff8b1c6119ebde313bf99fe0909a2e9c6653aa07712e65597dc"
     }
 }
 package "cssgrid" {
@@ -10399,6 +10519,7 @@ package "cssgrid" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="782a313e901018b9f9cfcf23f0cd89fc1077f97cc90b861a0c1e1d80b75dd9d5"
     }
 }
 package "diffy" {
@@ -10415,6 +10536,7 @@ package "diffy" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="fdc39c7b2d72985a274c8ce353dc520061162f70763799e8196e0e59ef9a1f0a"
     }
 }
 package "dmon" {
@@ -10431,6 +10553,7 @@ package "dmon" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7e1f5133377d9c322252b098819d95a4d5d054a3ef75c799231b1739f151f1ed"
     }
 }
 package "fastrpc" {
@@ -10447,6 +10570,7 @@ package "fastrpc" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a55e9a04365753b59b4436704e7a6ccbfe5b09f79176db37fede98926a60ac4d"
     }
 }
 package "fidgetty" {
@@ -10463,6 +10587,7 @@ package "fidgetty" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="20887a6a7fbf7e094b50327b04df21fb6f8af8f914b2227035595b91feb0f051"
     }
 }
 package "figdraw" {
@@ -10479,6 +10604,7 @@ package "figdraw" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-11T06:49:52Z"
+        bundle sha256="59af2a6ecba07c61e67a68d0dd4415607fcde2e403912f059713fc9d47624df9"
     }
     version "0.27.1" {
         content_hash "dag-sha256:76da193dbba8edaa3485caeb6788d913764995cfd6ccab2c9f6120d232272471"
@@ -10491,6 +10617,7 @@ package "figdraw" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-09T07:17:07Z"
+        bundle sha256="a55662c0e1cac45533c50667f8620f160c510bd537cc8a0c3d9972d484e95a8d"
     }
     version "0.27.0" {
         content_hash "dag-sha256:e993ba2aa16627cb722a9f4f206eb6216f23d5b4321cd999827f13638ff8d0e4"
@@ -10503,6 +10630,7 @@ package "figdraw" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-08T06:54:58Z"
+        bundle sha256="c105c8bd0df1edeb24006770e6a79218bc5cb46a95a11f750cdfcca668560cec"
     }
     version "0.26.4" {
         content_hash "dag-sha256:2f260d45104b13bc76e39677bb6eacaa9dd4486b977514fc4bf73e54e1025ca3"
@@ -10515,6 +10643,7 @@ package "figdraw" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-06T07:39:46Z"
+        bundle sha256="88be47a8b3e7169aca282acfc6e0eb49f517fa2b54ad2a523e8e721ab4315fe4"
     }
     version "0.26.3" {
         content_hash "dag-sha256:31403d6501ebadcdf7af0829e855797902a4802711fc22c4a63aaa99b83a6d28"
@@ -10527,6 +10656,7 @@ package "figdraw" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-05T07:10:42Z"
+        bundle sha256="a353d5d01f0a135b30fbbb10f87fb6b367d242c2854164277687b0eea97dbeca"
     }
     version "0.26.1" {
         content_hash "dag-sha256:caffaa00104996a8dfa6c55bdc9fcc675e261bc7e985074a062b36f5b3b84845"
@@ -10539,6 +10669,7 @@ package "figdraw" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-30T03:37:48Z"
+        bundle sha256="eac30f4b0a771b94913b27bdd1c81534154b757dc77157ace89d3a1c265eeea1"
     }
     version "0.0.0+commit-a71e02f" {
         content_hash "sha256:90a46a119c1ffaaa008b4a13fff89f6a1604436694d681eddb53ea8b8746d9e3"
@@ -10551,6 +10682,7 @@ package "figdraw" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="745a7bb77baef15644366a5eda3ba6cefbaa8b833279da72514071b548d63fb5"
     }
     version "0.0.0+commit-75863a5" {
         content_hash "sha256:06b2f6cb5f7f2a901331c26614052cf5b9ac2fe13157579312def152402af712"
@@ -10563,6 +10695,7 @@ package "figdraw" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-07T07:30:14Z"
+        bundle sha256="7c539dde3b00b4dea72df6c39315fedc2e78cae8601ad567251431f76848aebd"
     }
 }
 package "geecode" {
@@ -10579,6 +10712,7 @@ package "geecode" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="50ae1531b8c0d34a6f1aa4e4b07bf587ee60ed87356f790d5fea7f983653969b"
     }
 }
 package "macosutils" {
@@ -10595,6 +10729,7 @@ package "macosutils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="99e199a34326089f1fc3b53cbd272df49b879b7e94aaeb96bae24c40e8029bdd"
     }
 }
 package "metalx" {
@@ -10611,6 +10746,7 @@ package "metalx" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-07T07:30:14Z"
+        bundle sha256="b30f08e1deddaafd8041258346fe3456f93925118c6fb1f8a71566ed720f81b2"
     }
     version "0.0.0+commit-b161231" {
         content_hash "sha256:8418d3899e7236e64f835b6cb5bbe0a28b622ae053e670249373392e8025303c"
@@ -10623,6 +10759,7 @@ package "metalx" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="62584367fde091d3786f7f8d20304c1bf0ec4c81082bcad118bf79720658bf42"
     }
 }
 package "nesper" {
@@ -10639,6 +10776,7 @@ package "nesper" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="777c74ed968fecc0e7741d586eb6e6b1e24ad71fb37f70a9acd463883f822c16"
     }
 }
 package "openlayers" {
@@ -10655,6 +10793,7 @@ package "openlayers" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b3aaedeb840d11b0d4c81c9444fd55fb3824021b0859ea681827ea42af42f948"
     }
 }
 package "sarcophagus" {
@@ -10671,6 +10810,7 @@ package "sarcophagus" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-10T07:15:52Z"
+        bundle sha256="e4fd7e452fa2ffcf6a488df680622450ff8b7aff30a17b5417f9a63a12454dc8"
     }
     version "0.12.1" {
         content_hash "dag-sha256:38faefcce00e274c8838c0ceb42fcff06224a80a3e8d972a65815cbfee185dec"
@@ -10683,6 +10823,7 @@ package "sarcophagus" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-09T07:17:07Z"
+        bundle sha256="67a69ecec2e735ff8d99e99a30da85dc1e5f541563feae26c7c6ea6e9004db85"
     }
     version "0.12.0" {
         content_hash "dag-sha256:047424d03764c7f7d3ba100be2247b99296d0c10b3e0d3ce0c3468a30a6cf52d"
@@ -10695,6 +10836,7 @@ package "sarcophagus" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-04T07:04:48Z"
+        bundle sha256="26d6bb1535145d7b219639d130c301d0f807f735b2f04ea8363d35b59ae66af1"
     }
     version "0.11.0" {
         content_hash "dag-sha256:dbfe51e41ce8f27a97635c730f69477dbd9dfc8277eb2199d40272f867bd09fc"
@@ -10707,6 +10849,7 @@ package "sarcophagus" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1e3d53827fd3023234b828080588a7dec78cf8f4c5a70340727902719a8b6b54"
     }
 }
 package "sdfy" {
@@ -10723,6 +10866,7 @@ package "sdfy" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="97a7cf1802dc6082205567496cfebb5f515be260a14e8998e63bfece1655f578"
     }
 }
 package "sigils" {
@@ -10739,6 +10883,7 @@ package "sigils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-11T06:49:52Z"
+        bundle sha256="7959bd5635721154dcdad98fb1d5572667c1377a31045ff244009cc21685d9d8"
     }
     version "0.25.0" {
         content_hash "dag-sha256:7e6c02413bd0c2b6aa7f91162f8fabc1146f7b2221d2cf3ac1d54c8d2bffbcb4"
@@ -10751,6 +10896,7 @@ package "sigils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-10T07:15:52Z"
+        bundle sha256="99f3e15c7875630fa62c55bff97b9c2f981dc5f27921836570dcae0efa6c2828"
     }
     version "0.24.4" {
         content_hash "dag-sha256:697887565d4f255b40b97825f329c8dd58bb24303cf52b10320dab47d526fc86"
@@ -10763,6 +10909,7 @@ package "sigils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-06T07:39:46Z"
+        bundle sha256="8646d7d9bddc63c14e6c255db8a1cac62e9840a5aed959cb6dffec274aa34b35"
     }
     version "0.24.3" {
         content_hash "dag-sha256:c6d1c1191921755df4a416b62ce7aafe81c1d1091c71b4c7014e322f69c9dafa"
@@ -10775,6 +10922,7 @@ package "sigils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-03T07:10:41Z"
+        bundle sha256="b61389418f8b8a7a9edf3d9fc04b2525f8435a5e54103aeaae75706e8a8f6245"
     }
     version "0.24.2" {
         content_hash "dag-sha256:e60d13584ff5ab9308490099e34aff4003d5fee35f9c7e2f1b71b8d89577a104"
@@ -10787,6 +10935,7 @@ package "sigils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-30T03:37:48Z"
+        bundle sha256="16c44813ec54015db7d82feb9ce4aceb893fe07c88dbc76d14ab8bae4a24c6d4"
     }
     version "0.23.0" {
         content_hash "sha256:429f580acb12f71bf3b79eb94eb86f99d1ff33791b48a7136da96089a00ae86b"
@@ -10799,6 +10948,7 @@ package "sigils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-07T07:30:14Z"
+        bundle sha256="951a822348c19126728f29914c92a9a6230cf0a6fe21aec6a9c6225a3a96e1b1"
     }
     version "0.19.3" {
         content_hash "sha256:55d4b5357e2a0a22d44c71092d0f75bc4d86dad704db036ec6a4ba099714d603"
@@ -10811,6 +10961,7 @@ package "sigils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="571d6c0fc0e385df7d3c136e86426408bd25e5f2f58a6705983b9a92b9dcddf6"
     }
 }
 package "thorvg" {
@@ -10827,6 +10978,7 @@ package "thorvg" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d5b870468a82ee3944fbee3fc89fbea1653a5cc8a7f7f449c021a890d3c1dc2d"
     }
 }
 package "SMBExec" {
@@ -10843,6 +10995,7 @@ package "SMBExec" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9da4c04351edecf775bb7422054e8a76809c995b02a20b8c7042cd5956aaf75a"
     }
 }
 package "nimbluez" {
@@ -10859,6 +11012,7 @@ package "nimbluez" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="dbdbb8b18b65d85b92deae1d3b4a92876c044671297be7b28302a79029113c9f"
     }
 }
 package "debra" {
@@ -10875,6 +11029,7 @@ package "debra" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-07T07:30:14Z"
+        bundle sha256="eff7a0f097c380f49f0c1eaadcc70490c9b2c656cfcc43e5766aafc74be06642"
     }
     version "0.8.0" {
         content_hash "sha256:3311019581f1b53cea706e21c767049bbfecb6aa9dbe2aba084a996cb9515342"
@@ -10887,6 +11042,7 @@ package "debra" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="689014339d2e3fa47e6f5eaa8886ffcdc143878d82ccbe50867db334d88f4fcb"
     }
 }
 package "lockfreequeues" {
@@ -10903,6 +11059,7 @@ package "lockfreequeues" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-30T03:37:48Z"
+        bundle sha256="f14e7cf9c4f8fc0c3a3020b970ad26fba09e3673682cf0fed3d9cda101e4c025"
     }
     version "4.1.0" {
         content_hash "sha256:ca990c43e2a58b04d72acc4e2be56d53255e4c6961d35f1bcb562c616f0548b9"
@@ -10915,6 +11072,7 @@ package "lockfreequeues" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8f5f596593d8c2cc4a89b9923ac849d5312c95410b3ad64d999eaa44d14c4da9"
     }
 }
 package "typestates" {
@@ -10931,6 +11089,7 @@ package "typestates" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-07T07:30:14Z"
+        bundle sha256="856dddbbe3a235b4b4fabcc104abc59a36f9ef0864d412c12c9fc9bb28bd91a5"
     }
     version "0.10.0" {
         content_hash "sha256:c2ab338f545d24fd290ef8c5cdf6768f1071c74576d9d4d04a46ea8fffa5cb95"
@@ -10943,6 +11102,7 @@ package "typestates" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2e7602d1c93cde7d8ee8b4c30a77dc02c89e860b4b46ade3972b6102efcbc11c"
     }
 }
 package "mcu_utils" {
@@ -10959,6 +11119,7 @@ package "mcu_utils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b1689c5e2aef723be73d56d9966150ef4a66d18c8bb5c7fe2ab84a0ccb006c63"
     }
 }
 package "nephyr" {
@@ -10975,6 +11136,7 @@ package "nephyr" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="bd2b10daf83238a60c386bd956f9e87b60b736568e798fadadd8ba699d1dbc4e"
     }
 }
 package "nimarrow" {
@@ -10991,6 +11153,7 @@ package "nimarrow" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5c33404791754a8fb289da43fcf4139eeb00f5b27aaa21f85870b6cc3e86fb8d"
     }
 }
 package "nimarrow_glib" {
@@ -11007,6 +11170,7 @@ package "nimarrow_glib" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9a867cc3399c36b3b9a524f21485019c14cad16c2d036cbff13fe9e8f7f585c3"
     }
 }
 package "suffer" {
@@ -11023,6 +11187,7 @@ package "suffer" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="75d1bec732b796b882e768ee34771f5f493ca23fa975116c85823265e3ae547e"
     }
 }
 package "vecio" {
@@ -11039,6 +11204,7 @@ package "vecio" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="fd418016d6034bbe5d61713ac1f5fabc376137a9eca084992cf0267cb39b7cc6"
     }
 }
 package "measures" {
@@ -11055,6 +11221,7 @@ package "measures" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="26627a531fe8a1001043931211c73cb0370e4b4c375cd06810e4b2d861f4a97c"
     }
 }
 package "tencil" {
@@ -11071,6 +11238,7 @@ package "tencil" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c4d505d9a96f52d102381a50b1054214351de08d43807e17b23d0634160c44e2"
     }
 }
 package "torm" {
@@ -11087,6 +11255,7 @@ package "torm" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e2fb7149c7e778e1fe4e5ae088d9ec9557069b2ea3fe8a2ca9866d385c1db3c9"
     }
 }
 package "nim_2048" {
@@ -11103,6 +11272,7 @@ package "nim_2048" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b24f031ccfb5bf67cf015cdafe518631b15ffdedcf676090e89b7f295a736af1"
     }
 }
 package "dbg" {
@@ -11119,6 +11289,7 @@ package "dbg" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e2366f86a607a2ca96cc2eb89a915ccca254c1d9dd2cd9aaf193bdc51bf150ed"
     }
 }
 package "flatdb" {
@@ -11135,6 +11306,7 @@ package "flatdb" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="67867ea105e9dea866bd268dd7f1e0f48859b98a0127519e92039e0bcba23e57"
     }
 }
 package "formatja" {
@@ -11151,6 +11323,7 @@ package "formatja" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0d320ed9f4918d163befab16d37659df585283e9ee10cbcdd571028db227cbb3"
     }
 }
 package "mime" {
@@ -11167,6 +11340,7 @@ package "mime" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b777a16c7f3ca78001dcad747fbdda2fc39cc562cc7c52ab1397eb362837d491"
     }
 }
 package "multicast" {
@@ -11183,6 +11357,7 @@ package "multicast" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="46b82cbc3875d8d4dacbb3d8a2acaae12b3cb4f03ad1ee27ee9199e48862d287"
     }
 }
 package "nimSocks" {
@@ -11199,6 +11374,7 @@ package "nimSocks" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f8ccd662f31bac0dc091735b70b7c6a69c3f66c8410a2255512288912e67cb0c"
     }
 }
 package "nimja" {
@@ -11215,6 +11391,7 @@ package "nimja" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-10T07:36:26Z"
+        bundle sha256="bfa7cd3eec372aa8419078e4877cc285a524e58604ff3ce476ab33fd7c748d0f"
     }
     version "0.10.1" {
         content_hash "sha256:c837945ff90a55d71489223d346de8c7c2503710698b4ffaff8093523492daec"
@@ -11227,6 +11404,7 @@ package "nimja" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="622b5772195f3821a47f7bb953f92b2643b01f3f60c7b3e8f7b61e79382a2c24"
     }
 }
 package "nwt" {
@@ -11243,6 +11421,7 @@ package "nwt" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="075a5a4c47e055fc61b24bf5b21ee2be8fbf6c23eb05095c84a762fc2c73d57e"
     }
 }
 package "zigcc" {
@@ -11259,6 +11438,7 @@ package "zigcc" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2a2f530e510f4ef43c13e3a177ab818c72d6c8ba9be30613998b82b7e27e86ac"
     }
 }
 package "simple_vector" {
@@ -11275,6 +11455,7 @@ package "simple_vector" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1014d84eaa4d81b6cea34eeb8ee814cce8a9f32bb5073be7dace38fa240d43e2"
     }
 }
 package "ao" {
@@ -11291,6 +11472,7 @@ package "ao" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="67221405373a1026e2b459736c97a8b4f31a049c7d88d15fe0355f84e8ca9c03"
     }
 }
 package "kirpi" {
@@ -11307,6 +11489,7 @@ package "kirpi" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a15b0ed49051b8f8eb56792126f2b90bcbe8ea74e647faee9da6c32375e5a2d7"
     }
 }
 package "textalot" {
@@ -11323,6 +11506,7 @@ package "textalot" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="28d450ba8998acb1d66d218c2a065b8ad9f4155f7eae83b37ce87a7fa5f4b60d"
     }
 }
 package "simple_graph" {
@@ -11339,6 +11523,7 @@ package "simple_graph" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9fdfb170a05fafd3d9bf4fe29717e28b264b2525e8da3e9ca4b751d117ef3b00"
     }
 }
 package "nanim" {
@@ -11355,6 +11540,7 @@ package "nanim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="76c21408f2705eeef19abb2424bbd603e6e47b0d621fb514e5501387c558e24f"
     }
 }
 package "tabulator" {
@@ -11371,6 +11557,7 @@ package "tabulator" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5f6abc918507fbf9f36827bbf5690cbfa022dca63f5ab0cdc67f85cf264aa56f"
     }
 }
 package "seance" {
@@ -11387,6 +11574,7 @@ package "seance" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5e6b258617a648f4aa048fe8a0c1f4af4401073b8f4a8b4ca9ea6eb586c6884e"
     }
 }
 package "hex" {
@@ -11403,6 +11591,7 @@ package "hex" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="384c1bbd95977b86ee18558d79467435989d77f392121a5985c08734bca06b8c"
     }
 }
 package "akane" {
@@ -11419,6 +11608,7 @@ package "akane" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="629d279af25dd16c22b17a646883dc204d69354dea6e81f28dca799e143e857a"
     }
 }
 package "anime" {
@@ -11435,6 +11625,7 @@ package "anime" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ae9eae2b495105ec7977a06edbd45bc7e333fe3d94a2afc1c1e718a722d104b0"
     }
 }
 package "badgemaker" {
@@ -11451,6 +11642,7 @@ package "badgemaker" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e407c5f35e6460f9c4ff20fde74a0412f2c76672055d292cbe1ebbfb7da8d22e"
     }
 }
 package "highlightjs" {
@@ -11467,6 +11659,7 @@ package "highlightjs" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e23ec2588982befa7d2d1f7aea18824e7105611de9360270f60cdbde77084d08"
     }
 }
 package "nimage" {
@@ -11483,6 +11676,7 @@ package "nimage" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ddce766bef8f2847d787bc218ae8f74559e009b0c39795ca9bdcbb2f93df520d"
     }
 }
 package "nodesnim" {
@@ -11499,6 +11693,7 @@ package "nodesnim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="15d445a851a570ee8539b172277581c2955d6c70bd24e9e767a7ff90aea284c3"
     }
 }
 package "saya" {
@@ -11515,6 +11710,7 @@ package "saya" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2fc42fb8ad57bc6e02ab4acd687ee280a3242bfedb3e978ac332c5ad19a40366"
     }
 }
 package "shizuka" {
@@ -11531,6 +11727,7 @@ package "shizuka" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4faf1b07a0d4d02a03dbc08f29e5cc16548ba48946e11ce74ee7725aa29ad382"
     }
 }
 package "tailwindcss" {
@@ -11547,6 +11744,7 @@ package "tailwindcss" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f12d5241c797e4f59a6a95dcfaaf85dac2ae626c02c5c6e42d18af152f66f1c1"
     }
 }
 package "dotenv" {
@@ -11563,6 +11761,7 @@ package "dotenv" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="beefdd9c3e00dd692905449159c779c7ac0c68840ef63b043a5ff92d55556eba"
     }
 }
 package "migrate" {
@@ -11579,6 +11778,7 @@ package "migrate" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3213b033b713134c5520cb9189d19dbe69ddc6a97e1f4ee0a6025c37eb4beeb0"
     }
 }
 package "pledge" {
@@ -11595,6 +11795,7 @@ package "pledge" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a9a7d60b66645580915df19d0104dff6df901f488cbc08da2f394ea4daafdeb5"
     }
 }
 package "progress" {
@@ -11611,6 +11812,7 @@ package "progress" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="280cabf87cf24badd84ed31769bc65d5823d8257dca6180a3a5c0d819592abdb"
     }
 }
 package "recaptcha" {
@@ -11627,6 +11829,7 @@ package "recaptcha" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8a6528b464025ba32902b0ea85adf93ed67cb4669ce96db128d349738281e452"
     }
 }
 package "semver" {
@@ -11643,6 +11846,7 @@ package "semver" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="47c8cc24b7de17e45d2af64c47e9cc30fd894de020384d6137e76be224da8967"
     }
 }
 package "serial" {
@@ -11659,6 +11863,7 @@ package "serial" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0165c6ebd05049cdf6f619719b3f64603148cc5a6f32209578796e8e757814bc"
     }
 }
 package "spdx_licenses" {
@@ -11675,6 +11880,7 @@ package "spdx_licenses" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ce98602ba7e1ba1bd2a6445a99fbf6ee043690ec4b952c3d6b7848e24dcfe4f9"
     }
 }
 package "sysrandom" {
@@ -11691,6 +11897,7 @@ package "sysrandom" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="28ff7544df7f7d1823ac9a5e1a844d46e4f9e004ca9ce823509e35faf272e090"
     }
 }
 package "tempdir" {
@@ -11707,6 +11914,7 @@ package "tempdir" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3a7795f2a31ebef08dd7d523e37bbfbbf3377a96cc08b14acfa37a66bb14a77f"
     }
 }
 package "monerorpc" {
@@ -11723,6 +11931,7 @@ package "monerorpc" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ebab83984fb6d5ad47d0cb87be9de048560e869f583bf09066ac956784be46de"
     }
 }
 package "natu" {
@@ -11739,6 +11948,7 @@ package "natu" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b1a2b0f30c42b8a574de4dedfe96b5f60e45a8d722836ca77f4c336bc00461aa"
     }
 }
 package "sunvox" {
@@ -11755,6 +11965,7 @@ package "sunvox" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ff94ae490b9abef222b9dff81954054fb6cc0199369d68ec6d404002e1b4d8ac"
     }
 }
 package "trick" {
@@ -11771,6 +11982,7 @@ package "trick" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2479114c9011d5a22bf1590cb6d9da3148569ab98ae825c772fa857237dda4a8"
     }
 }
 package "tram" {
@@ -11787,6 +11999,7 @@ package "tram" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c425da26dc0ba78f9a85a2e6e1d625782e2e917e4520310572f5133a942c7528"
     }
 }
 package "asyncpythonfile" {
@@ -11803,6 +12016,7 @@ package "asyncpythonfile" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1b15dfc44f5a1d9bfdc660f56963dae4b6316f86df36f9795941d81f907092fa"
     }
 }
 package "linenoise" {
@@ -11819,6 +12033,7 @@ package "linenoise" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3c35123f9e607173f8f4a7093b7909aed9f7482199135837848f5bc10d2230ff"
     }
 }
 package "options" {
@@ -11835,6 +12050,7 @@ package "options" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6d9cc4e118636fe61ad6e85a9eda22d2bcf4a4d5fe268786d883fb9da5374a33"
     }
 }
 package "sequester" {
@@ -11851,6 +12067,7 @@ package "sequester" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="44b2b0e6b4a94975f5bfaac364676feaed6be6e028844188ff2e9db66f5ff518"
     }
 }
 package "fastcomments" {
@@ -11867,6 +12084,7 @@ package "fastcomments" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-02T07:13:36Z"
+        bundle sha256="3e539d96dcaf166bbaad3ae56139b29bbb86d5d44a53d8fa94101917fa023d8e"
     }
 }
 package "LLVM" {
@@ -11883,6 +12101,7 @@ package "LLVM" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3510da1abe946eae203dfee0b609e503d64b9c253670bfaced881e981e1c1a3e"
     }
 }
 package "bencode" {
@@ -11899,6 +12118,7 @@ package "bencode" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="df0a96cf41e6bb7f0ae21f7f201822bdaa744a297445cad2e4167d9cf2555c46"
     }
 }
 package "circleci_client" {
@@ -11915,6 +12135,7 @@ package "circleci_client" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f5eb1e8ec488ed21616d5c38df725df8f9453c5f551aaf800f88e3f1d56a1145"
     }
 }
 package "dashing" {
@@ -11931,6 +12152,7 @@ package "dashing" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2fe67d881fba0440b3be72e65c5fbecb5e0d5bf215728caaf7b809188d253d33"
     }
 }
 package "etcd_client" {
@@ -11947,6 +12169,7 @@ package "etcd_client" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9b349c06d26828cdeba3c1f303c3c76c8516780251fe9305b968a3fb7ec4eab5"
     }
 }
 package "fswatch" {
@@ -11963,6 +12186,7 @@ package "fswatch" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="20fb1dc37a5e7846b84cccf27d4773dac67792b8fb0406c64b9583c80cdd9b6c"
     }
 }
 package "gnutls" {
@@ -11979,6 +12203,7 @@ package "gnutls" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a046139f877f2cd59fb40bf89d283d1ade07aa15ed4e771a81f91e8b51d359f2"
     }
 }
 package "httpauth" {
@@ -11995,6 +12220,7 @@ package "httpauth" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="11c328c1fa7ec0a6cbec249387ad44fb080b967764cd93eedb7acd62cf4306c3"
     }
 }
 package "i3ipc" {
@@ -12011,6 +12237,7 @@ package "i3ipc" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3874d53fda46bfba84bb226cbef38298f62c3b32c4ee3e4bb95f655236b2615b"
     }
 }
 package "libgcrypt" {
@@ -12027,6 +12254,7 @@ package "libgcrypt" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9d2285a26a29910f37aad3c196968691fd448abfe4a973307ac3fea4c4126216"
     }
 }
 package "libnotify" {
@@ -12043,6 +12271,7 @@ package "libnotify" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="320c52f33897bf456a7facae20489e44cbe54f5dfd3df1bcfd93bee85522542d"
     }
 }
 package "libsodium" {
@@ -12059,6 +12288,7 @@ package "libsodium" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f606414375c7ef72d395226de54d91fd249d9e935faf65a58d8c8996f8c4d01e"
     }
 }
 package "libu2f" {
@@ -12075,6 +12305,7 @@ package "libu2f" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="12a096cd514c18ffc4ef5504a020402d3359e284f8bd73db5d3d140a4ae06772"
     }
 }
 package "lmdb" {
@@ -12091,6 +12322,7 @@ package "lmdb" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1acbad3d5452fb8b7d7764ef4c5fefb755b588f62c2618cc60b4b185fc2fdb0c"
     }
 }
 package "mmgeoip" {
@@ -12107,6 +12339,7 @@ package "mmgeoip" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1ecd6cf577ab219aaa1d899929a966775e69548b00442b5841b73d66850aa475"
     }
 }
 package "morelogging" {
@@ -12123,6 +12356,7 @@ package "morelogging" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8c6f4ec67dc556c5c6eec768ce9d7285155da2cb8b83a8fe9b6c8387faa4e1fd"
     }
 }
 package "nimfmt" {
@@ -12139,6 +12373,7 @@ package "nimfmt" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8ba5c9095e964c237b98d433d924b5f4f66598af5a69fa8ec9e29f2de61adf66"
     }
 }
 package "nimi3status" {
@@ -12155,6 +12390,7 @@ package "nimi3status" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="15c00c6ba675c71b57ae33b0bafa692481b32f07a593e23bc1c3d1dd130015b3"
     }
 }
 package "pop3" {
@@ -12171,6 +12407,7 @@ package "pop3" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="14a210f96879b2d8e9d5254da24c94a2d0214a16c46cf097288794bd4a70552d"
     }
 }
 package "sdnotify" {
@@ -12187,6 +12424,7 @@ package "sdnotify" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ff4d70ce2a54b3118983cc1aa6d0cbba67cf9fa206c0d68ec745f87245df3b9f"
     }
 }
 package "seccomp" {
@@ -12203,6 +12441,7 @@ package "seccomp" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7c06ddd593b297956873989031af2f22681edb514913825c7427d81507e6c32b"
     }
 }
 package "socks5" {
@@ -12219,6 +12458,7 @@ package "socks5" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6ff304fdc877528a820d21c65b3fb3cb1928813a47daf29c57ff86c59905175c"
     }
 }
 package "statsd_client" {
@@ -12235,6 +12475,7 @@ package "statsd_client" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c8330a3e01b6f69695dfda92be1b439e461ef4189828e5a780a4e254831c9fe1"
     }
 }
 package "syslog" {
@@ -12251,6 +12492,7 @@ package "syslog" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d8b36b5a3dd31140e5732c965351b87838776596a3b29b4685ce228ea89b3cf0"
     }
 }
 package "testrunner" {
@@ -12267,6 +12509,7 @@ package "testrunner" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="182c93a8a3b1365138f3457b94af38eae44ecdd072e5775dee7f37f7c22537df"
     }
 }
 package "tor" {
@@ -12283,6 +12526,7 @@ package "tor" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="51f0f43ffae3c8e92bfb77b6016a686eb4e592df30bab6afeaa12dec99ca18cb"
     }
 }
 package "tsundoku" {
@@ -12299,6 +12543,7 @@ package "tsundoku" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f2b793a8eeea5f769f7bc4f28128423d4a5c24f092f23fc294376fb17f5a74f3"
     }
 }
 package "nimchromepath" {
@@ -12315,6 +12560,7 @@ package "nimchromepath" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="921b8bce71c316c56f594d6b653abd43b283dcb1f9e033fbd1a8f9d4563fe5be"
     }
 }
 package "commandeer" {
@@ -12331,6 +12577,7 @@ package "commandeer" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e6eb49ca6a5e46d775afd253bb7930ccc25267170fd711fce01733d9cc9105c2"
     }
 }
 package "moustachu" {
@@ -12347,6 +12594,7 @@ package "moustachu" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="013bff0d23c820855fa64355b5db23d1005075ab8f449a75076c7603800edb9f"
     }
 }
 package "ada" {
@@ -12363,6 +12611,7 @@ package "ada" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="dc7d4b7e5fc4ff010afdbc2c8fc831a712040dcd705d19c8e7d4cc1a4c6f7dd4"
     }
 }
 package "bali" {
@@ -12379,6 +12628,7 @@ package "bali" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9a4dc4a830522fe6160328b46cfe9baa6538806b86d94706c49aef15c71e132d"
     }
 }
 package "ferrite" {
@@ -12395,6 +12645,7 @@ package "ferrite" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-07T07:30:14Z"
+        bundle sha256="8e866eefa0867077fce0cf7eb55f49b850cc8c8f08591a88a79b0a3a8b884bf8"
     }
     version "0.0.0+commit-4c63e9c" {
         content_hash "sha256:fc941227fde83b18c24b6edc263d7bcb865ca5512c4abec6a807bb77bb97e461"
@@ -12407,6 +12658,7 @@ package "ferrite" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="820c63b7a093146dd9e0f4fb0ef3d33ea0cba5d95e746b98bd46e10cccb6b03f"
     }
 }
 package "ferusgfx" {
@@ -12423,6 +12675,7 @@ package "ferusgfx" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="568a97c17574b1864a96db17db92cf7e23a6482f3d7d6bdbcfd0d6eb35fdfb61"
     }
 }
 package "icu4nim" {
@@ -12439,6 +12692,7 @@ package "icu4nim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c2b98b343e0e1281f5e5e796bb11be4c4801b676620812b0e2a151238112c21d"
     }
 }
 package "mirage" {
@@ -12455,6 +12709,7 @@ package "mirage" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e27fac795c6126e725095a7885b105cef43da067545bd022428c8479b9966505"
     }
 }
 package "shakar" {
@@ -12471,6 +12726,7 @@ package "shakar" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="32508dbeef6eadf7ce860198658d0e44b3d4b525766a8ac3f475ae52b9b3a5bd"
     }
 }
 package "simdutf" {
@@ -12487,6 +12743,7 @@ package "simdutf" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="faf69adadcfd0a48b6d76a41dcd9f9c0545df852533f572e9f85d080f811df90"
     }
 }
 package "stylus" {
@@ -12503,6 +12760,7 @@ package "stylus" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-30T07:24:44Z"
+        bundle sha256="8899a97b8ac41c06af87797f33e1dc03f4939e30907fb8e3bcb113e799ed5c6d"
     }
     version "0.1.4" {
         content_hash "dag-sha256:485adb9ed86ec822827e5ed205cf5cd096fe91d8a2cd4603af0a8b019409151a"
@@ -12515,6 +12773,7 @@ package "stylus" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-07T07:30:14Z"
+        bundle sha256="115d0ef7c408fad50923974bed5f04c223fc9cf7b9569b1e9994e2a53697e7d3"
     }
     version "0.1.3" {
         content_hash "sha256:16e64e8364a0a550f8c94e9e49db1546cd46742b71e08fcd6542d50d2ce7450a"
@@ -12527,6 +12786,7 @@ package "stylus" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6bc3014f4a68f2773c06bcee581b5355f125a63cc477dd98bbfa232c6d2d1b4a"
     }
 }
 package "nimqml" {
@@ -12543,6 +12803,7 @@ package "nimqml" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7a32b55247ac457cba68f6a95288f4c4187d2af11cfe2bf601d49c291f4d2310"
     }
 }
 package "DotNimRemoting" {
@@ -12559,6 +12820,7 @@ package "DotNimRemoting" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-03T07:10:41Z"
+        bundle sha256="05f7c6c680ab4b05ff153445dfa3e9fa2ae5241732975b1313da751789064d6a"
     }
     version "0.9.6" {
         content_hash "dag-sha256:bcaadfcc8e9b22b74f550f57201beb5aa63846f0ddfdf5565f0dc4c10b190e53"
@@ -12571,6 +12833,7 @@ package "DotNimRemoting" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-10T07:36:26Z"
+        bundle sha256="94e4335921df978d4e50bc1bbf42795c9d777402902e2143d4dfb643265277b0"
     }
     version "0.9.5" {
         content_hash "sha256:025663eebe131fed130b29fad6904511bf1114ff4bafa50b11437f4d558002d2"
@@ -12583,6 +12846,7 @@ package "DotNimRemoting" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="046bb94b24d13d0dcf01afd3727d224ff527b304cba69260da0267957cca4e32"
     }
 }
 package "bbcodim" {
@@ -12599,6 +12863,7 @@ package "bbcodim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8a724f04657c09deeda7e9681ac08a2018befcee8a645f1bc52e95c785ea1c18"
     }
 }
 package "dhash" {
@@ -12615,6 +12880,7 @@ package "dhash" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3cb98a0dd8a3b58976b7e1f67d0554922855353f1659532b6a0fab3612399eea"
     }
 }
 package "nimbooru" {
@@ -12631,6 +12897,7 @@ package "nimbooru" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="676fd7a52709d2d1d64baabed342d71f771c870d3cdc3af354bcec60180fef98"
     }
 }
 package "saucenao-nim" {
@@ -12647,6 +12914,7 @@ package "saucenao-nim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2d48e9f30eb9de937b8cda9b5ca2a207052f6b7ac5d940eeb3b94b75a374a7f5"
     }
 }
 package "jsonfmt" {
@@ -12663,6 +12931,7 @@ package "jsonfmt" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="31c70c12f924da6d7bfe71ff863b6dceb363144df6759a532ce3e1449ee9a357"
     }
 }
 package "nre" {
@@ -12679,6 +12948,7 @@ package "nre" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="24fb37760f84afe0a73a5043bf1f3534f22fa8331da136e4e0cd6091a3a6037c"
     }
 }
 package "optional_t" {
@@ -12695,6 +12965,7 @@ package "optional_t" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b95f43278ff002b12b78aaafd6f18ba1045e25d2b8d120f145c0c9f170b7bbc8"
     }
 }
 package "metar" {
@@ -12711,6 +12982,7 @@ package "metar" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="cb5c0a1ccf53d6133a8798e659030bb2c39c37eb8fbc56c334f20de28f8a32a0"
     }
 }
 package "nimlist" {
@@ -12727,6 +12999,7 @@ package "nimlist" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2c6f3d0f40e24b461ba972441321bb011465a1de5b8517b1c1e86965d37914ec"
     }
 }
 package "statictea" {
@@ -12743,6 +13016,7 @@ package "statictea" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2424b916ec5cfb4a894baede08f3ca69f78009e368f6054d52028269b040c27c"
     }
 }
 package "stfrunner" {
@@ -12759,6 +13033,7 @@ package "stfrunner" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c6079756ea2eb281974362b8171e6ddfabb9175006192102648877a712377f40"
     }
 }
 package "utf8tests" {
@@ -12775,6 +13050,7 @@ package "utf8tests" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3b16bf5bc99ae738deb29e43d84111d42870d962856f7d977693724a6703241b"
     }
 }
 package "sokol" {
@@ -12791,6 +13067,7 @@ package "sokol" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="478986ce1b198cf662db3c3b6e9c9d9b4e28d59429de6e8224304175c4bdb68d"
     }
 }
 package "feta" {
@@ -12807,6 +13084,7 @@ package "feta" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="39c1eca7082bf67df4066b85eb60964a2b20e19c8cc73df37c340ad3e34f902d"
     }
 }
 package "emerald" {
@@ -12823,6 +13101,7 @@ package "emerald" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="11a738509b858b9515945f89dddb61513aa406f083ac6f08dbc3cebf324ff97b"
     }
 }
 package "yaml" {
@@ -12839,6 +13118,7 @@ package "yaml" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b74d3dc51b7f831cf9fce9d091dacf132a9277f69689a9953e230af0690b48f5"
     }
 }
 package "foliant" {
@@ -12855,6 +13135,7 @@ package "foliant" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4315db976b7c6327b270c9f36ed6251467509936cef1754eb758be63b1022f2a"
     }
 }
 package "libsha" {
@@ -12871,6 +13152,7 @@ package "libsha" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c58e4a1e0ca81dc9c557bef65b9663e2e6e1a6b00014777b3b5253695f42f027"
     }
 }
 package "allegro5" {
@@ -12887,6 +13169,7 @@ package "allegro5" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2b7d6ee3cf40bd123c26ef9ea535e5de941ce204fa5ba0daf81662dff0d61246"
     }
 }
 package "chipmunk6" {
@@ -12903,6 +13186,7 @@ package "chipmunk6" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b339dedffe190cdceea3dc986a443b336522ea5804a456a9bfbc80b28a53a41b"
     }
 }
 package "enet" {
@@ -12919,6 +13203,7 @@ package "enet" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="620c27cee33c70c5fff519589fd4a4bf63e1770e6e132d56d57ab3b4dc841ee1"
     }
 }
 package "fowltek" {
@@ -12935,6 +13220,7 @@ package "fowltek" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1ac39847c37a2dfea53e79301db62b147b5c409bd4b7290595e902620b008820"
     }
 }
 package "glossolalia" {
@@ -12951,6 +13237,7 @@ package "glossolalia" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6ea031a906e5c8de40777ba96dfa496663f7aef3fa136a5a0a1b0447639801ec"
     }
 }
 package "horde3d" {
@@ -12967,6 +13254,7 @@ package "horde3d" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d7a242e0082389931c848023b70f224cd6d823553b8287f2b41e258217ab762c"
     }
 }
 package "nake" {
@@ -12983,6 +13271,7 @@ package "nake" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0bdbc7614da3b9340cc9b77e318d551f451ca2d3d39d00531638569cb1b784c8"
     }
 }
 package "physfs" {
@@ -12999,6 +13288,7 @@ package "physfs" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1513a32d45acbc32d8ffc105fd8676d85bff255ca826b42ae465bbc81d4c3ce6"
     }
 }
 package "sfml" {
@@ -13015,6 +13305,7 @@ package "sfml" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4bd2051295b1ca679bb4ab29588a43268f6a2c971a88bfd274b5089342a02b11"
     }
 }
 package "signals" {
@@ -13031,6 +13322,7 @@ package "signals" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="06ad321ae202da39995de286d6a1c3fd24dca3c451cc56fa3247f29a70c78471"
     }
 }
 package "termbox" {
@@ -13047,6 +13339,7 @@ package "termbox" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0c1e520188373c55d83ff1e68ca3e4e06bed69ffdf74f621060a7e229b54f5c1"
     }
 }
 package "async_postgres" {
@@ -13063,6 +13356,7 @@ package "async_postgres" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-07T07:30:14Z"
+        bundle sha256="8caa2d8c007494bf245dcd5a23001280b2fcde653eef5a5e620ec26a37c7eef6"
     }
     version "0.2.0" {
         content_hash "sha256:0abed7b8c11a3414295f07d5f27bc6094303325b6627026e68a46268c5b05408"
@@ -13075,6 +13369,7 @@ package "async_postgres" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="57408cdf8e0c6bebf5f4f9499d9bc2c612fe08b535c0ef30909e604998c7a388"
     }
 }
 package "celina" {
@@ -13091,6 +13386,7 @@ package "celina" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-30T03:37:48Z"
+        bundle sha256="692fc2e2dd50b2d4c98f2cd6470e14acf0b07201999ddee251fc5f0b82f97c13"
     }
     version "0.11.0" {
         content_hash "sha256:6e921d2447c538818d0c2456a157cbfd44e69460878253e202ee4a5525898052"
@@ -13103,6 +13399,7 @@ package "celina" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="fbc81d721ba882e05dce33c33e47ce4253199aee18edd7ce4109b09a4485ad78"
     }
 }
 package "chronos_dnsc" {
@@ -13119,6 +13416,7 @@ package "chronos_dnsc" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8774de348b89730fa9a79718de58f6d8237eab8decd07d5b3a4abd44c5f41b77"
     }
 }
 package "chronos_file" {
@@ -13135,6 +13433,7 @@ package "chronos_file" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-30T03:37:48Z"
+        bundle sha256="8d9f759e8c307cfaef9c6392f87ac29f734d111bcfaff80d92b68bf37dedf0ae"
     }
 }
 package "chronos_smtp" {
@@ -13151,6 +13450,7 @@ package "chronos_smtp" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="dfb9eddf54003450c2df1e9585a780ea874eee1e479cce35e7942dbb718e033d"
     }
 }
 package "editorconfig" {
@@ -13167,6 +13467,7 @@ package "editorconfig" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="bc3336cfc9424b2c59536e93586098714d0c6453ac712e04b03476ed4c0bd00f"
     }
 }
 package "ghostscript" {
@@ -13183,6 +13484,7 @@ package "ghostscript" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="48402e24453fe879303e643328a2522c55f70778e1f76d8a9bdf0ffd0159821a"
     }
 }
 package "iori" {
@@ -13199,6 +13501,7 @@ package "iori" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-30T03:37:48Z"
+        bundle sha256="25ae653e5bc58a01c0ed1c7a37556bbe07e973e9ff6f4ae20f7da3ca512c50d0"
     }
     version "0.0.0+commit-69b5712" {
         content_hash "sha256:a8caeceacc65d7b3d4a8deafa33d933e0fd00e8154e683439b48620371469b02"
@@ -13211,6 +13514,7 @@ package "iori" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9aadb2f4f09d6197e6d4db494b4e59250b327742950e3103fc6b6b7a89053387"
     }
 }
 package "lasm" {
@@ -13227,6 +13531,7 @@ package "lasm" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-10T07:36:26Z"
+        bundle sha256="7897293a71e900211bb7b06390ea7de82cf3650d2618026aa4befec43e6e08ca"
     }
     version "0.0.0+commit-149b53a" {
         content_hash "sha256:d51cfa4fffbd0ba5efbf31b0c9c51e1a072ccf1b14b55a52beab80c8bb1f3113"
@@ -13239,6 +13544,7 @@ package "lasm" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ce305d8a23b3fcc98f879c61644e7b2ebed60bab045e6b80f9f7215178eb0e37"
     }
 }
 package "moe" {
@@ -13255,6 +13561,7 @@ package "moe" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d16c72108b02cead1b5ed29fd88785ac43b4cef7994f0ecd1e872c0fbc12b8a0"
     }
 }
 package "nicoru" {
@@ -13271,6 +13578,7 @@ package "nicoru" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e00433b9e73a41df34f4b54dd45e04975aed627b076223d3c39043d025ad7901"
     }
 }
 package "podofo" {
@@ -13287,6 +13595,7 @@ package "podofo" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c7e2a7d138100a13d53eaf4fefda48b339bdcfbaf3a87407a0435ac40edb7486"
     }
 }
 package "qpdf" {
@@ -13303,6 +13612,7 @@ package "qpdf" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="cbcf89d3aff02988df0ea68d6de5119a2a70310f81b93baf18e725e464ebc764"
     }
 }
 package "reni" {
@@ -13319,6 +13629,7 @@ package "reni" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1e0332c3c2ed07797d1b53b77d98c9427b6a2393ba3caad29551227e0b04f049"
     }
 }
 package "textmate" {
@@ -13335,6 +13646,7 @@ package "textmate" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1d095aabd60a9b4d49eebae2bc9a6bce6d5dfca4891d128aa6ae7176f50e089a"
     }
 }
 package "xerces" {
@@ -13351,6 +13663,7 @@ package "xerces" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9e1206bb414914e06ae42dd441315257f2ffcc42c8e6150b57d41b84cac1b071"
     }
 }
 package "mersal" {
@@ -13367,6 +13680,7 @@ package "mersal" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="03bb32694f7abfc618d8140562f27ac29c6f62b94fe73fba1de413f6dd82475c"
     }
 }
 package "openurl" {
@@ -13383,6 +13697,7 @@ package "openurl" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="11f6480b6bdad75ecb9c9de32595cf44b861b618fa07f71f5eb2bf92a79d0210"
     }
 }
 package "pwnedpass" {
@@ -13399,6 +13714,7 @@ package "pwnedpass" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="354b733187c7fe20e6358596085d74a949493a4fdf41b3440c39e64659e1359a"
     }
 }
 package "torch" {
@@ -13415,6 +13731,7 @@ package "torch" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="fe479a9ccc0e21d99aaa813c566da9218670bfdc691d4cc37f81a4536407570d"
     }
 }
 package "frag" {
@@ -13431,6 +13748,7 @@ package "frag" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ce6f583c1b4f6728dd02de345d330e029b0e87ea9287a5bdfb55cd274a56a365"
     }
 }
 package "importc_helpers" {
@@ -13447,6 +13765,7 @@ package "importc_helpers" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e5307ccbe1cc0ec543c0e21f14c6a47203f06097dea164427629e787817eba99"
     }
 }
 package "integers" {
@@ -13463,6 +13782,7 @@ package "integers" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4e109d1565dabe031d73298c1089e8c3e47ceeed9de39f38c6c4ca854897095b"
     }
 }
 package "strides" {
@@ -13479,6 +13799,7 @@ package "strides" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7dd233507e0109dec6eae2c4c0548ed22b04a99f285d16fa586e5ec02004a2ce"
     }
 }
 package "gifenc" {
@@ -13495,6 +13816,7 @@ package "gifenc" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6b542c57f8d3e7d5b291dcc66429b29dbd1c6a4ad55347f9670cf22483b75ae4"
     }
 }
 package "nico" {
@@ -13511,6 +13833,7 @@ package "nico" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c90799e7d698d6ec618c2942e249db2768b795a87494c07ccfeb934427e497dc"
     }
 }
 package "webaudio" {
@@ -13527,6 +13850,7 @@ package "webaudio" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="00c6dc3f3a10d802b7d65aad560e8e870a248fc0c1d2fe5e8145561341712e1b"
     }
 }
 package "lsblk" {
@@ -13543,6 +13867,7 @@ package "lsblk" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d6a09287ab93c46a68bac29d0da40a933e0dbcac6961827ba51b6962a321c1af"
     }
 }
 package "nimsutils" {
@@ -13559,6 +13884,7 @@ package "nimsutils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e8d0e25644ea5717236471caea04c815d9069dec8be387a3a4cf230c96eb081d"
     }
 }
 package "sudo" {
@@ -13575,6 +13901,7 @@ package "sudo" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8900e78f8af107e37983f401929b4e862459802e544589d9adf35be62c4f6077"
     }
 }
 package "sweet" {
@@ -13591,6 +13918,7 @@ package "sweet" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7c0bfaf597ac75c2cab7547de5346616c8637c3637cab989f3a7aea95726bd7d"
     }
 }
 package "dimslash" {
@@ -13607,6 +13935,7 @@ package "dimslash" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e5f5af30daac379149289ca154597d58414e631468bda728e6724e8225e374aa"
     }
 }
 package "deser" {
@@ -13623,6 +13952,7 @@ package "deser" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8f1db4ea156c33b873e181c2bd10f0b09f5129290ee2c802c1ee5e0b87646686"
     }
 }
 package "deser_json" {
@@ -13639,6 +13969,7 @@ package "deser_json" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c121cbb980582f949343ae895b33431ef51504ef657d99d019ecf4338c87ebaa"
     }
 }
 package "sam_protocol" {
@@ -13655,6 +13986,7 @@ package "sam_protocol" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ddcdac4cce19a78fdfec898a4197ba341b057da42d67332a7f2133ded13997fd"
     }
 }
 package "drawim" {
@@ -13671,6 +14003,7 @@ package "drawim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d3469a858094a5144374c3d7e3d68c44010457ec22b866516a9954c0a013aa87"
     }
 }
 package "minecraft_server_status" {
@@ -13687,6 +14020,7 @@ package "minecraft_server_status" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="859a282c49a940e33cae839e52386605fd74665546c9c99e1e06f3ef61468390"
     }
 }
 package "Runned" {
@@ -13703,6 +14037,7 @@ package "Runned" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a895d12213e6403deb45267830c216e14cb3fe07a1faa62dcb6e95d222c1af89"
     }
 }
 package "lis3dhtr" {
@@ -13719,6 +14054,7 @@ package "lis3dhtr" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9296cd3ee6f3af96b1ec085ddb97d82811c1b9c619a9f7dc9271b820d4ef1cd9"
     }
 }
 package "steadytensor" {
@@ -13735,6 +14071,7 @@ package "steadytensor" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3ddb285921381d46531fabf6217ca580e1a76a3c748699148ae6895095b82609"
     }
 }
 package "gene" {
@@ -13751,6 +14088,7 @@ package "gene" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6f659d33480fa248cc918f72b883bb200f1d1dee64c337dcf1572c2fda997a73"
     }
     version "0.0.0+commit-e224047" {
         content_hash "dag-sha256:7ec41acc10824ac6199a8a7db7ba693b4c952b3dec0aa5577d88727fca5710ea"
@@ -13763,6 +14101,7 @@ package "gene" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-12T06:57:14Z"
+        bundle sha256="33ddba237c95900617907b45c9f3804287e68517e24892ddf511b4f2639a5793"
     }
 }
 package "businessdays" {
@@ -13779,6 +14118,7 @@ package "businessdays" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d80c3d0851910430fb62cb6653a7eab980acbf5e5677eb2a1dd82c4d977857ee"
     }
 }
 package "easter" {
@@ -13795,6 +14135,7 @@ package "easter" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5135ab1ef1ab422716f48775bd85806d7c5180870131d5659ff3565f89643813"
     }
 }
 package "nimutils" {
@@ -13811,6 +14152,7 @@ package "nimutils" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a973c5954b8854676083f69c347327c5e3cabe93810acf688cd3e947da097e6f"
     }
 }
 package "nudates" {
@@ -13827,6 +14169,7 @@ package "nudates" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f1f2ad026a0183278e43295ea94d8ffcb5e62469bccb4e629e84ab51aa22b795"
     }
 }
 package "cmake" {
@@ -13843,6 +14186,7 @@ package "cmake" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="30d441c8264004fa4faa8a7c0b9afa70ef03c0594f91d4039cbc04e5003562be"
     }
 }
 package "libsvm" {
@@ -13859,6 +14203,7 @@ package "libsvm" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e9f7a5712e4117890a9c87e42412b9618202b7218636eb4a3c330cc2d99b1372"
     }
 }
 package "nim7z" {
@@ -13875,6 +14220,7 @@ package "nim7z" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="73f7d28421d41e063cabbe6067772386440cf83efb51da38d23d354ca76c3bf5"
     }
 }
 package "nimarchive" {
@@ -13891,6 +14237,7 @@ package "nimarchive" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8a0d05944cc1d74103d5e932564a4b244a440e41cc0c5b6f0d3761a49f70db3f"
     }
 }
 package "nimbass" {
@@ -13907,6 +14254,7 @@ package "nimbass" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="be1b292b8823deddcf4b65b88c495b7397ba64a1d5d6a7d47c391a30983cb494"
     }
 }
 package "nimbigwig" {
@@ -13923,6 +14271,7 @@ package "nimbigwig" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="fd2e721f64fd51d510a319bed5a35d91524870b31e3deb33907f8d6a96574894"
     }
 }
 package "nimclipboard" {
@@ -13939,6 +14288,7 @@ package "nimclipboard" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="350f7d4dd8836d4b6e38cf7f8661b94cd4b68cc426f6f9606664f1694ff45fb8"
     }
 }
 package "nimdeps" {
@@ -13955,6 +14305,7 @@ package "nimdeps" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b02cd6df2ef56818e5cdb68fc98dbcc1f875b7c81990827d7a4f162b4da564bc"
     }
 }
 package "nimfastText" {
@@ -13971,6 +14322,7 @@ package "nimfastText" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5ad00074029a938e5f0b34cfa64491aa50329aef6ef290c982b91efdb5e049f9"
     }
 }
 package "nimfuzzy" {
@@ -13987,6 +14339,7 @@ package "nimfuzzy" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="be85cd141cf5ac0a92157a6aacdb2687ec896527b4b4a795d2defc2d1ef71346"
     }
 }
 package "nimgen" {
@@ -14003,6 +14356,7 @@ package "nimgen" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="322b191ebf5fd871f5762b415f8232bd0af98fc9abda38e3193b95074573e600"
     }
 }
 package "nimgit2" {
@@ -14019,6 +14373,7 @@ package "nimgit2" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a3e9c3902f26c695d81533e1d481f4f92c42eec35d20d3934804c52f4f9164cb"
     }
 }
 package "nimgraphql" {
@@ -14035,6 +14390,7 @@ package "nimgraphql" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5ce0cf35cd826810948cd3e36680f2b3ae3cfc980ab41179fd2639db34396802"
     }
 }
 package "nimkerberos" {
@@ -14051,6 +14407,7 @@ package "nimkerberos" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e9f4043476e05d41eda9d0b67e9923ae8c7623069546aa778f6bca2c7e952377"
     }
 }
 package "nimmonocypher" {
@@ -14067,6 +14424,7 @@ package "nimmonocypher" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a7aa025625059866e86f73b3878c80303642e6a54b768820a2e2ae2d1010b1d5"
     }
 }
 package "nimpcre" {
@@ -14083,6 +14441,7 @@ package "nimpcre" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9081d464d8ac000965906863040f7cb1cef93e68dde48f7cfb0cc0c25ed8bce8"
     }
 }
 package "nimrax" {
@@ -14099,6 +14458,7 @@ package "nimrax" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6d402708c5e03c9ace90847ea090a1ba44151167cdc2d5f2c796bc0d552f8035"
     }
 }
 package "nimssh2" {
@@ -14115,6 +14475,7 @@ package "nimssh2" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c0039f16abf70f39604953d5d0d3fd726fc41f8c8d3fed56d5b6933a3aae9915"
     }
 }
 package "nimssl" {
@@ -14131,6 +14492,7 @@ package "nimssl" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="bd4fdae89f18f21ef85eceac5e9356a19d1bf1c529c1549084c84e681b48cfaa"
     }
 }
 package "nimterop" {
@@ -14147,6 +14509,7 @@ package "nimterop" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="164f48a86f701e5a294c37ee58b7ba05e43adac7bf4a7bf9c46f1a1a02a65828"
     }
 }
 package "nimtess2" {
@@ -14163,6 +14526,7 @@ package "nimtess2" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3f416aa5da569e9ee5f57eb94c0092c359a6888e59d19ba9657cd8b5005075cf"
     }
 }
 package "nimzbar" {
@@ -14179,6 +14543,7 @@ package "nimzbar" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4903913ada3f680de053480ea8b169844becd6841c2af30dd9deb666a8095d10"
     }
 }
 package "plugins" {
@@ -14195,6 +14560,7 @@ package "plugins" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="084d6d9e4dc96ba706dcf655668c14eae40b9b55582befebda590a61a70f12b6"
     }
 }
 package "shared" {
@@ -14211,6 +14577,7 @@ package "shared" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ed53e7bd2c7400d68bc7ba5b14491a97af513e4a284b10ae47bde914cc38a357"
     }
 }
 package "snip" {
@@ -14227,6 +14594,7 @@ package "snip" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="41e9ec1ea893248c79fd03c311b1112b2ac052440b94c56e94b56d45713aef6f"
     }
 }
 package "tissue" {
@@ -14243,6 +14611,7 @@ package "tissue" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="cf9e8dc29c49e84b487914a79453bfc1d891836653bd0910deabfe955a70931a"
     }
 }
 package "testdiff" {
@@ -14259,6 +14628,7 @@ package "testdiff" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="36646bd53918df1d6c3364f70351933a3ff0b832cb541d921338d10da0238353"
     }
 }
 package "wren" {
@@ -14275,6 +14645,7 @@ package "wren" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e34768b76adb00ba462cb8552cfa80da55c365084df7a041b6ed0d8bd7bdd447"
     }
 }
 package "textformats" {
@@ -14291,6 +14662,7 @@ package "textformats" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="bd39b986585d317950446d53fe51f8c4860fdc91ecaa60a87a129597da65d8cf"
     }
 }
 package "oolib" {
@@ -14307,6 +14679,7 @@ package "oolib" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a2fffcbe876580abbc1430e7350d86f62972b82e57ed0a9e79a5081c306a2922"
     }
 }
 package "ecslib" {
@@ -14323,6 +14696,7 @@ package "ecslib" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3efe90c14848914106f664ce4fdd38120d0e31a1da24110b1de8e61b7c750f33"
     }
 }
 package "seiryu" {
@@ -14339,6 +14713,7 @@ package "seiryu" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f0d3884b5a614368951b8479d6cd226b605b058772c2139047fe7fec3f4db759"
     }
 }
 package "spellua" {
@@ -14355,6 +14730,7 @@ package "spellua" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="df1f9541a37cf1028e1c05d1592be4733242b6eb77e50f24ecb8b6e2c5a2596d"
     }
 }
 package "nsh" {
@@ -14371,6 +14747,7 @@ package "nsh" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7c396f2fccd1d3eb8dabf4f7691b7444489e14363c40fc4707b274e0b2457a36"
     }
 }
 package "replim" {
@@ -14387,6 +14764,7 @@ package "replim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="79a071c8b154f940ad4db4bbde22df9dc4f96ecbf76454011025e12cda3e107c"
     }
 }
 package "gdext" {
@@ -14403,6 +14781,7 @@ package "gdext" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="fa09f647db15389a2633c87c09a22f6f2e4ce341a04f81b1d0dbdb24275d610f"
     }
 }
 package "nimcp" {
@@ -14419,6 +14798,7 @@ package "nimcp" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b443cdf4400e58ffa2dbf2b1250faa90b925bbbe912a991854c3ad50221b1e73"
     }
 }
 package "norx" {
@@ -14435,6 +14815,7 @@ package "norx" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="22db87795b8a183a088284c0117334f63c417e21787c0aeb63a212af6bc1e580"
     }
 }
 package "sophia" {
@@ -14451,6 +14832,7 @@ package "sophia" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="f3d3f2f1bd88a9478c32cce79d6caca2ddb4137b0f494e838b4c62a9f2328451"
     }
 }
 package "spry" {
@@ -14467,6 +14849,7 @@ package "spry" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="50308ea867c283b6457fb40af5ee8f0770ec9ab2e81357ce3d1fff175895c30a"
     }
 }
 package "sprymicro" {
@@ -14483,6 +14866,7 @@ package "sprymicro" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="8636a373aece284fb34b4392aa9034d990f68f5302101353515cbd7824919c9f"
     }
 }
 package "spryvm" {
@@ -14499,6 +14883,7 @@ package "spryvm" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="39fef59e3488d1fcaa0c4537f29cebc9967ed89e11a9a13ee9442162e61c1035"
     }
 }
 package "littlefs" {
@@ -14515,6 +14900,7 @@ package "littlefs" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2c31aed720a805cb5db01b98ff2923a71dabf98812c7d4c66266016b1041a76f"
     }
 }
 package "nfind" {
@@ -14531,6 +14917,7 @@ package "nfind" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b5b4edd8240d3e9e778e79a9fb92cf86bc6eb353026bc93001d5429928ad7e7c"
     }
 }
 package "awk" {
@@ -14547,6 +14934,7 @@ package "awk" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7eb21118e92e253a045653ab1fc7db9189f261f85629af6c7d7ced1925f25be3"
     }
 }
 package "nimraylib_now" {
@@ -14563,6 +14951,7 @@ package "nimraylib_now" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0673047352ff6441c3ccbb38cd0964d9edd4e9f5d5b682f6889db85f88b2e09b"
     }
 }
 package "nimkdl" {
@@ -14579,6 +14968,7 @@ package "nimkdl" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="42f9c942353bf4bbb1254bda5aee18e894b65fc7d444347f0a8cecff03adf60b"
     }
 }
 package "nimf" {
@@ -14595,6 +14985,7 @@ package "nimf" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="690c940a4493be6508ea44980ed72d26adb12e2c06ff9cd1cda192ea0de95dee"
     }
 }
 package "nmostr" {
@@ -14611,6 +15002,7 @@ package "nmostr" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="22ea325c9d4dc14ea0ed7ed004f8688556249d8a526234bd9031c4afe2b8925f"
     }
 }
 package "Xors3D" {
@@ -14627,6 +15019,7 @@ package "Xors3D" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4ff8060f0d6158cc589fb3679acf0ba030bf8dea75d17727cf02f3c872e97796"
     }
 }
 package "autonim" {
@@ -14643,6 +15036,7 @@ package "autonim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c4271f109ee869cc66a9222c503c233e5ae1bacdb0ca1efe19a4ab4ecbc9266b"
     }
 }
 package "cliptomania" {
@@ -14659,6 +15053,7 @@ package "cliptomania" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="21bcc7ab909b09a197d2aa62c5ef473f567556618704483ad40329c95b71a505"
     }
 }
 package "conio" {
@@ -14675,6 +15070,7 @@ package "conio" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="91e2a11be44811b685c139eeff7ab93b8818e62e1d53f03fc620674a87f76c12"
     }
 }
 package "aossoa" {
@@ -14691,6 +15087,7 @@ package "aossoa" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9ea68a0b281b9db6a1421df6632bc28a5075f59f26fc4d2abea734cb25f6356a"
     }
 }
 package "formatstr" {
@@ -14707,6 +15104,7 @@ package "formatstr" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="07d9387853f3ec141da4c983034a8841d8df4ac6e8818d1c01fe0626efc5bf1f"
     }
 }
 package "polypbren" {
@@ -14723,6 +15121,7 @@ package "polypbren" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d96f7a12f5277e9ab7b9e3e9114b1849109666c35fd52905fb9dcd66d4ae7ef2"
     }
 }
 package "stackclosures" {
@@ -14739,6 +15138,7 @@ package "stackclosures" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="eb28f167664a3b3c39202fdd94f52ba7bc6ac1a1f26d9371d79c57e8d6118fa9"
     }
 }
 package "nimquery" {
@@ -14755,6 +15155,7 @@ package "nimquery" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5403ff19633834935339e9624f112cdfd4df25af4e7eceee3c2bc45253763fb9"
     }
 }
 package "samson" {
@@ -14771,6 +15172,7 @@ package "samson" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4e6a2aaed385a416ff3dc70fbf673faad3ad2a3604eacec5a51e7a56c4dcb5dd"
     }
 }
 package "systimes" {
@@ -14787,6 +15189,7 @@ package "systimes" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a8d6c984d483ce7edc79eac2504990f8c3d7cad1ae0ba73ee5557e79f9f7ba28"
     }
 }
 package "timezones" {
@@ -14803,6 +15206,7 @@ package "timezones" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4af9ab31a4f41dffb51fefff5941304a85f02ce047bf0e02e1a3a3a2e8c2c548"
     }
 }
 package "tiny_sqlite" {
@@ -14819,6 +15223,7 @@ package "tiny_sqlite" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="98c247c211f74697c261d1e533359f6ec32c54883b6838f811f4048b5b4c481c"
     }
 }
 package "bossy" {
@@ -14835,6 +15240,7 @@ package "bossy" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="bbabf4e7fe6cada2a22ff9996c08504744b231961f31b8fc1690a56f50d378b6"
     }
 }
 package "crunchy" {
@@ -14851,6 +15257,7 @@ package "crunchy" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="03d4d1c708e4a08a0a18a2725255fad2ec4f21749ab6e86a75d797cd67a411b4"
     }
 }
 package "curly" {
@@ -14867,6 +15274,7 @@ package "curly" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="488de2baaa7b15bf8e7375c5e071472326e26c8039c15ef954a98b0d358eae75"
     }
 }
 package "depot" {
@@ -14883,6 +15291,7 @@ package "depot" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5d7321e0c467a241fe10f99d95239d4aa361c9dfdcb2682ea0c08928aada7519"
     }
 }
 package "jwtea" {
@@ -14899,6 +15308,7 @@ package "jwtea" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="42cd257c6d44a6d7655b832a0a6aab8c738ab1f46a9a4e4c3478ae9ecc4ee43c"
     }
 }
 package "mummy" {
@@ -14915,6 +15325,7 @@ package "mummy" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b5b9a31dcd7ef140522d0360208678b5afb57e46ea7845ccc8d103a37ed963e7"
     }
 }
 package "nimsimd" {
@@ -14931,6 +15342,7 @@ package "nimsimd" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d927ad085c6198d0f0f2fbe2523f6d7c3c50f71e954c876f76168fed12111ccb"
     }
 }
 package "noisy" {
@@ -14947,6 +15359,7 @@ package "noisy" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7f28f3cf2b81da6b1cdf720b7284fe80771b9549a54cc981e409a09b8490c85e"
     }
 }
 package "ready" {
@@ -14963,6 +15376,7 @@ package "ready" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2fbee32e55d6968c1eed4468c9ec7249c59971b1bb0f21582218d588ef418926"
     }
 }
 package "respite" {
@@ -14979,6 +15393,7 @@ package "respite" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="4e2a3c9d7a1f6fc2dcc015f000b3695a9c1c362c51857a6d612b9f7488ae84f0"
     }
 }
 package "smelly" {
@@ -14995,6 +15410,7 @@ package "smelly" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="cf9e96031aa0a228c8667d6190dcf6194faad1433da715d8fb6aa9ef57695e6d"
     }
 }
 package "stb_truetype" {
@@ -15011,6 +15427,7 @@ package "stb_truetype" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a63d64696d288d2d66ced1912a09ee845122395adf85e7209dc0108bf2908463"
     }
 }
 package "sunny" {
@@ -15027,6 +15444,7 @@ package "sunny" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="808f7c741f7f9d26729b3d5110b53a6bfa5ae7adca887ec4bbcf0f9d053dafeb"
     }
 }
 package "supersnappy" {
@@ -15043,6 +15461,7 @@ package "supersnappy" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="552fbb7c74f19e1d7f6c5522077a7f08fefa677510318c8d6e4083be00d42e06"
     }
 }
 package "unicody" {
@@ -15059,6 +15478,7 @@ package "unicody" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6eaf5a9a68b9a245ddf79e2cd336f30f5a38528924dd6cb778b950a7b4d95533"
     }
 }
 package "waterpark" {
@@ -15075,6 +15495,7 @@ package "waterpark" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="da0fd257c7f1d3223d327a3bdb27973bc209ce1d879f58c501164b0e030b4fb1"
     }
 }
 package "whisky" {
@@ -15091,6 +15512,7 @@ package "whisky" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c0e2dadb28833e050606b1f26fe516125876a7eaeeca92cf13e8949664966d94"
     }
 }
 package "zippy" {
@@ -15107,6 +15529,7 @@ package "zippy" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b0383c9ef478df8407d82481aa10fa5cea7651842743b30340fafd3fe063563e"
     }
 }
 package "fae" {
@@ -15123,6 +15546,7 @@ package "fae" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6414d9e52ca1a6520ccf110c1e0f6edeb18d513a5d3182a8c767cdd5c6c30479"
     }
 }
 package "hastyscribe" {
@@ -15139,6 +15563,7 @@ package "hastyscribe" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="220f0be5f41c8453cf97246c0f71d674d89c6190645e904a9ff00636f93924c1"
     }
 }
 package "hastysite" {
@@ -15155,6 +15580,7 @@ package "hastysite" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6d1bfb3aa5dbe8adba638ad6fbd6144a7cfdf40ab0326b9e8145e1b78b3b3fc5"
     }
 }
 package "litestore" {
@@ -15171,6 +15597,7 @@ package "litestore" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1d6d816339c3e3bc11fe4c7101ea17d6c86a28d2512a6270d3104d86a8e07aa3"
     }
 }
 package "min" {
@@ -15187,6 +15614,7 @@ package "min" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-07T07:30:14Z"
+        bundle sha256="a31e00349947dc80875c52c425e4ddf6c1f2b432b750f9b85dcd805ecaf7178d"
     }
     version "0.47.1" {
         content_hash "sha256:ec2d57c07fe3d6d25ce5fd05fa84c33505869f6cb254f21549d4bb9d07234399"
@@ -15199,6 +15627,7 @@ package "min" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c6a4ef03c9a8bae5948686896dad9a87efc6accde71fe30e0b7d6545877d1571"
     }
 }
 package "minline" {
@@ -15215,6 +15644,7 @@ package "minline" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7219bbbc817e962e38f883e41c21376d8e4a61ff69091df12fc140d05c5b04f0"
     }
 }
 package "mn" {
@@ -15231,6 +15661,7 @@ package "mn" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="863dbf2dd63ee6aa665c02911f0ef668579f6510c00c80f0030d6669c1bae2bd"
     }
 }
 package "nifty" {
@@ -15247,6 +15678,7 @@ package "nifty" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ae0267db3caf9f555daf648505ce4d4a57c5c9ed82268d2b5077cd32c14a134b"
     }
 }
 package "nim_miniz" {
@@ -15263,6 +15695,7 @@ package "nim_miniz" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ca85605eb4da1749bfa176adb947d18d0da79790f769f7e58d56f00291b943e8"
     }
 }
 package "nimhttpd" {
@@ -15279,6 +15712,7 @@ package "nimhttpd" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="36216d442c61cb47c3ac7f47d6b9ef363b7faef5aca830413b0738a0562eda5f"
     }
 }
 package "pls" {
@@ -15295,6 +15729,7 @@ package "pls" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="06f047e06ecf88a67dcae61b2e3a8cd79f4e8d0801ae7929da09c05f69391f36"
     }
 }
 package "halonium" {
@@ -15311,6 +15746,7 @@ package "halonium" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="908e5e1b2ec706b87ef28942ee1b09b5ab4b7f70e2b633cc91573c47257e85ce"
     }
 }
 package "Remotery" {
@@ -15327,6 +15763,7 @@ package "Remotery" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="336745ac91334b54cc1ddfdf68d91214f2916544752edf3e0ad5444d8cb68ed0"
     }
 }
 package "SDF" {
@@ -15343,6 +15780,7 @@ package "SDF" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7062cf48dc2d7f9a8c3e46b1c8c5a879116a8688a0dc10d16545c08e70f155be"
     }
 }
 package "bgfx" {
@@ -15359,6 +15797,7 @@ package "bgfx" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0cb02ededbdcb123689e84aa816df305a5ca3c6d7c2152c6b2e889601939b0f6"
     }
 }
 package "cascade" {
@@ -15375,6 +15814,7 @@ package "cascade" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c44aea897e621bb492643189411944063ded8ddd54ffffaa555a953aad533401"
     }
 }
 package "fugitive" {
@@ -15391,6 +15831,7 @@ package "fugitive" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ebcd99ec6a55a1f331b9beaef16b881b7a6d7dde96b6c165404b618c7ae7c4ef"
     }
 }
 package "glob" {
@@ -15407,6 +15848,7 @@ package "glob" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3857d77727479039b2ee8c5f416fd25936f557a2c86a01969a725d858e362f09"
     }
 }
 package "asyncanything" {
@@ -15423,6 +15865,7 @@ package "asyncanything" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e0ac2bd335a32dc43db7b0f1b7ce36f82c1eb85355983a72eb78e5587de1503f"
     }
 }
 package "bale" {
@@ -15439,6 +15882,7 @@ package "bale" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="46084d99011a1234dffbe21056902f7f659140764086a3fab27be53438d63c6a"
     }
 }
 package "caster" {
@@ -15455,6 +15899,7 @@ package "caster" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="594e9d2eea2155a7471f8bd58e64671c58e0f3768885c532c6975f59c1f78c10"
     }
 }
 package "emath" {
@@ -15471,6 +15916,7 @@ package "emath" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="30effd19e4ab8f5cc3ba6e1ac15a713b6404fb912b79fecd94e4beff6dc19f99"
     }
 }
 package "fastpnm" {
@@ -15487,6 +15933,7 @@ package "fastpnm" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6ad4bf443d5e1f06692d3975dcbc8f079db80a6a5f4c07b8d91d13bca8250791"
     }
 }
 package "iterrr" {
@@ -15503,6 +15950,7 @@ package "iterrr" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c98e0d6e342cc9e1401b3d7ec1514bb2f5b17a8bbbc4884aa50a2e97bb422a7e"
     }
 }
 package "jalali_nim" {
@@ -15519,6 +15967,7 @@ package "jalali_nim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="53d1305243c6d7da8f71dbb6ae1beab1f1b6413189d97445883ec08bdafc0b5f"
     }
 }
 package "labeledtypes" {
@@ -15535,6 +15984,7 @@ package "labeledtypes" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="59d8a26a5757890526cf169df5646a222f4cc66f1ee890796aa0b6764728093a"
     }
 }
 package "macroplus" {
@@ -15551,6 +16001,7 @@ package "macroplus" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1ce198d8984cf0a3c5d723927f1dd57b6568d06423d75061f5dc4d9d00bc9a05"
     }
 }
 package "mycouch" {
@@ -15567,6 +16018,7 @@ package "mycouch" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="c043ffe61d91493c83190ec44d15e832562914ec887b969a9a9abd2036e00ff5"
     }
 }
 package "packedArgs" {
@@ -15583,6 +16035,7 @@ package "packedArgs" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1c0e45d11ed20e325766b71f30cf63b61dbc8d93d5c1da3bbe25986ea3c67751"
     }
 }
 package "sbttl" {
@@ -15599,6 +16052,7 @@ package "sbttl" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d048b0d16cf6e44718dc8e3af1160537dc1925b34ab507beac404f54b92e6595"
     }
 }
 package "uncomment" {
@@ -15615,6 +16069,7 @@ package "uncomment" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="45aefbc95954a68f6a5701303592bc4691f1e65bd25f21060f2a40f8eb01181e"
     }
 }
 package "watch_for_files" {
@@ -15631,6 +16086,7 @@ package "watch_for_files" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e8ff95510dcc8e9efe1ebfa563b675f9ea3f59ed1cc4986c223cd11370488200"
     }
 }
 package "naecs" {
@@ -15647,6 +16103,7 @@ package "naecs" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6996fe6a2be4823d836854091790cbf34e1894ae147a3f0409cd7cb9c8944a2e"
     }
 }
 package "buju" {
@@ -15663,6 +16120,7 @@ package "buju" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7b06355f378d9cb11a264c04727702f37c9eb2fa646bf00fb6cfa2d35faa098c"
     }
 }
 package "nimvault" {
@@ -15679,6 +16137,7 @@ package "nimvault" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-30T03:37:48Z"
+        bundle sha256="34ff70be4a89dbde5b29280b5ccbf6395efd01c18767af1b0142a58696045e8d"
     }
     version "0.3.0" {
         content_hash "sha256:edf3f3cf2252be6ebef46bc3156b749ad13bb9a74786718bd9058133a57c1117"
@@ -15691,6 +16150,7 @@ package "nimvault" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="1597ce511b6a5b6b2c4e85f05c4cacb6af6329c2cadb2cb70ed071f826a3734a"
     }
 }
 package "happyx" {
@@ -15707,6 +16167,7 @@ package "happyx" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="947f958c3528bbfdc9f4347ecc6fdce9746508512785a30f5b13c83b6144686e"
     }
 }
 package "happyx-native" {
@@ -15723,6 +16184,7 @@ package "happyx-native" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0da600e05634d4cb9eee6952ff9ffe594ce05b811bac7c608f8868a9f8552d49"
     }
 }
 package "happyx-ui" {
@@ -15739,6 +16201,7 @@ package "happyx-ui" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e94223b1393a9a7dde106edf7b34393b3587c11d1338445b069a42c8962ceabd"
     }
 }
 package "nmr" {
@@ -15755,6 +16218,7 @@ package "nmr" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7a6bb7a59da4c7b0aee809a9904d39bebfa4eee151a36cff917b8b81d9ea22d2"
     }
 }
 package "hasts" {
@@ -15771,6 +16235,7 @@ package "hasts" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="299c994723f8153bb15e605f9af71f32fa0645bbe24ded91b76b0208ff6bcd2f"
     }
 }
 package "hcparse" {
@@ -15787,6 +16252,7 @@ package "hcparse" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d90a812c2d417faf3f8f52079527988f77e6ef0128ba9edbaee5243fb641734c"
     }
 }
 package "hdrawing" {
@@ -15803,6 +16269,7 @@ package "hdrawing" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="60e8f978051085eda32d59de7ba190de036437f7c3fa744e5086055bdd54c4a3"
     }
 }
 package "hmisc" {
@@ -15819,6 +16286,7 @@ package "hmisc" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="d6af1b39517ddba33c3367b44346d1529adb18a45801e7a91ff486913364169b"
     }
 }
 package "hnimast" {
@@ -15835,6 +16303,7 @@ package "hnimast" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b27a954d11501e382264d13dd6c3f6c475ceb28d600679b1ed86d8de0fa1cfe2"
     }
 }
 package "hparse" {
@@ -15851,6 +16320,7 @@ package "hparse" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="292e875be1737b6bcda716cf17d9b380eaa776d78983e22bc6f19e1b5c0e44f3"
     }
 }
 package "hpprint" {
@@ -15867,6 +16337,7 @@ package "hpprint" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="197657bf62a8acb38816a92518d77fad2e8b6d65e25f6383b1e7d0cb2276f7d9"
     }
 }
 package "htsparse" {
@@ -15883,6 +16354,7 @@ package "htsparse" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9e9fa669d3c2a6cb5337d0f78dc7526b481fa096a3507f70143b25edc7e87fb7"
     }
 }
 package "ngspice" {
@@ -15899,6 +16371,7 @@ package "ngspice" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5e5774da4509b67d7f1c0c08a5e734ca852438830ede76cda803c61dd3057df3"
     }
 }
 package "nimtraits" {
@@ -15915,6 +16388,7 @@ package "nimtraits" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b765c2e1bed210d193c80bdd6b2f6e759c12140fdc628c5b9f3c32bca9ba74e0"
     }
 }
 package "nimtrs" {
@@ -15931,6 +16405,7 @@ package "nimtrs" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b74dfb0764d45042a831226e8dd55332399ecbd8c0d348c9c4edbace7ef00161"
     }
 }
 package "geolocation" {
@@ -15947,6 +16422,7 @@ package "geolocation" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="59f180f806416f4cf7c3281510ff87412d68b82b45438d19d8f41add172a59d0"
     }
 }
 package "capstone" {
@@ -15963,6 +16439,7 @@ package "capstone" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="77799a059b067cc71cfdbe0ebffe6b401fb8815b111847fbd06ad03cdd1bf067"
     }
 }
 package "pape" {
@@ -15979,6 +16456,7 @@ package "pape" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="cf1c0269294c417df00e918061a8919c808486d54f9c24881afb59e8343891a0"
     }
 }
 package "tsv2json" {
@@ -15995,6 +16473,7 @@ package "tsv2json" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="61a6030c3f5c33780d7790b3dcd18bf3c76d96b37088df2f6f04739a086b9dee"
     }
 }
 package "ni18n" {
@@ -16011,6 +16490,7 @@ package "ni18n" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9eb625fdf1567f8b06870b15004b9d80f54bdf2de984c155525f103af0846be9"
     }
 }
 package "tinyfetch" {
@@ -16027,6 +16507,7 @@ package "tinyfetch" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-12T06:57:14Z"
+        bundle sha256="cd1481f3cc0318cc1461d97f97f9c588981880d022c24737ce1978e57dc2313d"
     }
     version "0.1.1" {
         content_hash "dag-sha256:7c7d1e02f37ff0d7f7843d19aad73c530d3d844d01cf306c639e853079fad037"
@@ -16039,6 +16520,7 @@ package "tinyfetch" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-10T07:15:52Z"
+        bundle sha256="56b96807552cf4c70ee1e8bb0bbcb5900be303e03d84d07af9d2bc1f8cfae213"
     }
 }
 package "nptr" {
@@ -16055,6 +16537,7 @@ package "nptr" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="58139ea6a549d30d2b62fc32fe11ebc7a8fdfc635f278a9334c98a34d101d6a0"
     }
 }
 package "scfg_nim" {
@@ -16071,6 +16554,7 @@ package "scfg_nim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-10T07:15:52Z"
+        bundle sha256="0cad5374a99f68361524eff4e05e7931693249bc42554f81bc274005aadc1a1f"
     }
     version "0.3.0" {
         content_hash "dag-sha256:60180742edab3994a5c8e5943202d6a7a9d29ee2c3651c9cf6ad4b0732a9b730"
@@ -16083,6 +16567,7 @@ package "scfg_nim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="9d1bda4dc3a97e04b63bfca46dfcf31098c79ab218f797a6b85af2025e9019f6"
     }
 }
 package "mouse" {
@@ -16099,6 +16584,7 @@ package "mouse" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="6f323ec9ef51d533e0c680917dac189a144f7e1c6626ef4049bc92f141b15323"
     }
 }
 package "asciitext" {
@@ -16115,6 +16601,7 @@ package "asciitext" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3feecf66e157a8ed73cafc7cb2fefcab9a6e9cde449b934e9c93cb09fc800987"
     }
 }
 package "mcsrvstat.nim" {
@@ -16131,6 +16618,7 @@ package "mcsrvstat.nim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="bb45d8094cb6f505eac80d931421df3524e55be221f67977f4aa0da9130686c2"
     }
 }
 package "nimip" {
@@ -16147,6 +16635,7 @@ package "nimip" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="28ea9fe809f60c5c8357a56539a00972cef7aba9c30446e4bb6346c1d3c8cd09"
     }
 }
 package "d3" {
@@ -16163,6 +16652,7 @@ package "d3" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="dd0af8ae04d41b78a9a062aa03a09f908d50a84d0f82a0a24832e26f320c157b"
     }
 }
 package "eternity" {
@@ -16179,6 +16669,7 @@ package "eternity" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="ca5cff4a73f16031ce82c74c76e3a4a84723bff6fe3f15301c0d459ca326ebfa"
     }
 }
 package "pg_util" {
@@ -16195,6 +16686,7 @@ package "pg_util" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="25735a7d9784ac6f73332035a6a845789e4805222511e2653b5ba34cfd4e1ccb"
     }
 }
 package "hk" {
@@ -16211,6 +16703,7 @@ package "hk" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2495e0844006084aa90204a2e152aba847865f4630bdad567e4134477baafb9c"
     }
 }
 package "ic" {
@@ -16227,6 +16720,7 @@ package "ic" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="0cc8ece95feb2d7e2d3bbf29ab4445a5fc519ba1e48818694159630953bb4918"
     }
 }
 package "lately" {
@@ -16243,6 +16737,7 @@ package "lately" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="e2b154400c92b28486f6b95a17185a7ddf118f67e98d05798f291757faf460ba"
     }
 }
 package "nim_opentui" {
@@ -16259,6 +16754,7 @@ package "nim_opentui" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-07-02T07:13:36Z"
+        bundle sha256="c264745990e011f044eae4024a69b8693469511eb98a086174d59da9dc86826a"
     }
 }
 package "nimsterm" {
@@ -16275,6 +16771,7 @@ package "nimsterm" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="388712fe8159aecf128d6af7dc724daaa2153d5116c98eb0f608a37a9d6ea038"
     }
 }
 package "rz" {
@@ -16291,6 +16788,7 @@ package "rz" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="bb3ee3554e5771763eab43e1f4f0158e9b69e896ef593ffc8b112bd1decedda7"
     }
 }
 package "win11toast" {
@@ -16307,6 +16805,7 @@ package "win11toast" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="3e4df2b3e021b02c759652bc8c5c0aefb45c4c848c8db8ccb47efcbc63b6bac8"
     }
 }
 package "aur" {
@@ -16323,6 +16822,7 @@ package "aur" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="5f4b430bb88ca8c865eea59831b89a476db0822c12c0a4c2903ad126ac820165"
     }
 }
 package "holo_json" {
