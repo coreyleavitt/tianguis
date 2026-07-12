@@ -30,6 +30,17 @@ on:
           candidates" step's log for the exact skipped count).
         required: false
         default: "0"
+      dry_run:
+        description: >
+          Dry run: mint AND cryptographically verify the bundles, upload them
+          as workflow artifacts, but DO NOT apply pins, commit, or push. Use
+          this to validate the keyless signing seam on CI (real Fulcio + Rekor
+          under this workflow's OIDC) WITHOUT mutating the production index.
+          Defaults TRUE for safety — an accidental run mints + verifies but
+          changes nothing. Set FALSE for a real backfill that commits.
+        type: boolean
+        required: false
+        default: true
 
 permissions:
   contents: write          # to commit + push updated index.kdl
@@ -145,16 +156,55 @@ jobs:
             mv pins.json.tmp pins.json
           done
 
-      - name: Apply minted bundle pins (backfill's OWN apply path)
+      # Cryptographically verify every freshly-minted bundle — the real proof
+      # the keyless seam worked end-to-end. verify_entry_bundle.py (issuer-only
+      # mode: no pinned identity, TOFU) checks the Fulcio cert chain, the
+      # GH-Actions OIDC issuer, and Rekor transparency-log inclusion against
+      # Sigstore's production trusted root — the SAME sigstore-python library
+      # milpa's per-entry verifier uses, so a bundle that passes here is one
+      # milpa can verify. Runs in BOTH dry-run and real mode; fails the job if
+      # any bundle doesn't verify.
+      - name: Verify minted bundles (crypto seam check)
         if: hashFiles('candidates.json') != ''
+        run: |
+          count=$(jq 'length' pins.json)
+          echo "verifying ${count} minted bundle(s)"
+          for i in $(seq 0 $((count - 1))); do
+            pin=$(jq -r ".[$i].bundle_pin" pins.json)
+            bundle="attestation/${pin}.bundle"
+            echo "verifying ${bundle}"
+            python3 scripts/verify_entry_bundle.py \
+              --bundle "$bundle" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              --out "/tmp/stmt-${i}.json" >/dev/null
+          done
+          echo "all ${count} bundle(s) verified against Sigstore production root + Rekor"
+
+      # DRY RUN: publish the minted+verified bundles as artifacts (they double
+      # as milpa's P4 real-crypto fixtures) and STOP before any index mutation.
+      - name: Upload minted bundles (dry-run artifact / P4 fixtures)
+        if: ${{ hashFiles('candidates.json') != '' && inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: attestation-bundles
+          path: |
+            attestation/
+            candidates.json
+            pins.json
+          if-no-files-found: warn
+
+      - name: Apply minted bundle pins (backfill's OWN apply path)
+        if: ${{ hashFiles('candidates.json') != '' && !inputs.dry_run }}
         run: ./tianguis backfill --bundle-pins=pins.json
       # ----------------------------------------------------------------------
 
       - name: Keep index.json in parity
+        if: ${{ !inputs.dry_run }}
         run: ./tianguis project
 
       - name: Commit + push changes
         id: commit
+        if: ${{ !inputs.dry_run }}
         run: |
           if [[ -z "$(git status --porcelain)" ]]; then
             echo "no changes from this backfill pass"
