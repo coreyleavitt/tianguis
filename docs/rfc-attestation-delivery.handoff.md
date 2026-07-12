@@ -1,5 +1,21 @@
 # attestation-delivery (tianguis#42 / milpa P4) — handoff
 
+- **CI-VALIDATED 2026-07-12:** merged to `main` (`e7d510c`, rebased over 10 daily
+  vendor commits, clean). Backfill dry-run (run 29182522590) GREEN: minted 3 real
+  Sigstore bundles under GH-Actions OIDC + verified them against Sigstore prod
+  root + Rekor via verify_entry_bundle.py; apply/parity/commit/cosign all SKIPPED
+  (dry_run guards → zero production mutation). `parity` + `pages` + `dispatch-deploy`
+  (Cloud Function redeploy w/ entry_bundle_b64) all GREEN on the main push. First
+  actionlint fix: empty `${{ }}` in a run-block comment invalidated commit-entry.yaml
+  (`6fd5b3b`). Artifact `attestation-bundles` = 3 real P4 fixtures. **The keyless
+  seam that could never be locally gated is now proven end-to-end.**
+- **REMAINING = operational rollout (Corey's calls, NOT code):** (1) full real
+  backfill of the 2881 remaining eligible entries (`dry_run=false` — mints + commits
+  to main; big production action); (2) set root `attestation-epoch` to activate the
+  S5 gate on NEW publishes (until set, vendor mint loop stays dormant); (3) real
+  author-signed E2E needs a real author repo publishing via the composite action
+  (crypto seam proven via same verify path, but author→dispatch→commit-entry flow
+  unexercised end-to-end).
 - **Stage:** TDD (rfc-flow stage 3) COMPLETE — ALL SLICES S1–S9 LANDED (incl.
   S7c shared core + the Model-3 author-signed trust stack: L1 composite action /
   L2 per-author namespace SSOT / L3 signer ratchet + A/B/C). Full nim suite:
