@@ -13,6 +13,7 @@ package "directnimrod" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="7813d0546f78c94fcfe09d20dff2aa8e87e52f0667be06d3b65e3c3ee70073f5"
     }
 }
 package "entoody" {
@@ -29,6 +30,7 @@ package "entoody" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="120e56171ee17c53efc12d17f36b719b2189aae2a5acdde7a8cca13df0e0c388"
     }
 }
 package "therapist" {
@@ -45,6 +47,7 @@ package "therapist" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="2411b518acbeeb78f5442002c658ec2afc80d79183a0580c9324f9c608fb8d37"
     }
 }
 package "turso-nim" {
@@ -61,6 +64,7 @@ package "turso-nim" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="b34074b895c8ec42ab2a08daa3de325ad34b2c8cfd002f4a0f45905ae80badc3"
     }
 }
 package "audio2json" {
@@ -77,6 +81,7 @@ package "audio2json" {
         attestation "milpa-vendored"
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
+        bundle sha256="a4ca631a43030dd2f08a619e4ad181f9f102f93fa0f675ad8910996c4cb6f719"
     }
 }
 package "bz2" {
