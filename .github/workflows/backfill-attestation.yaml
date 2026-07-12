@@ -206,17 +206,23 @@ jobs:
         id: commit
         if: ${{ !inputs.dry_run }}
         run: |
-          if [[ -z "$(git status --porcelain)" ]]; then
-            echo "no changes from this backfill pass"
+          # Stage ONLY the files a backfill produces, THEN decide whether there
+          # is anything to commit — do NOT gate on `git status --porcelain`,
+          # which also sees `milpa fetch`'s milpa.lock re-lock churn and the
+          # untracked build outputs (tianguis, candidates.json, pins.json,
+          # .nim_runtime/). A no-op backfill (0 candidates left) otherwise
+          # passes that guard and then fails on an empty `git commit`.
+          git add index.kdl index.json
+          # Newly minted attestation bundles — the content-addressed tree
+          # milpa fetches `<hex>.bundle` files from at serve time.
+          [ -d attestation ] && git add attestation/ || true
+          if git diff --cached --quiet; then
+            echo "no index changes from this backfill pass"
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name "milpa-bot"
           git config user.email "milpa-bot@users.noreply.github.com"
-          git add index.kdl index.json
-          # Newly minted attestation bundles — the content-addressed tree
-          # milpa fetches `<hex>.bundle` files from at serve time.
-          [ -d attestation ] && git add attestation/ || true
           git commit -m "chore(backfill): batched attestation-bundle backfill pass"
           # Same rebase-retry discipline as vendor.yaml — a backfill run can
           # take a while over a large index, during which other commits

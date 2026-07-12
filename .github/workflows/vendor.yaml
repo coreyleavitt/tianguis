@@ -164,13 +164,6 @@ jobs:
       - name: Commit + push changes
         id: commit
         run: |
-          if [[ -z "$(git status --porcelain)" ]]; then
-            echo "no changes from this vendor pass"
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          git config user.name "milpa-bot"
-          git config user.email "milpa-bot@users.noreply.github.com"
           # Stage each file separately so a missing alerts.kdl (no drift
           # this pass) doesn't make the whole `git add` no-op the others.
           git add index.kdl index.json
@@ -180,6 +173,18 @@ jobs:
           # (bundlestore.nim's `writeBundle`). Absent when no post-epoch
           # entries needed minting this pass.
           [ -d attestation ] && git add attestation/ || true
+          # Decide "no changes" from the STAGED index/alerts/attestation only —
+          # NOT `git status --porcelain`, which also sees `milpa fetch`'s
+          # milpa.lock re-lock churn and untracked build outputs, so a
+          # zero-change vendor day would pass that guard then fail on an empty
+          # `git commit`.
+          if git diff --cached --quiet; then
+            echo "no changes from this vendor pass"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "milpa-bot"
+          git config user.email "milpa-bot@users.noreply.github.com"
           git commit -m "chore(vendor): daily milpa-bot vendoring pass"
           # A vendor pass can take >1h, during which other commits may
           # have landed on main. Rebase before push so we don't lose the
