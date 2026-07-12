@@ -1,4 +1,5 @@
 schema_version 1
+attestation-epoch "2026-07-12T00:00:00Z"
 package "directnimrod" {
     namespace "bitbucket.org/barcharcraz"
     upstream (url)"https://bitbucket.org/barcharcraz/directnimrod"
