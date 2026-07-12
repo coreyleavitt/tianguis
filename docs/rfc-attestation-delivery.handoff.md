@@ -17,12 +17,18 @@
   `milpa fetch` so `git status --porcelain` mis-fires → empty `git commit` fails;
   now stages index/alerts/attestation then gates on `git diff --cached --quiet`.
   Fixed in BOTH backfill-attestation.yaml AND vendor.yaml (same latent bug).
-- **REMAINING = operational rollout (Corey's calls, NOT code):** (1) set root
-  `attestation-epoch` to activate the S5 gate on NEW publishes (until set, vendor
-  mint loop stays dormant + newly-vendored entries land pinless → a later backfill
-  re-run covers them); (2) real author-signed E2E needs a real author repo
-  publishing via the composite action (crypto seam proven via same verify path,
-  but author→dispatch→commit-entry flow unexercised end-to-end).
+- **EPOCH ARMED 2026-07-12** (`286e47f` command + `bab3661` arm): built
+  `tianguis set-attestation-epoch` (set-once guard + safety guard reusing
+  merge.nim's S5 `attestationGateRejects` via a synthetic mergeVendored probe;
+  15 tests, 415 suite assertions green) and set root `attestation-epoch
+  "2026-07-12T00:00:00Z"` on production `main`. Safety guard confirmed 0 would-be
+  violations (all 2898 eligible backfilled first). Parity OK. **The S5 strict gate
+  is now LIVE** — every entry published on/after today must carry attestation+pin;
+  the daily vendor mint loop (S7b) now runs live (fails closed if signing is down).
+- **REMAINING = operational (Corey's call, NOT code):** real author-signed E2E
+  needs a real author repo publishing via the composite action — the crypto seam
+  is proven (same verify path), but the full author→dispatch→commit-entry flow is
+  unexercised end-to-end. Everything else (delivery, backfill, epoch) is DONE + LIVE.
 - **Stage:** TDD (rfc-flow stage 3) COMPLETE — ALL SLICES S1–S9 LANDED (incl.
   S7c shared core + the Model-3 author-signed trust stack: L1 composite action /
   L2 per-author namespace SSOT / L3 signer ratchet + A/B/C). Full nim suite:
