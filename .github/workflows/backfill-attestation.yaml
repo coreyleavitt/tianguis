@@ -184,7 +184,7 @@ jobs:
       # as milpa's P4 real-crypto fixtures) and STOP before any index mutation.
       - name: Upload minted bundles (dry-run artifact / P4 fixtures)
         if: ${{ hashFiles('candidates.json') != '' && inputs.dry_run }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: attestation-bundles
           path: |
