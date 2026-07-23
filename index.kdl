@@ -9097,6 +9097,19 @@ package "lumber" {
 package "schematic" {
     namespace "github.com/cryo2010"
     upstream (url)"https://github.com/cryo2010/nim-schematic"
+    version "0.4.0" {
+        content_hash "dag-sha256:b5d55ff50d5c2f651e8578379563b42abffd1e5746437e2c4ce948a856965a9d"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/cryo2010/nim-schematic"
+            ref "v0.4.0"
+            commit_sha "09e0980adfb67f8f413c7f6098e92b8d80496449"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-23T06:55:19Z"
+        bundle sha256="1640a812095682c56944e6b6a4519e3422cd58768b5349fa5f8a536930467cb3"
+    }
     version "0.3.0" {
         content_hash "dag-sha256:89f22b54210408ca980704e61c4661c6f066ecde29dbdf80c78d1c524d2eef27"
         provenance {
@@ -13965,6 +13978,19 @@ package "lasm" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-06-10T07:36:26Z"
         bundle sha256="7897293a71e900211bb7b06390ea7de82cf3650d2618026aa4befec43e6e08ca"
+    }
+    version "0.0.0+commit-28d7114" {
+        content_hash "dag-sha256:e0f322ac9eb2e5314082394dee88909ebc8e060c5fc8a6ee544bd9022e9eb497"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/fox0430/lasm"
+            ref "HEAD"
+            commit_sha "28d71141f0aed542581e07ddf3ba6e58dfd5149a"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-23T06:55:19Z"
+        bundle sha256="a98077c95c919b1bd34178ddbe78e53cde3b067e7aa99687fd8db866fbb9316d"
     }
     version "0.0.0+commit-149b53a" {
         content_hash "sha256:d51cfa4fffbd0ba5efbf31b0c9c51e1a072ccf1b14b55a52beab80c8bb1f3113"
@@ -29080,6 +29106,19 @@ package "narduino" {
         published_at "2026-07-19T06:55:49Z"
         bundle sha256="ac2c14ce10b62d87d04836953faaae74ae3ef737697ea95b40ac4ba1e4c7fee9"
     }
+    version "0.0.0+commit-6b544dd" {
+        content_hash "dag-sha256:1e0ed634e0f69e2bbc85df0b61e0458a4fba0586869d705f130ff31bb8c9c8f1"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/Niminem/narduino"
+            ref "HEAD"
+            commit_sha "6b544ddbb26412ff03259f5340b1f3cb35db5125"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-23T06:55:19Z"
+        bundle sha256="314112d66682c664166298eafc80d1d99ebc73b08ae2fcf8891b5595c87d3780"
+    }
     version "0.0.0+commit-09733c2" {
         content_hash "dag-sha256:da652db7ef8605a20bdfb7210e72de954e76fdc0492484606df9a1ce00ad578f"
         provenance {
@@ -43403,6 +43442,19 @@ package "nimics" {
 package "nimletter" {
     namespace "github.com/thomastjdev"
     upstream (url)"https://github.com/ThomasTJdev/nimletter"
+    version "1.0.3" {
+        content_hash "dag-sha256:d27a1b6ee9883a730c16f69998b77eb49c783e56e5a2898da3801941cdbfec6d"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/ThomasTJdev/nimletter"
+            ref "v1.0.3"
+            commit_sha "b6431ca188a2e6abf5526b4694d1e8fe72c24ba9"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-23T06:55:19Z"
+        bundle sha256="9a83ed1400e1838b569c4e9a499e4cc97bd8b59da42adaa912cd27b7cc0139e5"
+    }
     version "1.0.2" {
         content_hash "dag-sha256:8ab33fbcdb0616f6271e0939bcf1903ba33d8ee6a5bd6633da592635acc9dd49"
         provenance {
