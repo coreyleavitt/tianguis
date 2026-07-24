@@ -6398,6 +6398,19 @@ package "onnx_rt" {
         published_at "2026-07-18T06:43:04Z"
         bundle sha256="1705807dfd0273c3e516177871b5a94f81e35de7ed171cc7f986b49c054f7c72"
     }
+    version "0.0.0+commit-4422bb8" {
+        content_hash "dag-sha256:9106657b4d0025056b6eb19546db6cfec42600798f63d99fff1d27313d3320d5"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/bung87/onnx"
+            ref "HEAD"
+            commit_sha "4422bb8e4f6230691cf444f09e1a7de94948366c"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-24T06:55:47Z"
+        bundle sha256="f57d503e27a01888c60f379f9c93b803d994b832195b6f15c0531c9053eccbe7"
+    }
     version "0.0.0+commit-30a01d1" {
         content_hash "dag-sha256:3cdeb082442d6d8a21cb6b14b363ff913ef9b1b1f796290daa41fe9d136a229c"
         provenance {
@@ -17031,6 +17044,23 @@ package "nptr" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
         bundle sha256="58139ea6a549d30d2b62fc32fe11ebc7a8fdfc635f278a9334c98a34d101d6a0"
+    }
+}
+package "mancia" {
+    namespace "github.com/heuer"
+    upstream (url)"https://github.com/heuer/mancia"
+    version "0.1.0" {
+        content_hash "dag-sha256:c065f8bf2e0be64edbbdb807a1cb5c058922610954342a7ca028fb6a0b37c169"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/heuer/mancia"
+            ref "0.1.0"
+            commit_sha "d17a775ec50a8faf10d4345923579c43fa44c799"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-24T06:55:47Z"
+        bundle sha256="a22d37f68ba848b411f41058c4cf89311f0b7ed1e24b117c8d0762dc0d31d978"
     }
 }
 package "scfg_nim" {
@@ -45835,6 +45865,19 @@ package "libp2p" {
 package "lsquic" {
     namespace "github.com/vacp2p"
     upstream (url)"https://github.com/vacp2p/nim-lsquic"
+    version "0.6.0" {
+        content_hash "dag-sha256:054abeade65212491e5fb0c382ab2bdb8f7242b7ec5ee20fac8de45d5ed57261"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/vacp2p/nim-lsquic"
+            ref "v0.6.0"
+            commit_sha "d6d8f81d854cbc575f6206aa6d72bcdfbe5d07aa"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-24T06:55:47Z"
+        bundle sha256="1997822780a11e33708c193c3aaf8dc3db79321c0915558591ce1ec0347bb5e9"
+    }
     version "0.5.6" {
         content_hash "dag-sha256:6bf4465ab476138fcc0b8b9da6069699b18ef19848bb1c4f575fe7cca432e5bd"
         provenance {
