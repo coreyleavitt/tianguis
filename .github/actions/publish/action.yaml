@@ -196,10 +196,11 @@ runs:
       # (tianguis, at the ref the caller pinned via `uses:
       # coreyleavitt/tianguis/.github/actions/publish@<ref>`) — a separate
       # checkout GitHub manages, distinct from the caller's own workspace.
-      # `.github/actions/publish` is two directories below the repo root.
+      # `.github/actions/publish` is THREE directories below the repo root
+      # (publish -> actions -> .github -> root), so go up three levels.
       run: |
         set -euo pipefail
-        TIANGUIS_ROOT="$(cd "${{ github.action_path }}/../.." && pwd)"
+        TIANGUIS_ROOT="$(cd "${{ github.action_path }}/../../.." && pwd)"
         echo "TIANGUIS_ROOT=${TIANGUIS_ROOT}" >> "$GITHUB_ENV"
         nim c -d:release -d:ssl -o:"${RUNNER_TEMP}/tianguis" "${TIANGUIS_ROOT}/src/tianguis_cli.nim"
         echo "${RUNNER_TEMP}" >> "$GITHUB_PATH"
