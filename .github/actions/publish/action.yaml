@@ -202,7 +202,13 @@ runs:
         set -euo pipefail
         TIANGUIS_ROOT="$(cd "${{ github.action_path }}/../../.." && pwd)"
         echo "TIANGUIS_ROOT=${TIANGUIS_ROOT}" >> "$GITHUB_ENV"
-        nim c -d:release -d:ssl -o:"${RUNNER_TEMP}/tianguis" "${TIANGUIS_ROOT}/src/tianguis_cli.nim"
+        # Resolve tianguis's OWN deps (nkdl, nimcrypto — both public) into
+        # _deps/ + emit nim.cfg, then compile from the repo root so nim
+        # discovers that nim.cfg. Without this, `nim c` fails with
+        # "cannot open file: nkdl". Mirrors vendor.yaml/commit-entry.yaml.
+        cd "${TIANGUIS_ROOT}"
+        milpa fetch
+        nim c -d:release -d:ssl -o:"${RUNNER_TEMP}/tianguis" src/tianguis_cli.nim
         echo "${RUNNER_TEMP}" >> "$GITHUB_PATH"
 
     - name: Install sigstore
