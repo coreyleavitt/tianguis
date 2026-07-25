@@ -207,6 +207,13 @@ runs:
         # discovers that nim.cfg. Without this, `nim c` fails with
         # "cannot open file: nkdl". Mirrors vendor.yaml/commit-entry.yaml.
         cd "${TIANGUIS_ROOT}"
+        # tianguis's milpa.kdl references nkdl via an ssh:// URL
+        # (ssh://git@github.com/coreyleavitt/nkdl.git); the runner has no SSH
+        # key, so rewrite ssh forms to unauthenticated https. nkdl (and
+        # nimcrypto) are public, so no token is needed — this differs from
+        # vendor.yaml/commit-entry.yaml, which add a PAT for the private era.
+        git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+        git config --global --add url."https://github.com/".insteadOf "git@github.com:"
         milpa fetch
         nim c -d:release -d:ssl -o:"${RUNNER_TEMP}/tianguis" src/tianguis_cli.nim
         echo "${RUNNER_TEMP}" >> "$GITHUB_PATH"
