@@ -520,8 +520,12 @@ jobs:
           git commit -m "publish: ${{ steps.payload.outputs.name }} ${{ steps.payload.outputs.version }} (run:${{ github.run_id }})"
           # Rebase before push — another commit (vendor pass, parallel
           # publish, etc.) may have landed during this workflow.
+          # --autostash: milpa fetch / milpa hash (the OCI pull during
+          # "Add entry") re-lock milpa.lock and leave it dirty, which would
+          # otherwise abort the rebase with "cannot pull with rebase: You
+          # have unstaged changes" — the same fix vendor.yaml already carries.
           for i in 1 2 3; do
-            git pull --rebase origin main && git push && break
+            git pull --rebase --autostash origin main && git push && break
             echo "push attempt $i failed; will retry"
             sleep $((i * 2))
           done
