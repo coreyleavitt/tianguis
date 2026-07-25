@@ -68,7 +68,7 @@ jobs:
         # already stale — `uv run --project .milpa-tool/impls/python` below
         # would fail against anything that old.
         env:
-          MILPA_SHA: 27435c53bd70cb4d0db0efa3742df0942097f664
+          MILPA_SHA: a0890ade2d1097f985f1fdb778dd97dc77af9142
         run: |
           git clone --filter=blob:none --no-checkout https://github.com/coreyleavitt/milpa.git .milpa-tool
           git -C .milpa-tool checkout "$MILPA_SHA"
