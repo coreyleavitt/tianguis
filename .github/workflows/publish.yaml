@@ -1,163 +1,74 @@
 name: tianguis-publish
 
-# Reusable workflow that author repos call to publish a Nim package to
-# the tianguis registry. Authors add one tiny job to their own repo:
+# RETIRED (rfc-distribution-and-publishing, milpa Phase 3 — `milpa publish`
+# revival). This reusable workflow is kept ONLY so existing `uses:
+# coreyleavitt/tianguis/.github/workflows/publish.yaml@...` references in
+# author repos fail with a clear message instead of a hard parse error.
 #
-#   jobs:
-#     publish:
-#       uses: coreyleavitt/tianguis/.github/workflows/publish.yaml@v1
+# Two independent reasons this is retired, not just updated:
+#
+#   1. It called the OLD `milpa publish` monolith's flags (`--registry
+#      --provider --repo-url --signed-by --dispatch-url`), which are DELETED
+#      as of the revived, generic `milpa publish` CLI (`--version --target
+#      --name --tag --output --dry-run --allow-untagged` only).
+#   2. As a REUSABLE WORKFLOW (`workflow_call`), it runs as its OWN job, so
+#      GitHub stamps its ambient OIDC token's `job_workflow_ref` (what
+#      Fulcio puts in the cosign cert's SAN) with THIS workflow's own path —
+#      not the calling author repo's. Every author who published through it
+#      therefore signed under the SAME shared identity, collapsing
+#      per-author accountability to zero (see
+#      `.github/actions/publish/action.yaml`'s header comment for the full
+#      explanation). This is a structural property of `workflow_call`, not
+#      a bug fixable in place.
+#
+# Authors MUST switch to the composite action instead — it runs INSIDE the
+# calling job, so the signing identity is genuinely per-author:
+#
+#   permissions:
+#     id-token: write
+#     contents: read
+#     packages: write
+#   steps:
+#     - uses: actions/checkout@v6
+#     - uses: coreyleavitt/tianguis/.github/actions/publish@main
 #       with:
 #         name: my-package
 #         version: ${{ github.ref_name }}
-#       permissions:
-#         id-token: write   # cosign keyless signing
-#         contents: read    # checkout
-#         packages: write   # push the OCI artifact to GHCR
 #
-# See docs/adoption/github.md for the full author-facing copy-paste.
+# See docs/adoption/github.md for the full copy-paste and
+# docs/rfc-attestation-delivery.handoff.md / rfc-distribution-and-publishing
+# for the design rationale.
 
 on:
   workflow_call:
     inputs:
       name:
-        description: "Package name (must match milpa.kdl)"
-        required: true
+        required: false
         type: string
       version:
-        description: "Semver tag (typically github.ref_name on a tag push)"
-        required: true
+        required: false
         type: string
       registry:
-        description: "OCI registry ref (default: ghcr.io/${owner}/${repo}:${version})"
         required: false
         type: string
         default: ""
       dispatch-url:
-        description: "tianguis dispatch endpoint (default: production)"
         required: false
         type: string
-        default: "https://dispatch.tianguis.dev"
+        default: ""
       dry-run:
-        description: "Pack + push + sign + POST dispatch with dry_run flag (skips index commit; for smoke testing)"
         required: false
         type: boolean
         default: false
     secrets:
       milpa-install-token:
-        description: |
-          Fine-grained PAT with read access to coreyleavitt/milpa.
-          Required while milpa is private. Once milpa is published to
-          PyPI / made public, this becomes unnecessary.
         required: false
 
 jobs:
-  publish:
+  retired:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write   # cosign keyless: fetch Fulcio cert
-      contents: read    # checkout
-      packages: write   # push to GHCR
     steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up oras
-        uses: oras-project/setup-oras@v2
-        with:
-          version: "1.2.0"
-
-      - name: Set up cosign
-        uses: sigstore/cosign-installer@v3
-        with:
-          cosign-release: "v2.4.0"
-
-      - name: Set up uv (Python runtime for milpa)
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-
-      - name: Install milpa CLI
-        env:
-          MILPA_TOKEN: ${{ secrets.milpa-install-token }}
+      - name: Fail with a migration notice
         run: |
-          # While milpa is private, prefix with the PAT so the git fetch
-          # succeeds. Once milpa goes public this whole branch collapses
-          # to the unauthenticated install.
-          if [[ -n "${MILPA_TOKEN}" ]]; then
-            uv tool install "git+https://x-access-token:${MILPA_TOKEN}@github.com/coreyleavitt/milpa.git@main#subdirectory=impls/python"
-          else
-            uv tool install "git+https://github.com/coreyleavitt/milpa.git@main#subdirectory=impls/python"
-          fi
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      - name: Log in to GHCR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          echo "${GH_TOKEN}" | oras login ghcr.io \
-            --username "${{ github.actor }}" \
-            --password-stdin
-
-      - name: Compute registry ref + signer identity
-        id: vars
-        env:
-          INPUT_REGISTRY: ${{ inputs.registry }}
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          # Default registry: ghcr.io/<owner>/<repo>:<version>. Author can
-          # override with an explicit registry input.
-          if [[ -z "${INPUT_REGISTRY}" ]]; then
-            ref="ghcr.io/${{ github.repository }}:${INPUT_VERSION}"
-          else
-            ref="${INPUT_REGISTRY}"
-          fi
-          # Lowercase the registry ref — GHCR rejects uppercase paths.
-          ref=$(echo "${ref}" | tr '[:upper:]' '[:lower:]')
-          echo "registry=${ref}" >> "$GITHUB_OUTPUT"
-
-          # cosign keyless signer identity = the workflow that actually runs
-          # `cosign sign`. In a reusable-workflow architecture Fulcio stamps the
-          # cert SAN with THIS reusable workflow's `job_workflow_ref`, not the
-          # caller's (verified live: a publish through here yields SAN
-          # https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml@<ref>).
-          # The @<ref> varies (refs/heads/main, refs/tags/v1, SHA); we strip it
-          # and commit-entry.yaml matches across refs via
-          # --certificate-identity-regexp.
-          #
-          # #30: self-derive the path from the OIDC token's job_workflow_ref
-          # claim instead of hardcoding, so a fork of this repo needs no
-          # find/replace. NOTE: GITHUB_WORKFLOW_REF can't be used here — for a
-          # reusable workflow it is the CALLER's ref, which would derive the
-          # wrong (author) identity. Fall back to the canonical path if the
-          # OIDC lookup fails: signer derivation must never break a publish.
-          DEFAULT_SIGNER="https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml"
-          signer="$DEFAULT_SIGNER"
-          if [[ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" && -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
-            tok=$(curl -sf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sigstore" | jq -r '.value // empty' || true)
-            if [[ -n "$tok" ]]; then
-              # Decode the JWT payload (2nd segment, base64url) and read the claim.
-              payload=$(echo "$tok" | cut -d. -f2)
-              case $(( ${#payload} % 4 )) in 2) payload="${payload}==";; 3) payload="${payload}=";; esac
-              claim=$(echo "$payload" | tr '_-' '/+' | base64 -d 2>/dev/null \
-                | jq -r '.job_workflow_ref // empty' 2>/dev/null || true)
-              if [[ -n "$claim" ]]; then
-                signer="https://github.com/${claim%@*}"
-              fi
-            fi
-          fi
-          echo "Resolved cosign signer identity: ${signer}"
-          echo "signed_by=${signer}" >> "$GITHUB_OUTPUT"
-
-      - name: milpa publish
-        env:
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ github.token }}
-        run: |
-          milpa publish \
-            --name="${{ inputs.name }}" \
-            --version="${{ inputs.version }}" \
-            --registry="${{ steps.vars.outputs.registry }}" \
-            --provider=github \
-            --repo-url="https://github.com/${{ github.repository }}" \
-            --signed-by="${{ steps.vars.outputs.signed_by }}" \
-            --dispatch-url="${{ inputs.dispatch-url }}" \
-            ${{ inputs.dry-run && '--dry-run' || '' }}
+          echo "::error::coreyleavitt/tianguis/.github/workflows/publish.yaml is RETIRED. It called milpa publish's old monolith flags (deleted) and, as a reusable workflow, collapsed every author's cosign signing identity to the same shared SAN. Switch to the composite action instead: 'uses: coreyleavitt/tianguis/.github/actions/publish@<ref>' as a step in your OWN job (not a reusable-workflow 'uses:' at the jobs: level). See docs/adoption/github.md for the full copy-paste."
+          exit 1

@@ -56,8 +56,19 @@ jobs:
         # migrated (tuple-keyed) index.kdl lands on main, a pre-P1.2 milpa would
         # choke on it here. Bump deliberately, never below 079dbf0. (RFC
         # rfc-identity-and-resolution-completion §1 deploy-ordering gate.)
+        #
+        # Bumped to 27435c5 (rfc-distribution-and-publishing, milpa Phase 3 —
+        # the revived, generic `milpa publish` CLI): this pin MUST track
+        # .github/actions/publish/action.yaml's `milpa-ref` default in
+        # lockstep — this workflow re-verifies the SAME content_hash the
+        # author-side action computed at publish time (via `milpa publish`'s
+        # identity algorithm), and a mismatched milpa version between the two
+        # sides would always fail the §1 digest-binding check. Also note: the
+        # OLD pin (130ecd1) predated impls/python/'s introduction, so it was
+        # already stale — `uv run --project .milpa-tool/impls/python` below
+        # would fail against anything that old.
         env:
-          MILPA_SHA: 130ecd1ed8328fe4b91e35314c7031ed9e72f781
+          MILPA_SHA: 27435c53bd70cb4d0db0efa3742df0942097f664
         run: |
           git clone --filter=blob:none --no-checkout https://github.com/coreyleavitt/milpa.git .milpa-tool
           git -C .milpa-tool checkout "$MILPA_SHA"

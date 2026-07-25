@@ -1,195 +1,350 @@
-name: "tianguis: build per-entry attestation bundle"
+name: "tianguis: publish a package (pack + push + sign + attest + dispatch)"
 description: >-
-  Compute an author-signed §1 in-toto statement (content_hash + tianguis
-  purl) for one package version, sign it under the CALLING workflow's own
-  ambient GitHub Actions OIDC identity, and emit the resulting Sigstore
-  bundle (base64) for the author's own dispatch POST to carry.
+  One-shot author-side publish pipeline for a Nim package: build the
+  `milpa`/`tianguis` toolchain, run `milpa publish` (pack the git HEAD
+  source tree, push it as an OCI artifact, keyless cosign-sign it, verify
+  the pushed digest), mint a per-entry §1 attestation bundle over the
+  resulting receipt, and POST the publish request to tianguis's dispatch
+  endpoint.
 
-# rfc-attestation-delivery.handoff.md S8 (tianguis#42) — the author-side
-# half of per-entry attestation delivery. See docs/rfc-attestation-
-# delivery.handoff.md's "RESOLVED: bundle-minting recipe" + "SHARPENED"
-# sections for the full design rationale; short version below.
+# rfc-attestation-delivery.handoff.md S8 (tianguis#42) established the
+# composite-action architecture below for the per-entry attestation half
+# of this pipeline; this revision (rfc-distribution-and-publishing,
+# milpa Phase 3, `milpa publish` revival) folds the REST of an author's
+# publish pipeline — pack/push/sign/verify, previously only available via
+# the reusable workflow `.github/workflows/publish.yaml` — into this SAME
+# composite action, and retires that reusable workflow (see its own
+# deprecation stub) because of the trust property explained next.
 #
 # WHY A COMPOSITE ACTION, NOT A REUSABLE WORKFLOW (`workflow_call`):
-# a reusable workflow (like the existing tianguis-publish reusable
-# workflow at .github/workflows/publish.yaml) runs as its OWN job, and
-# GitHub stamps its ambient OIDC token's `job_workflow_ref` (what Fulcio
-# puts in the signing cert's SAN) with the REUSABLE WORKFLOW's own path —
-# NOT the calling repo's. publish.yaml's own "Compute registry ref +
-# signer identity" step documents this exact behavior and works around it
-# for the OCI-artifact signature by decoding the OIDC token's claim by
-# hand. For per-entry attestation, that behavior is disqualifying: milpa's
-# stage-6 "author-signed" gate needs the statement's signer to be the
-# INDIVIDUAL AUTHOR's own identity (so a malicious/compromised author
-# can be told apart from tianguis's own shared infra) — signing under a
-# shared reusable-workflow identity would make every "author-signed" entry
-# indistinguishable from a vendor-bot entry in every way that matters. A
-# COMPOSITE ACTION (`uses: .../actions/x@ref` under a `steps:` list,
-# not `jobs:`) runs INSIDE the caller's own job — so its ambient
-# `id-token: write` OIDC request correctly reflects the CALLING repo's own
-# `job_workflow_ref`, giving a genuinely per-author signing identity. This
-# is the reason this is a NEW composite action rather than an extension of
-# publish.yaml.
+# a reusable workflow (like the now-retired `.github/workflows/
+# publish.yaml`) runs as its OWN job, and GitHub stamps its ambient OIDC
+# token's `job_workflow_ref` (what Fulcio puts in the signing cert's SAN)
+# with the REUSABLE WORKFLOW's own path — NOT the calling repo's. Every
+# author who published through it therefore signed under the SAME shared
+# identity (`.../tianguis/.github/workflows/publish.yaml@<ref>`),
+# collapsing per-author accountability to zero: a malicious or compromised
+# author could not be told apart from tianguis's own shared infra, for
+# EITHER the OCI-artifact cosign signature OR the per-entry §1 attestation
+# signature. A COMPOSITE ACTION (`uses: .../actions/publish@ref` under a
+# `steps:` list, not `jobs:`) runs INSIDE the caller's own job — so its
+# ambient `id-token: write` OIDC request correctly reflects the CALLING
+# repo's own `job_workflow_ref`, giving a genuinely per-author signing
+# identity for both signatures this action produces. This is why the
+# unified publish pipeline lives HERE and not back in a reusable workflow.
 #
-# SCOPE: this action does ONLY the new S8 work (content_hash, statement,
-# sign, base64) — it does NOT push the OCI artifact, does NOT cosign-sign
-# the OCI artifact, and does NOT POST to the dispatch endpoint. Those steps
-# are the author's EXISTING publish pipeline (today: publish.yaml's
-# reusable workflow, once `milpa publish` ships; today it's often
-# hand-rolled per docs/adoption/github.md). This action hands back
-# `entry-bundle-b64` as an output; the caller's own dispatch POST is
-# responsible for including it as the `entry_bundle_b64` field
-# (dispatch/handler.go's `PublishRequest.EntryBundleB64`) ALONGSIDE the
-# name/version/oci_ref/upstream/signed_by fields it already sends. Kept
-# separate deliberately — duplicating the OCI-push/cosign-sign pipeline
-# here would create a second, divergent author onboarding path.
+# SCOPE (post-unification): this action now does the FULL author-side
+# publish pipeline —
+#   1. pack + push + cosign-sign the OCI artifact + verify the pushed
+#      digest (via `milpa publish`, S2/S3a-d/M1 of the RFC — replaces the
+#      old hand-rolled oras/cosign steps a reusable workflow used to run)
+#   2. mint the per-entry §1 in-toto attestation bundle over the receipt's
+#      content_hash (S8 — unchanged from the prior revision of this file)
+#   3. POST the publish request to tianguis's dispatch endpoint (NEW —
+#      previously the caller's OWN `milpa publish --dispatch-url=...` did
+#      this; the revived `milpa publish` CLI no longer talks to dispatch
+#      at all, so this action does it instead)
+# This is deliberately ONE action rather than three, now that all three
+# steps need to run under the SAME per-author signing identity anyway —
+# splitting them back out would just reintroduce a second, divergent
+# author onboarding path for no benefit.
 #
 # REQUIRED PERMISSIONS in the calling job:
 #   permissions:
-#     id-token: write   # ambient OIDC for BOTH milpa's git clone (none
-#                        # needed) and sigstore-python's sign_dsse — this
-#                        # is what makes the signing identity the CALLING
-#                        # repo's own workflow, not tianguis's.
+#     id-token: write   # ambient OIDC for (a) milpa's `cosign sign` keyless
+#                        # signing of the OCI artifact, (b) this action's
+#                        # own sigstore-python `sign_dsse` of the §1
+#                        # statement, and (c) minting the bearer token this
+#                        # action sends to the dispatch endpoint — ALL
+#                        # THREE derive their identity from the CALLING
+#                        # repo's own workflow, not tianguis's, because this
+#                        # is a composite action (see above).
 #     contents: read     # the calling job must already have checked out
 #                        # its own source tree (`actions/checkout`) BEFORE
-#                        # this action runs — the `source-path` input
-#                        # points into that checkout.
+#                        # this action runs — `milpa publish` reads the git
+#                        # HEAD commit of that checkout directly (not a
+#                        # `source-path` input; see the `version`/`name`
+#                        # inputs below).
+#     packages: write    # `milpa publish` pushes the OCI artifact to GHCR
+#                        # (or whatever `target` resolves to) via `oras`.
 
 inputs:
-  source-path:
-    description: >-
-      Path (relative to the calling workflow's own checkout) to the exact
-      source tree that was (or will be) packed into the OCI artifact for
-      this publish. content_hash is computed over these exact bytes —
-      milpa's local-fetcher and OCI-fetcher identity algorithms must agree
-      on the same tree for the statement's digest to bind to what tianguis
-      later recomputes from the pulled artifact.
-    required: true
   name:
-    description: "Package name (must match milpa.kdl / the dispatch request's `name`)."
+    description: >-
+      Package name (must match `milpa.kdl`'s `name` node if the tree has
+      one; required here regardless, since `milpa publish` only
+      auto-derives the name from a `milpa.kdl` at the HEAD tree's root —
+      a tree without one, like softlink's, has no other way to supply it).
     required: true
   version:
     description: >-
-      The version tag being published (e.g. "v1.2.3" or "1.2.3" — either
-      form accepted; normalized identically to `tianguis add-entry`'s
-      `normalizeVersion`, i.e. a leading "v" followed by a digit is
-      stripped).
+      The version being published (e.g. "v1.2.3" or "1.2.3" — either form
+      accepted). Passed straight through to `milpa publish --version` (it
+      enforces the HEAD<->tag binding) AND normalized identically to
+      `tianguis add-entry`'s `normalizeVersion` for the attestation
+      statement (leading "v" before a digit stripped).
     required: true
+  target:
+    description: >-
+      OCI push destination as `<registry>/<repository>` (NO tag — `milpa
+      publish` appends `:<version>` internally). Defaults to
+      `ghcr.io/<owner>/<repo>` (lowercased) when empty.
+    required: false
+    default: ""
+  dispatch-url:
+    description: "tianguis dispatch endpoint (default: production)."
+    required: false
+    default: "https://dispatch.tianguis.dev"
+  dry-run:
+    description: >-
+      When true, `milpa publish` STILL packs+pushes+signs for real (there
+      is no receipt — and therefore no oci_ref to dispatch — without a
+      real push; see the "Dry-run semantics" note on the dispatch step
+      below), but the dispatch POST carries `dry_run: true`, which tells
+      the dispatch handler to run its OIDC + identity checks WITHOUT
+      triggering the commit-entry workflow. Use this for first-time
+      author onboarding smoke tests.
+    required: false
+    default: "false"
   milpa-ref:
     description: >-
-      Pinned milpa commit SHA to build `milpa hash` from. MUST track
-      .github/workflows/commit-entry.yaml's own milpa pin in lockstep — a
-      mismatch risks the author-side and tianguis-side identity algorithms
-      disagreeing, which would always fail the S8 digest-binding check.
+      Pinned milpa commit SHA to install the `milpa` CLI from. MUST track
+      `.github/workflows/commit-entry.yaml`'s own milpa pin in lockstep —
+      a mismatch risks the author-side (this action, via `milpa publish`'s
+      content-hash/identity computation) and tianguis-side (commit-entry's
+      re-verification of that same content hash) identity algorithms
+      disagreeing, which would fail the §1 digest-binding check on every
+      publish. Defaults to the commit that introduced the revived,
+      generic `milpa publish` CLI (the old monolith's `--registry
+      --provider --repo-url --signed-by --dispatch-url` flags are DELETED
+      as of this commit — do not pin to anything older).
     required: false
-    default: "130ecd1ed8328fe4b91e35314c7031ed9e72f781"
+    default: "27435c53bd70cb4d0db0efa3742df0942097f664"
   milpa-git-read-pat:
     description: >-
       Fine-grained PAT with read access to coreyleavitt/milpa (temporary,
-      while milpa is private — same secret publish.yaml's
-      `milpa-install-token` documents). Omit once milpa is public.
+      while milpa is private). Omit once milpa is public.
     required: false
     default: ""
 
 outputs:
+  oci-ref:
+    description: "The immutable <registry>/<repository>@sha256:<digest> the artifact was pushed to (from milpa publish's receipt)."
+    value: ${{ steps.receipt.outputs.oci-ref }}
+  content-hash:
+    description: "The published tree's content_hash (dag-sha256:<hex>), from milpa publish's receipt."
+    value: ${{ steps.receipt.outputs.content-hash }}
   entry-bundle-b64:
     description: >-
-      The signed Sigstore Bundle (BUNDLE_0_3 JSON), base64-encoded with no
-      embedded newlines. Attach this as the `entry_bundle_b64` field on the
-      dispatch POST to https://dispatch.tianguis.dev/v1/publish.
+      The signed Sigstore Bundle (BUNDLE_0_3 JSON) over the §1 in-toto
+      statement, base64-encoded with no embedded newlines. This action
+      already includes it in its own dispatch POST (`entry_bundle_b64`);
+      exposed as an output too so a caller doing its own diagnostics can
+      inspect it.
     value: ${{ steps.mint.outputs.entry-bundle-b64 }}
-  content-hash:
-    description: "The recomputed content_hash (dag-sha256:<hex>) — reuse it rather than recomputing."
-    value: ${{ steps.mint.outputs.content-hash }}
-  namespace:
-    description: "The derived namespace (host/org) — reuse it rather than recomputing."
-    value: ${{ steps.mint.outputs.namespace }}
 
 runs:
   using: "composite"
   steps:
-    - name: Configure git auth for private milpa read (temporary)
-      if: inputs.milpa-git-read-pat != ''
-      shell: bash
-      env:
-        PAT: ${{ inputs.milpa-git-read-pat }}
-      run: |
-        git config --global url."https://x-access-token:${PAT}@github.com/".insteadOf "https://github.com/"
-
-    - name: Set up Nim
-      uses: jiro4989/setup-nim-action@v2
+    - name: Set up oras
+      uses: oras-project/setup-oras@v2
       with:
-        nim-version: "2.2.0"
+        version: "1.2.0"
+
+    - name: Set up cosign
+      uses: sigstore/cosign-installer@v3
+      with:
+        cosign-release: "v2.4.0"
 
     - name: Set up uv (for milpa)
       uses: astral-sh/setup-uv@v7
       with:
         enable-cache: false
 
-    - name: Clone milpa (pinned — must track commit-entry.yaml's pin)
-      shell: bash
-      env:
-        MILPA_SHA: ${{ inputs.milpa-ref }}
-      run: |
-        git clone --filter=blob:none --no-checkout https://github.com/coreyleavitt/milpa.git "${RUNNER_TEMP}/milpa-tool"
-        git -C "${RUNNER_TEMP}/milpa-tool" checkout "$MILPA_SHA"
-        echo "MILPA_TOOL=${RUNNER_TEMP}/milpa-tool" >> "$GITHUB_ENV"
-
-    - name: Build tianguis CLI (from this action's own pinned checkout)
-      shell: bash
-      # ${{ github.action_path }} is THIS action's own repo checkout
-      # (tianguis, at the ref the caller pinned via `uses:
-      # coreyleavitt/tianguis/.github/actions/publish@<ref>`) — a separate
-      # checkout GitHub manages, distinct from the caller's own workspace
-      # (which `source-path` points into). `.github/actions/publish` is two
-      # directories below the repo root.
-      run: |
-        TIANGUIS_ROOT="$(cd "${{ github.action_path }}/../.." && pwd)"
-        echo "TIANGUIS_ROOT=${TIANGUIS_ROOT}" >> "$GITHUB_ENV"
-        nim c -d:release -d:ssl -o:"${RUNNER_TEMP}/tianguis" "${TIANGUIS_ROOT}/src/tianguis_cli.nim"
+    - name: Set up Nim (for the tianguis CLI)
+      uses: jiro4989/setup-nim-action@v2
+      with:
+        nim-version: "2.2.0"
 
     - name: Set up Python (for sigstore signing)
       uses: actions/setup-python@v6
       with:
         python-version: "3.12"
 
+    - name: Install milpa CLI
+      shell: bash
+      env:
+        MILPA_REF: ${{ inputs.milpa-ref }}
+        MILPA_TOKEN: ${{ inputs.milpa-git-read-pat }}
+      run: |
+        set -euo pipefail
+        # While milpa is private, prefix with the PAT so the git fetch
+        # succeeds. Once milpa goes public this branch collapses to the
+        # unauthenticated install. Pinned to inputs.milpa-ref (a fixed
+        # commit SHA), NOT @main — see the milpa-ref input's doc comment
+        # on why this must stay in lockstep with commit-entry.yaml's pin.
+        if [[ -n "${MILPA_TOKEN}" ]]; then
+          uv tool install "git+https://x-access-token:${MILPA_TOKEN}@github.com/coreyleavitt/milpa.git@${MILPA_REF}#subdirectory=impls/python"
+        else
+          uv tool install "git+https://github.com/coreyleavitt/milpa.git@${MILPA_REF}#subdirectory=impls/python"
+        fi
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+    - name: Build tianguis CLI (from this action's own pinned checkout)
+      shell: bash
+      # ${{ github.action_path }} is THIS action's own repo checkout
+      # (tianguis, at the ref the caller pinned via `uses:
+      # coreyleavitt/tianguis/.github/actions/publish@<ref>`) — a separate
+      # checkout GitHub manages, distinct from the caller's own workspace.
+      # `.github/actions/publish` is two directories below the repo root.
+      run: |
+        set -euo pipefail
+        TIANGUIS_ROOT="$(cd "${{ github.action_path }}/../.." && pwd)"
+        echo "TIANGUIS_ROOT=${TIANGUIS_ROOT}" >> "$GITHUB_ENV"
+        nim c -d:release -d:ssl -o:"${RUNNER_TEMP}/tianguis" "${TIANGUIS_ROOT}/src/tianguis_cli.nim"
+        echo "${RUNNER_TEMP}" >> "$GITHUB_PATH"
+
     - name: Install sigstore
       shell: bash
       run: pip install -r "${TIANGUIS_ROOT}/scripts/requirements.txt"
+
+    - name: Log in to GHCR
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        echo "${GH_TOKEN}" | oras login ghcr.io \
+          --username "${{ github.actor }}" \
+          --password-stdin
+        # cosign (invoked internally by `milpa publish`) uses ambient
+        # keyless OIDC, not a registry login — no separate `cosign login`.
+
+    - name: Compute target ref + signer identity
+      id: vars
+      shell: bash
+      env:
+        INPUT_TARGET: ${{ inputs.target }}
+        WORKFLOW_REF: ${{ github.workflow_ref }}
+      run: |
+        set -euo pipefail
+
+        # Default target: ghcr.io/<owner>/<repo> — NO ":<version>" suffix;
+        # `milpa publish` appends the tag internally (PublishTarget.tag).
+        if [[ -z "${INPUT_TARGET}" ]]; then
+          target="ghcr.io/${{ github.repository }}"
+        else
+          target="${INPUT_TARGET}"
+        fi
+        # Lowercase — GHCR (and OCI generally) rejects uppercase paths.
+        target=$(echo "${target}" | tr '[:upper:]' '[:lower:]')
+        echo "target=${target}" >> "$GITHUB_OUTPUT"
+
+        # cosign keyless signer identity = the workflow that actually runs
+        # `cosign sign` (invoked internally by `milpa publish`, below).
+        # Because THIS is a composite action (runs INSIDE the caller's own
+        # job, not a separate `jobs:` entry), the ambient OIDC token's
+        # `job_workflow_ref` claim already IS the caller's own top-level
+        # workflow path — unlike the now-retired publish.yaml reusable
+        # workflow, where job_workflow_ref pointed at publish.yaml itself.
+        #
+        # This derivation mirrors publish.yaml's identical "Compute
+        # registry ref + signer identity" step (#30: self-derive from the
+        # OIDC token rather than hardcode, so a fork needs no
+        # find/replace) verbatim, EXCEPT the fallback: publish.yaml's
+        # fallback was tianguis's own reusable-workflow path (correct
+        # there, since a reusable workflow's job_workflow_ref and
+        # `github.workflow_ref` context genuinely diverge); here the
+        # fallback is `github.workflow_ref` directly, which in a composite
+        # action already equals the caller's own job_workflow_ref — so in
+        # practice the curl+JWT-decode branch below and this fallback
+        # should always agree. The decode is kept anyway as defense in
+        # depth (it reads the claim GitHub's OIDC service actually signed,
+        # rather than trusting the `github.workflow_ref` context
+        # expression) — falling back to the same value only if the OIDC
+        # lookup/decode fails for any reason. Signer derivation must never
+        # break a publish.
+        DEFAULT_SIGNER="https://github.com/${WORKFLOW_REF%@*}"
+        signer="$DEFAULT_SIGNER"
+        if [[ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" && -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
+          tok=$(curl -sf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sigstore" | jq -r '.value // empty' || true)
+          if [[ -n "$tok" ]]; then
+            # Decode the JWT payload (2nd segment, base64url) and read the claim.
+            payload=$(echo "$tok" | cut -d. -f2)
+            case $(( ${#payload} % 4 )) in 2) payload="${payload}==";; 3) payload="${payload}=";; esac
+            claim=$(echo "$payload" | tr '_-' '/+' | base64 -d 2>/dev/null \
+              | jq -r '.job_workflow_ref // empty' 2>/dev/null || true)
+            if [[ -n "$claim" ]]; then
+              signer="https://github.com/${claim%@*}"
+            fi
+          fi
+        fi
+        echo "Resolved cosign signer identity: ${signer}"
+        echo "signed_by=${signer}" >> "$GITHUB_OUTPUT"
+
+    # NO env override here (deliberately). cosign keyless (invoked
+    # internally by `milpa publish`'s make_cosign_sign) mints its Fulcio
+    # OIDC token by calling ACTIONS_ID_TOKEN_REQUEST_URL with the AMBIENT
+    # ACTIONS_ID_TOKEN_REQUEST_TOKEN the runner injects whenever the
+    # calling job has `id-token: write` — that ambient token flows through
+    # to this composite-action step automatically. The now-retired
+    # publish.yaml overrode ACTIONS_ID_TOKEN_REQUEST_TOKEN with
+    # `github.token` here; that was a latent bug (github.token is NOT a
+    # valid bearer for the OIDC token endpoint → cosign keyless would fail
+    # to obtain a cert) which never surfaced because no real author publish
+    # ever ran through it. Do NOT reintroduce it. GHCR push/pull auth is
+    # already established by the earlier `oras login ghcr.io` step, so this
+    # step needs no github.token either.
+    - name: milpa publish (pack + push + sign + verify)
+      shell: bash
+      run: |
+        set -euo pipefail
+        milpa publish \
+          --name="${{ inputs.name }}" \
+          --version="${{ inputs.version }}" \
+          --target="${{ steps.vars.outputs.target }}" \
+          --output="${RUNNER_TEMP}/receipt.json"
+
+    - name: Read publish receipt
+      id: receipt
+      shell: bash
+      run: |
+        set -euo pipefail
+        CONTENT_HASH=$(jq -r '.content_hash // empty' "${RUNNER_TEMP}/receipt.json")
+        OCI_REF=$(jq -r '.oci_ref // empty' "${RUNNER_TEMP}/receipt.json")
+        if [[ -z "$CONTENT_HASH" ]]; then
+          echo "::error::milpa publish's receipt has no content_hash (${RUNNER_TEMP}/receipt.json)"
+          exit 1
+        fi
+        if [[ -z "$OCI_REF" ]]; then
+          echo "::error::milpa publish's receipt has no oci_ref (${RUNNER_TEMP}/receipt.json)"
+          exit 1
+        fi
+        printf '%s<<%s\n%s\n%s\n' "content-hash" "EOF_CONTENT_HASH" "$CONTENT_HASH" "EOF_CONTENT_HASH" >> "$GITHUB_OUTPUT"
+        printf '%s<<%s\n%s\n%s\n' "oci-ref" "EOF_OCI_REF" "$OCI_REF" "EOF_OCI_REF" >> "$GITHUB_OUTPUT"
 
     - name: Compute content_hash, build + sign the §1 statement
       id: mint
       shell: bash
       env:
-        SOURCE_PATH: ${{ inputs.source-path }}
-        PKG_NAME:    ${{ inputs.name }}
-        PKG_VERSION: ${{ inputs.version }}
-        # The calling repo's OWN workflow identity — correct here (unlike
-        # a reusable workflow) precisely because this step runs inside the
-        # caller's own job. THIS is the Model-3 trust anchor (rfc-
-        # attestation-delivery.handoff.md S8 Layer 2c): it becomes both the
-        # statement's `signed_by` predicate field AND — via `tianguis
-        # derive-namespace` below — the namespace the statement's purl
-        # binds to. It MUST be the exact string commit-entry.yaml's
-        # verify_entry_bundle.py extracts from this bundle's own signing
-        # certificate at admission time (Fulcio stamps the cert SAN from
-        # this same ambient OIDC token), which is why this action derives
-        # the namespace from THIS value and never from an upstream/OCI repo
-        # URL (a URL-derived namespace could silently diverge from the
-        # signer's real identity — e.g. a fork, a renamed org, or a repo
-        # whose upstream URL doesn't match its own GH Actions path).
-        SIGNED_BY: "https://github.com/${{ github.workflow_ref }}"
+        PKG_NAME:     ${{ inputs.name }}
+        PKG_VERSION:  ${{ inputs.version }}
+        CONTENT_HASH: ${{ steps.receipt.outputs.content-hash }}
+        # The calling repo's OWN workflow identity (see the "vars" step
+        # above) — the Model-3 trust anchor (rfc-attestation-delivery.
+        # handoff.md S8 Layer 2c): it becomes both the statement's
+        # `signed_by` predicate field AND — via `tianguis derive-namespace`
+        # below — the namespace the statement's purl binds to. It MUST be
+        # the exact string commit-entry.yaml's verify_entry_bundle.py
+        # extracts from this bundle's own signing certificate at admission
+        # time (Fulcio stamps the cert SAN from this same ambient OIDC
+        # token), which is why this is derived from the SAME signed_by the
+        # OCI artifact itself is signed under (both come from this job's
+        # identity) and never from an upstream/OCI repo URL.
+        SIGNED_BY: ${{ steps.vars.outputs.signed_by }}
       run: |
         set -euo pipefail
         TIANGUIS_BIN="${RUNNER_TEMP}/tianguis"
-        export PATH="${RUNNER_TEMP}:${PATH}"
-
-        # milpa hash: content identity over the EXACT tree that gets/got
-        # OCI-packed — no CAS admission, no lockfile writes (A0-cmd).
-        # `uv run` syncs the project's venv on first use — no separate
-        # `uv sync` step, matching commit-entry.yaml's own convention.
-        CONTENT_HASH=$(uv run --project "${MILPA_TOOL}/impls/python" \
-          python -m milpa hash "local=${SOURCE_PATH}")
 
         # Derive namespace from THIS action's own SIGNED_BY (the author's
         # per-repo job identity) via the Layer 2a single-source-of-truth
@@ -198,8 +353,6 @@ runs:
         # bundle. Client and server MUST agree byte-for-byte here, or the
         # §1 subject-name binding check rejects every publish (see this
         # action's header comment + rfc-attestation-delivery.handoff.md).
-        # Deliberately NOT derived from an upstream/OCI repo URL — that can
-        # diverge from the signer's real identity.
         NAMESPACE=$("$TIANGUIS_BIN" derive-namespace --signed-by="$SIGNED_BY")
         if [[ -z "$NAMESPACE" ]]; then
           echo "::error::could not derive namespace from signed-by=${SIGNED_BY}"
@@ -208,7 +361,6 @@ runs:
 
         # Normalize the version identically to addentry.nim's
         # normalizeVersion: a leading 'v' followed by a digit is stripped.
-        # MUST mirror that proc exactly — see its doc comment.
         VERSION="$PKG_VERSION"
         if [[ "$VERSION" =~ ^v[0-9] ]]; then
           VERSION="${VERSION#v}"
@@ -232,8 +384,90 @@ runs:
 
         BUNDLE_B64=$(base64 -w0 bundle.json)
 
-        {
-          printf '%s<<%s\n%s\n%s\n' "entry-bundle-b64" "EOF_BUNDLE" "$BUNDLE_B64" "EOF_BUNDLE"
-          echo "content-hash=${CONTENT_HASH}"
-          echo "namespace=${NAMESPACE}"
-        } >> "$GITHUB_OUTPUT"
+        printf '%s<<%s\n%s\n%s\n' "entry-bundle-b64" "EOF_BUNDLE" "$BUNDLE_B64" "EOF_BUNDLE" >> "$GITHUB_OUTPUT"
+
+    # Dry-run semantics: `inputs.dry-run` does NOT get passed to `milpa
+    # publish` above — milpa always really packs+pushes+signs here (its
+    # own `--dry-run` produces no oci_ref, which this action's dispatch
+    # POST requires). Instead, `dry-run: true` sets `dry_run: true` in the
+    # DISPATCH body below — dispatch's handler runs its OIDC + identity
+    # checks but skips triggering commit-entry.yaml (no index/ledger
+    # commit). So a CI "dry run" still lands a real, cosign-signed OCI
+    # artifact in the registry + a real Rekor entry, which is exactly what
+    # you want to inspect before going live — see docs/adoption/github.md.
+    - name: Dispatch publish request
+      shell: bash
+      env:
+        DISPATCH_URL: ${{ inputs.dispatch-url }}
+        PKG_NAME:     ${{ inputs.name }}
+        PKG_VERSION:  ${{ inputs.version }}
+        OCI_REF:      ${{ steps.receipt.outputs.oci-ref }}
+        REPO_URL:     https://github.com/${{ github.repository }}
+        SIGNED_BY:    ${{ steps.vars.outputs.signed_by }}
+        BUNDLE_B64:   ${{ steps.mint.outputs.entry-bundle-b64 }}
+        DRY_RUN:      ${{ inputs.dry-run }}
+      run: |
+        set -euo pipefail
+
+        # Bearer token for dispatch's own OIDC verification. dispatch's
+        # multi-issuer verifier (dispatch/function.go's issuerCatalog)
+        # accepts audience "sigstore" ONLY, for both its "github" and
+        # "gitlab" issuer configs — its own comment explains why: "the aud
+        # 'sigstore' is the standard audience used by cosign keyless;
+        # reusing it means authors don't have to mint a second token just
+        # for the dispatch call." Mint a fresh one here (audience=sigstore)
+        # via the SAME ambient-OIDC mechanism the "vars" step above uses.
+        if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" || -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
+          echo "::error::no ambient OIDC token available for the dispatch POST (missing 'id-token: write' in the calling job?)"
+          exit 1
+        fi
+        DISPATCH_TOKEN=$(curl -sf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+          "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sigstore" | jq -r '.value // empty')
+        if [[ -z "$DISPATCH_TOKEN" ]]; then
+          echo "::error::failed to mint an OIDC token (audience=sigstore) for the dispatch POST"
+          exit 1
+        fi
+
+        DRY_RUN_JSON="false"
+        if [[ "${DRY_RUN}" == "true" ]]; then
+          DRY_RUN_JSON="true"
+        fi
+
+        # dispatch/handler.go's PublishRequest field names, exactly:
+        # name, version, oci_ref, provider, repo_url, signed_by,
+        # entry_bundle_b64 (optional), dry_run (optional). Built via
+        # `jq -n` (never string concatenation) so a value containing a
+        # `"` can't inject extra JSON fields.
+        BODY=$(jq -n \
+          --arg name             "$PKG_NAME" \
+          --arg version          "$PKG_VERSION" \
+          --arg oci_ref          "$OCI_REF" \
+          --arg provider         "github" \
+          --arg repo_url         "$REPO_URL" \
+          --arg signed_by        "$SIGNED_BY" \
+          --arg entry_bundle_b64 "$BUNDLE_B64" \
+          --argjson dry_run      "$DRY_RUN_JSON" \
+          '{
+            name:             $name,
+            version:          $version,
+            oci_ref:          $oci_ref,
+            provider:         $provider,
+            repo_url:         $repo_url,
+            signed_by:        $signed_by,
+            entry_bundle_b64: $entry_bundle_b64,
+            dry_run:          $dry_run
+          }')
+
+        HTTP_CODE=$(curl -sS -o /tmp/dispatch-response.json -w '%{http_code}' \
+          -X POST "${DISPATCH_URL}/v1/publish" \
+          -H "Authorization: Bearer ${DISPATCH_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d "$BODY")
+
+        echo "dispatch response (HTTP ${HTTP_CODE}):"
+        cat /tmp/dispatch-response.json || true
+
+        if (( HTTP_CODE < 200 || HTTP_CODE >= 300 )); then
+          echo "::error::dispatch POST to ${DISPATCH_URL}/v1/publish failed (HTTP ${HTTP_CODE})"
+          exit 1
+        fi
