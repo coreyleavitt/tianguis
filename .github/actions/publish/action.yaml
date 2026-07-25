@@ -119,7 +119,7 @@ inputs:
       --provider --repo-url --signed-by --dispatch-url` flags are DELETED
       as of this commit — do not pin to anything older).
     required: false
-    default: "a0890ade2d1097f985f1fdb778dd97dc77af9142"
+    default: "92d18abd0b55ab58c87f619556374f4bd58a2c22"
   milpa-git-read-pat:
     description: >-
       Fine-grained PAT with read access to coreyleavitt/milpa (temporary,
