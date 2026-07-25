@@ -28,6 +28,16 @@ on:
       signed_by:
         description: "Expected cosign signer identity regexp prefix (used in cosign verify)"
         required: true
+      entry_bundle_b64:
+        description: >-
+          Author's per-entry Sigstore attestation bundle (base64), forwarded
+          by the dispatch handler (S8/tianguis#42). Empty = no bundle
+          (pre-S8/manual-recovery behavior). The workflow body already
+          consumes github.event.inputs.entry_bundle_b64; this declaration was
+          missing, so the author-dispatch trigger 422'd until the first real
+          author publish surfaced it.
+        required: false
+        default: ""
       # NOTE: `namespace` input removed in P2.1 — the namespace is now derived
       # inside the binary from the verified OIDC SAN extracted in the cosign step.
 
