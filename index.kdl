@@ -8940,6 +8940,29 @@ package "nkdl" {
         }
     }
 }
+package "softlink" {
+    namespace "github.com/coreyleavitt"
+    upstream (url)"https://github.com/coreyleavitt/softlink"
+    authorized-signer "https://github.com/coreyleavitt/softlink/.github/workflows/tianguis-publish.yaml@refs/heads/main"
+    version "0.11.0" {
+        content_hash "dag-sha256:8ffc81bb57721da6871853d5c158c3db50935c72064715ffc6fc0536401b6417"
+        provenance {
+            kind "oci"
+            registry "ghcr.io"
+            repository "coreyleavitt/softlink"
+            digest "sha256:0392803ede29dc87d97cdd0fdeefc56a15fda0ad2603bcbc8a9820c9aad79707"
+        }
+        attestation "author-signed"
+        signed_by "https://github.com/coreyleavitt/softlink/.github/workflows/tianguis-publish.yaml@refs/heads/main"
+        published_at "2026-07-25T23:22:30Z"
+        rekor {
+            uuid "108e9186e8c5677acf1d869a6723cc648be3792e1d16f73e6e87d60d7e6d4a0a2f3be354a3563db6"
+            log_index "2254446795"
+            integrated_time "1785021689"
+        }
+        bundle sha256="6ca658bbe26e7d68959ae16ef8518d2c55006e468730dc72af6035984ded2d36"
+    }
+}
 package "pipe" {
     namespace "github.com/cosmictoast"
     upstream (url)"https://github.com/CosmicToast/pipe"
