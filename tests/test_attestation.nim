@@ -145,3 +145,49 @@ suite "extractStatementSubject":
   test "a JSON array (not object) at top level is Err":
     let r = extractStatementSubject("""[1, 2, 3]""")
     check r.isErr
+
+suite "buildIndexStatement":
+  ## The whole-index counterpart to `buildEntryStatement` (milpa
+  ## `docs/rfc-registry-trust-federation.md` §4/§7.3 — TNG-INDEX-BUNDLE-
+  ## MISSING). milpa's whole-index verifier
+  ## (`impls/python/milpa/index_trust.py::_check_dsse_payload_digest`)
+  ## checks ONLY `subject[0].digest.sha256`; `name` and the predicate are
+  ## never inspected, so only the digest is a byte-format contract.
+
+  test "subject[0].digest.sha256 is exactly the caller-supplied digest, unmodified":
+    let hexDigest = "a".repeat(64)
+    let stmt = buildIndexStatement(hexDigest, "https://vendor-bot.example/identity")
+    let j = parseJson(stmt)
+    check j["subject"][0]["digest"]["sha256"].getStr == hexDigest
+
+  test "no dag-sha256 scheme stripping (unlike buildEntryStatement) — a scheme-prefixed" &
+      " input is passed through verbatim, not silently reinterpreted":
+    let withScheme = "dag-sha256:" & "b".repeat(64)
+    let stmt = buildIndexStatement(withScheme, "https://vendor-bot.example/identity")
+    let j = parseJson(stmt)
+    check j["subject"][0]["digest"]["sha256"].getStr == withScheme
+
+  test "subject[0].name is the descriptive 'index.kdl' literal":
+    let stmt = buildIndexStatement("c".repeat(64), "https://vendor-bot.example/identity")
+    let j = parseJson(stmt)
+    check j["subject"][0]["name"].getStr == "index.kdl"
+
+  test "statement is a valid in-toto Statement: _type + single-element subject array":
+    let stmt = buildIndexStatement("d".repeat(64), "https://vendor-bot.example/identity")
+    let j = parseJson(stmt)
+    check j["_type"].getStr == "https://in-toto.io/Statement/v1"
+    check j["subject"].kind == JArray
+    check j["subject"].len == 1
+    check j.hasKey("predicateType")
+    check j.hasKey("predicate")
+
+  test "predicate.signed_by carries the caller-supplied identity":
+    let stmt = buildIndexStatement("e".repeat(64), "https://github.com/coreyleavitt/tianguis/.github/workflows/attest-index.yaml@refs/heads/main")
+    let j = parseJson(stmt)
+    check j["predicate"]["signed_by"].getStr ==
+      "https://github.com/coreyleavitt/tianguis/.github/workflows/attest-index.yaml@refs/heads/main"
+
+  test "determinism: two calls with identical inputs produce byte-identical output":
+    let a = buildIndexStatement("f".repeat(64), "https://vendor-bot.example/identity")
+    let b = buildIndexStatement("f".repeat(64), "https://vendor-bot.example/identity")
+    check a == b

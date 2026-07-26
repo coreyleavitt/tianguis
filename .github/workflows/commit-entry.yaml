@@ -48,6 +48,13 @@ permissions:
 jobs:
   add-entry:
     runs-on: ubuntu-latest
+    # Exposed so the attest-index job below can gate on "did this publish
+    # actually commit+push a new index.kdl" (rfc-registry-trust-federation.md
+    # §4/§7.3 — TNG-INDEX-BUNDLE-MISSING). `changed`/`sha` mirror the
+    # "Commit + push if changed" step's own $GITHUB_OUTPUT values.
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+      sha:     ${{ steps.commit.outputs.sha }}
     steps:
       - uses: actions/checkout@v6
 
@@ -505,11 +512,8 @@ jobs:
           echo "Rekor bundle written to commit-attest.bundle (subject=predicate.json; predicate names oci_ref=${OCI_REF})"
 
       - name: Commit + push if changed
+        id: commit
         run: |
-          if [[ -z "$(git status --porcelain)" ]]; then
-            echo "no changes (already up-to-date)"
-            exit 0
-          fi
           git config user.name "tianguis-bot"
           git config user.email "tianguis-bot@users.noreply.github.com"
           git add index.kdl index.json
@@ -517,6 +521,16 @@ jobs:
           # content-addressed tree milpa fetches <hex>.bundle files from.
           # Absent when this publish carried no entry_bundle_b64.
           [ -d attestation ] && git add attestation/ || true
+          # Decide "no changes" from the STAGED index/json/attestation only —
+          # NOT `git status --porcelain`, which also sees this job's own
+          # `milpa fetch`/`milpa hash` re-lock churn on milpa.lock and would
+          # otherwise proceed into an empty `git commit` (same latent bug
+          # already fixed in vendor.yaml/backfill-attestation.yaml).
+          if git diff --cached --quiet; then
+            echo "no changes (already up-to-date)"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           git commit -m "publish: ${{ steps.payload.outputs.name }} ${{ steps.payload.outputs.version }} (run:${{ github.run_id }})"
           # Rebase before push — another commit (vendor pass, parallel
           # publish, etc.) may have landed during this workflow.
@@ -524,8 +538,37 @@ jobs:
           # "Add entry") re-lock milpa.lock and leave it dirty, which would
           # otherwise abort the rebase with "cannot pull with rebase: You
           # have unstaged changes" — the same fix vendor.yaml already carries.
+          # Track push success explicitly (not just `break` on the retry
+          # loop): the attest-index job below trusts `outputs.changed` to
+          # mean "main now has this commit" — a silently-lost push would
+          # otherwise make attest-index sign a bundle for a commit main
+          # never received.
+          pushed=false
           for i in 1 2 3; do
-            git pull --rebase --autostash origin main && git push && break
+            if git pull --rebase --autostash origin main && git push; then
+              pushed=true; break
+            fi
             echo "push attempt $i failed; will retry"
             sleep $((i * 2))
           done
+          if [[ "$pushed" != true ]]; then
+            echo "::error::commit-entry push failed after 3 attempts"; exit 1
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  # rfc-registry-trust-federation.md §4/§7.3 (TNG-INDEX-BUNDLE-MISSING) —
+  # every author publish that commits index.kdl must re-sign the whole-index
+  # bundle milpa's index-trust verifier fetches at `index.kdl.bundle`, or
+  # that bundle's subject digest goes stale the moment this publish lands.
+  # Separate job (not inlined above) so its OIDC token's `job_workflow_ref`
+  # — the Fulcio cert SAN milpa checks — is `attest-index.yaml`, the SAME
+  # identity `vendor.yaml`'s own call into this reusable workflow produces,
+  # regardless of which top-level workflow triggered it.
+  attest-index:
+    needs: add-entry
+    if: needs.add-entry.outputs.changed == 'true'
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/attest-index.yaml

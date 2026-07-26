@@ -12,6 +12,13 @@ permissions:
 jobs:
   vendor:
     runs-on: ubuntu-latest
+    # Exposed so the attest-index job below can gate on "did this pass
+    # actually commit+push a new index.kdl" (rfc-registry-trust-federation.md
+    # §4/§7.3 — TNG-INDEX-BUNDLE-MISSING). `changed`/`sha` mirror the
+    # "Commit + push changes" step's own $GITHUB_OUTPUT values.
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+      sha:     ${{ steps.commit.outputs.sha }}
     steps:
       - uses: actions/checkout@v6
 
@@ -231,3 +238,20 @@ jobs:
             --bundle vendor-attest.bundle \
             index.kdl
           echo "Rekor bundle written to vendor-attest.bundle"
+
+  # rfc-registry-trust-federation.md §4/§7.3 (TNG-INDEX-BUNDLE-MISSING) —
+  # every commit to index.kdl must re-sign the whole-index bundle milpa's
+  # index-trust verifier fetches at `index.kdl.bundle`, or that bundle's
+  # subject digest goes stale the moment this pass changes index.kdl. Runs
+  # as a separate job (not inlined above) specifically so its OIDC token's
+  # `job_workflow_ref` — and therefore the Fulcio cert SAN milpa checks — is
+  # `attest-index.yaml`, the SAME identity `commit-entry.yaml`'s own call
+  # into this reusable workflow produces, regardless of which top-level
+  # workflow triggered it.
+  attest-index:
+    needs: vendor
+    if: needs.vendor.outputs.changed == 'true'
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/attest-index.yaml

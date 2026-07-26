@@ -56,6 +56,12 @@ proc usage(): int =
   echo "    --namespace --name --version --content-hash --attestation-kind --signed-by"
   echo "    (single source of truth for the bytes scripts/sign_statement.py signs;"
   echo "     never re-derive this statement in Python)"
+  echo "  attest-index-statement  print the whole-index in-toto statement JSON (subject ="
+  echo "                          index.kdl); consumed by .github/workflows/attest-index.yaml"
+  echo "    --content-hash --signed-by"
+  echo "    (--content-hash is the sha256 hex of the raw index.kdl bytes, no scheme prefix;"
+  echo "     single source of truth for the bytes scripts/sign_statement.py signs into"
+  echo "     index.kdl.bundle — the fix for TNG-INDEX-BUNDLE-MISSING)"
   echo "  show <url>          derive and print the namespace (host/org) for an upstream URL"
   echo "  derive-namespace    print the namespace (host/org) for a --signed-by OIDC SAN (S8 Layer 2a)"
   echo "    --signed-by=<url-or-SAN>"
@@ -97,6 +103,20 @@ proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
         quit(4)
       else:
         stderr.writeLine("tianguis add-entry: unknown option --" & key)
+    of cmdShortOption: discard
+    of cmdEnd: discard
+
+proc parseAttestIndexStatementArgs(parser: var OptParser): AttestIndexStatementArgs =
+  ## Walk the remaining options; populate AttestIndexStatementArgs.
+  for kind, key, val in parser.getopt():
+    case kind
+    of cmdArgument: discard
+    of cmdLongOption:
+      case key
+      of "content-hash": result.contentHash = val
+      of "signed-by":     result.signedBy = val
+      else:
+        stderr.writeLine("tianguis attest-index-statement: unknown option --" & key)
     of cmdShortOption: discard
     of cmdEnd: discard
 
@@ -216,6 +236,11 @@ proc main(): int =
     var sub = initOptParser()
     let args = parseAttestStatementArgs(sub)
     return cmdAttestStatement(args)
+  of "attest-index-statement":
+    # Re-parse for the subcommand's options (parseopt was consumed above).
+    var sub = initOptParser()
+    let args = parseAttestIndexStatementArgs(sub)
+    return cmdAttestIndexStatement(args)
   of "derive-namespace":
     # Re-parse for the subcommand's options (parseopt was consumed above).
     var sub = initOptParser()

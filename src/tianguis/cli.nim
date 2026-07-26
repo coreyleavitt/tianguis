@@ -56,6 +56,47 @@ proc cmdAttestStatement*(args: AttestStatementArgs): int =
     stderr.writeLine("tianguis: attest-statement: " & r.stderr)
   r.code
 
+type
+  AttestIndexStatementArgs* = object
+    ## Args for `tianguis attest-index-statement` — the whole-index
+    ## counterpart to `attest-statement` (milpa `docs/rfc-registry-trust-
+    ## federation.md` §4/§7.3 tianguis-side bundle-delivery gap,
+    ## TNG-INDEX-BUNDLE-MISSING). Only two fields: unlike `attest-statement`,
+    ## this command does no filesystem I/O — the caller (the `attest-index`
+    ## reusable workflow) has already computed sha256(index.kdl) itself, so
+    ## this stays pure like its per-entry sibling.
+    contentHash*: string  ## sha256 hex of the raw `index.kdl` bytes (no scheme prefix)
+    signedBy*:    string
+
+proc attestIndexStatementResult*(
+    args: AttestIndexStatementArgs
+): tuple[code: int, stdout, stderr: string] =
+  ## Pure core for `tianguis attest-index-statement`.
+  ## Returns (exit code, stdout text, stderr text) without any I/O side
+  ## effects. `cmdAttestIndexStatement` wraps this with actual echo/writeLine.
+  ##
+  ## The single source-of-truth CLI entry point for the whole-index in-toto
+  ## statement bytes: it does nothing but validate args and delegate to
+  ## `buildIndexStatement` (attestation.nim), so `scripts/sign_statement.py`
+  ## (the same CI-only signing seam the per-entry path uses) never re-derives
+  ## the statement in Python — it shells out here for the exact bytes to sign.
+  if args.contentHash.len == 0 or args.signedBy.len == 0:
+    return (code: 4, stdout: "", stderr:
+      "missing required argument(s); need --content-hash --signed-by")
+  let stmt = buildIndexStatement(args.contentHash, args.signedBy)
+  (code: 0, stdout: stmt, stderr: "")
+
+proc cmdAttestIndexStatement*(args: AttestIndexStatementArgs): int =
+  ## `tianguis attest-index-statement`: print the whole-index in-toto
+  ## Statement JSON to stdout, or a clear error to stderr with a non-zero
+  ## exit code.
+  let r = attestIndexStatementResult(args)
+  if r.code == 0:
+    echo r.stdout
+  else:
+    stderr.writeLine("tianguis: attest-index-statement: " & r.stderr)
+  r.code
+
 proc deriveNamespaceResult*(signedBy: string): tuple[code: int, stdout, stderr: string] =
   ## Pure core for `tianguis derive-namespace --signed-by=<url-or-SAN>`.
   ## Returns (exit code, stdout text, stderr text) without any I/O side

@@ -1,0 +1,156 @@
+name: attest-index
+
+# Reusable workflow (rfc-registry-trust-federation.md §3.2/§4/§7.3,
+# TNG-INDEX-BUNDLE-MISSING) — signs the CURRENT `index.kdl` on `main` into
+# `index.kdl.bundle`, the whole-index Sigstore attestation milpa's
+# index-trust verifier fetches from the raw path alongside `index.kdl`.
+#
+# WHY A REUSABLE `workflow_call` WORKFLOW (not a composite action, not
+# inlined per-caller): GitHub's Actions OIDC token records `job_workflow_ref`
+# as the path of THIS workflow file for any job that invokes it via
+# `uses: ./.github/workflows/attest-index.yaml`, regardless of which
+# top-level workflow (`vendor.yaml`'s daily cron, `commit-entry.yaml`'s
+# per-author publish) did the calling. That gives every whole-index bundle
+# the SAME Fulcio cert SubjectAltName —
+# `https://github.com/coreyleavitt/tianguis/.github/workflows/attest-index.yaml@refs/heads/main`
+# — which is what milpa's `DEFAULT_INDEX_SIGNER` now pins to
+# (`impls/python/milpa/index_trust.py`, `impls/rust/crates/milpa-core/src/index_trust.rs`).
+# A composite action would NOT give this property: composite actions run
+# inside the CALLER's job, so the SAN would still be `vendor.yaml` or
+# `commit-entry.yaml` depending on who invoked it — exactly the multi-signer
+# problem this workflow exists to collapse into one identity.
+#
+# `index.kdl` is mutated by (at least) two independent workflows — the daily
+# `vendor.yaml` cron and every `commit-entry.yaml` author-publish — so EVERY
+# commit to `index.kdl` must be followed by a call into this workflow, or the
+# committed bundle's `subject[0].digest.sha256` goes stale the moment the
+# next mutation lands (the very next `milpa fetch` would then see
+# TNG-INDEX-DIGEST-MISMATCH, not just a missing bundle).
+#
+# Uses `scripts/sign_statement.py` (the sigstore-python library seam already
+# validated for per-entry bundles, tianguis#42), NOT `cosign attest-blob` —
+# the CLI writes the legacy cosign bundle schema
+# (`base64Signature`/`Cert`/`Bundle.Payload`), not the Sigstore `BUNDLE_0_3`
+# protobuf-JSON shape (`verificationMaterial.tlogEntries`/`dsseEnvelope`)
+# milpa's `Bundle.from_json` parses.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write   # commit + push index.kdl.bundle
+  id-token: write    # sigstore keyless: fetch Fulcio cert under THIS workflow's OIDC identity
+
+jobs:
+  attest-index:
+    runs-on: ubuntu-latest
+    steps:
+      # `ref: main` — the caller's own commit job must complete (`needs:`)
+      # and push BEFORE this job starts, so this checkout picks up the
+      # just-committed index.kdl, not a stale pre-push snapshot from the
+      # top-level workflow run's original trigger ref.
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+
+      # Rewrite every github.com URL form to authenticated https using a
+      # fine-grained PAT scoped to milpa + nimkdl read-only — same pattern
+      # as vendor.yaml/reindex.yaml/commit-entry.yaml (building the tianguis
+      # CLI needs milpa cloned, and milpa's own subprocess clones fetch
+      # nimkdl).
+      - name: Configure git auth for private deps
+        env:
+          PAT: ${{ secrets.TIANGUIS_GIT_READ_PAT }}
+        run: |
+          git config --global url."https://x-access-token:${PAT}@github.com/".insteadOf "https://github.com/"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "ssh://git@github.com/"
+
+      - name: Clone milpa
+        run: git clone --depth 1 https://github.com/coreyleavitt/milpa.git .milpa-tool
+
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: "2.2.0"
+
+      - name: Set up uv (for milpa)
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: false
+
+      - name: Install milpa deps
+        working-directory: .milpa-tool/impls/python
+        run: uv sync
+
+      - name: Expose milpa on PATH
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          cat > "$HOME/.local/bin/milpa" <<'SH'
+          #!/usr/bin/env bash
+          exec uv run --project "$GITHUB_WORKSPACE/.milpa-tool/impls/python" python -m milpa "$@"
+          SH
+          chmod +x "$HOME/.local/bin/milpa"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch deps via milpa
+        run: uv run --project .milpa-tool/impls/python python -m milpa fetch
+
+      - name: Build tianguis CLI
+        run: nim c -d:release -d:ssl -o:tianguis src/tianguis_cli.nim
+
+      - name: Set up Python (for sigstore signing)
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install sigstore
+        run: pip install -r scripts/requirements.txt
+
+      # Build the whole-index in-toto Statement (subject = index.kdl,
+      # digest.sha256 = sha256 of the exact bytes just checked out) and sign
+      # it under this job's own ambient GH-Actions OIDC identity. The digest
+      # is computed HERE, from the checked-out file — never passed in from
+      # the caller — so the signed subject can only ever describe the
+      # index.kdl this job actually has on disk.
+      - name: Sign whole-index attestation bundle
+        run: |
+          content_hash=$(sha256sum index.kdl | cut -d' ' -f1)
+          ./tianguis attest-index-statement \
+            --content-hash="$content_hash" \
+            --signed-by="https://github.com/coreyleavitt/tianguis (attest-index workflow, GH-OIDC)" \
+            | python3 scripts/sign_statement.py > index.kdl.bundle.new
+          mv index.kdl.bundle.new index.kdl.bundle
+
+      - name: Commit + push index.kdl.bundle
+        run: |
+          git add index.kdl.bundle
+          # A fresh Sigstore signature is bound to a new ephemeral key +
+          # Rekor entry + timestamp every run, so in practice this is never
+          # a no-op — but guard anyway rather than assume, mirroring the
+          # staged-diff check the other index-mutating workflows use (never
+          # `git status --porcelain`, which mis-fires on unrelated milpa.lock
+          # churn from the "Fetch deps via milpa" step above).
+          if git diff --cached --quiet; then
+            echo "index.kdl.bundle unchanged; nothing to commit"
+            exit 0
+          fi
+          git config user.name "milpa-bot"
+          git config user.email "milpa-bot@users.noreply.github.com"
+          git commit -m "chore(attest-index): sign whole-index attestation bundle"
+          # Rebase before push: the caller's own commit landed moments ago,
+          # and another workflow may push again while this job runs.
+          # --autostash: the "Fetch deps via milpa" step re-locks milpa.lock
+          # and leaves it dirty, which would otherwise abort the rebase.
+          pushed=false
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin main && git push; then
+              pushed=true; break
+            fi
+            echo "push attempt $i failed; will retry"
+            sleep $((i * 2))
+          done
+          if [[ "$pushed" != true ]]; then
+            echo "::error::attest-index push failed after 3 attempts — index.kdl.bundle is now STALE relative to main's index.kdl (TNG-INDEX-DIGEST-MISMATCH risk) until the next successful run"
+            exit 1
+          fi

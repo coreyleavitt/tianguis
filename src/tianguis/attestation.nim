@@ -101,6 +101,48 @@ proc buildEntryStatement*(
 
   $statement
 
+proc buildIndexStatement*(digestSha256, signedBy: string): string =
+  ## Build the canonical in-toto Statement JSON for the WHOLE `index.kdl`
+  ## document — the payload that gets DSSE-enveloped and signed into
+  ## `index.kdl.bundle` (milpa `docs/rfc-registry-trust-federation.md` §4/
+  ## §7.3; tianguis-side cross-repo bundle-delivery gap, TNG-INDEX-BUNDLE-
+  ## MISSING).
+  ##
+  ## Unlike `buildEntryStatement`'s per-package subject, milpa's whole-index
+  ## verifier (`impls/python/milpa/index_trust.py::_check_dsse_payload_digest`,
+  ## mirrored in `index_trust.rs`) checks ONLY `subject[0].digest.sha256`
+  ## against `sha256(index_bytes)` — it never inspects `subject[0].name` or
+  ## the predicate contents. So `digestSha256` is the ONE load-bearing byte-
+  ## format contract here; the subject `name` ("index.kdl") and the
+  ## predicate fields are descriptive metadata only, matching the same
+  ## "predicate is never inspected" property `buildEntryStatement` documents
+  ## for the per-entry case.
+  ##
+  ## `digestSha256` is the caller's already-computed sha256 hex of the raw
+  ## `index.kdl` bytes — the whole-file digest, NOT a `content_hash`-shaped
+  ## value, so (unlike `buildEntryStatement`) no `dag-sha256:`-scheme
+  ## stripping applies; pass the bare 64-hex digest.
+  var subject = newJObject()
+  subject["name"] = %"index.kdl"
+  var digest = newJObject()
+  digest["sha256"] = %digestSha256
+  subject["digest"] = digest
+
+  var predicate = newJObject()
+  predicate["attestation_kind"] = %"whole-index"
+  predicate["signed_by"] = %signedBy
+
+  var subjects = newJArray()
+  subjects.add(subject)
+
+  var statement = newJObject()
+  statement["_type"] = %"https://in-toto.io/Statement/v1"
+  statement["subject"] = subjects
+  statement["predicateType"] = %"https://tianguis.dev/attestation/index/v1"
+  statement["predicate"] = predicate
+
+  $statement
+
 proc extractStatementSubject*(statementJson: string): Result[StatementSubject, string] =
   ## Parse an in-toto Statement JSON — either this module's own
   ## `buildEntryStatement` output, or (S8) the byte-identical statement a CI
