@@ -109,7 +109,7 @@ jobs:
 
       - name: Set up Python (for sigstore signing)
         if: hashFiles('candidates.json') != ''
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 

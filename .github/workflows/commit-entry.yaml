@@ -305,7 +305,7 @@ jobs:
       # recovery callers).
       - name: Set up Python (for sigstore bundle verification)
         if: steps.payload.outputs.entry_bundle_b64 != ''
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
