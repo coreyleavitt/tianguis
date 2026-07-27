@@ -4817,6 +4817,23 @@ package "xml" {
         bundle sha256="e02906da35b3d7451c66747a59b39345ffc7281cc86b7153bdd08e60d39238c7"
     }
 }
+package "libGTK4" {
+    namespace "github.com/balans097"
+    upstream (url)"https://github.com/Balans097/libGTK4"
+    version "v1.3" {
+        content_hash "dag-sha256:789858740fdce2080b403ffb2d4fb32d1b4a2ccab4aa28665a9b1593a05f8294"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/Balans097/libGTK4"
+            ref "v1.3"
+            commit_sha "f836197cd4b7cabb8663a469530621c321270096"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-27T07:14:41Z"
+        bundle sha256="4bc83102db860c9071d3f33e596551adc3c16de9cf72fa4e3a739b6d952d67d7"
+    }
+}
 package "Phosphor" {
     namespace "github.com/barcharcraz"
     upstream (url)"https://github.com/barcharcraz/Phosphor"
@@ -35914,6 +35931,40 @@ package "flowworkrunner" {
         bundle sha256="91fbeb153a7fee3d8c088139c84d42ea141e798b157bac49448eab5ee5467a7a"
     }
 }
+package "koutendb" {
+    namespace "github.com/puffball1567"
+    upstream (url)"https://github.com/puffball1567/koutendb"
+    version "0.9.0" {
+        content_hash "dag-sha256:ab27ef56a85f95f9702b4c5970f28ede7055782625e30281da1bc22ed7ae2da1"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/puffball1567/koutendb"
+            ref "v0.9.0"
+            commit_sha "2de6a714cc36838d1c38889800e6048ac4ac5047"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-27T07:14:41Z"
+        bundle sha256="ccab262d145b1640a16d21897e505530eac9f1da7a44588cec246156f10577fd"
+    }
+}
+package "koutendb_nif" {
+    namespace "github.com/puffball1567"
+    upstream (url)"https://github.com/puffball1567/koutendb-nif"
+    version "0.1.0" {
+        content_hash "dag-sha256:a3e28876a025a4bafe895745cbfc1a8167c9cfa0b2a0a8434836dce622acc112"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/puffball1567/koutendb-nif"
+            ref "v0.1.0"
+            commit_sha "8f7fb68f2384d5c28586a1f89500899d3e7e22a2"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-27T07:14:41Z"
+        bundle sha256="9e05b87e9dacc66bda44535fc26fa67e232ff9bafc1fcb56a7afe6d4ecc6c37d"
+    }
+}
 package "nifkit" {
     namespace "github.com/puffball1567"
     upstream (url)"https://github.com/puffball1567/nifkit"
@@ -40865,6 +40916,19 @@ package "stew" {
 package "stint" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-stint"
+    version "0.9.0" {
+        content_hash "dag-sha256:c8822f7507132d52ba886858be82c2b94fa89d64b8edc95d05aec9efe79cb771"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-stint"
+            ref "v0.9.0"
+            commit_sha "273fcdfa8dce4ceb975b383ffafe5e79e82766e2"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-07-27T07:14:41Z"
+        bundle sha256="e95cc0291d39ea75872a09abe34ecedfe8a5b2ed439a83304ef7c006428fef84"
+    }
     version "0.8.2" {
         content_hash "dag-sha256:849da5c5ba5419077abfd428a598f2f923ae0bd9dd2dab101e37655819b76204"
         provenance {
