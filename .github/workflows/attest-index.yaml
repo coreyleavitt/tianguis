@@ -100,7 +100,7 @@ jobs:
         run: nim c -d:release -d:ssl -o:tianguis src/tianguis_cli.nim
 
       - name: Set up Python (for sigstore signing)
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
