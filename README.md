@@ -20,7 +20,7 @@ See [`docs/rfc-registry.md`](docs/rfc-registry.md) and the other `docs/rfc-*.md`
 
 ## License
 
-TBD.
+Apache 2.0.
 
 ---
 
