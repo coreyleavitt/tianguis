@@ -20,7 +20,7 @@ jobs:
       changed: ${{ steps.commit.outputs.changed }}
       sha:     ${{ steps.commit.outputs.sha }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Rewrite every github.com URL form to authenticated https using a
       # fine-grained PAT scoped to milpa + nimkdl read-only. This applies

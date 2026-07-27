@@ -56,7 +56,7 @@ jobs:
       changed: ${{ steps.commit.outputs.changed }}
       sha:     ${{ steps.commit.outputs.sha }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Configure git auth for private deps (milpa + nimkdl reads)
         env:

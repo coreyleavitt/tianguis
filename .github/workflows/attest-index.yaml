@@ -49,7 +49,7 @@ jobs:
       # and push BEFORE this job starts, so this checkout picks up the
       # just-committed index.kdl, not a stale pre-push snapshot from the
       # top-level workflow run's original trigger ref.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: main
 
