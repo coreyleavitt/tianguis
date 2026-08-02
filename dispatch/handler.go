@@ -20,15 +20,23 @@ import (
 // reasoning; serverless functions don't fit Sigstore's federation model
 // so the trust root lives in GH Actions instead.
 type PublishRequest struct {
-	Name     string `json:"name"`      // package name to publish under
-	Version  string `json:"version"`   // semver tag the author published (e.g. "v1.2.3")
-	OciRef   string `json:"oci_ref"`   // <registry>/<repo>@sha256:<digest>
-	Provider string `json:"provider"`  // "github" | "gitlab" | "codeberg" | ...
-	RepoURL  string `json:"repo_url"`  // URL of the source repo making the request
-	SignedBy string `json:"signed_by"` // OIDC identity that cosign-signed the artifact;
-	                                   // the commit workflow re-verifies this against
-	                                   // the actual cosign signature on the artifact
-	DryRun   bool   `json:"dry_run,omitempty"` // when true, run OIDC + identity checks
+	Name     string `json:"name"`     // package name to publish under
+	Version  string `json:"version"`  // semver tag the author published (e.g. "v1.2.3")
+	OciRef   string `json:"oci_ref"`  // <registry>/<repo>@sha256:<digest>
+	Provider string `json:"provider"` // "github" | "gitlab" | "codeberg" | ...
+	RepoURL  string `json:"repo_url"` // URL of the source repo making the request
+	// SourceURL (optional): the SOURCE git repo the artifact was PACKED
+	// from — milpa publish's receipt `source_url` field (resolved from the
+	// published tree's own `origin` remote, which may differ from RepoURL
+	// e.g. a monorepo publishing a subdirectory, or a mirror). Empty when
+	// the published repo has no `origin` remote configured. Pure
+	// passthrough, same discipline as EntryBundleB64 below — dispatch does
+	// not validate or cross-check it against anything.
+	SourceURL string `json:"source_url,omitempty"`
+	SignedBy  string `json:"signed_by"` // OIDC identity that cosign-signed the artifact;
+	                                    // the commit workflow re-verifies this against
+	                                    // the actual cosign signature on the artifact
+	DryRun    bool   `json:"dry_run,omitempty"` // when true, run OIDC + identity checks
 	                                            // but skip the workflow_dispatch (used for
 	                                            // author-side smoke testing)
 
@@ -154,6 +162,11 @@ func publishHandler(deps Dependencies) http.HandlerFunc {
 				"oci_ref":   req.OciRef,
 				"upstream":  req.RepoURL,
 				"signed_by": req.SignedBy,
+				// Pure passthrough, empty when milpa publish's receipt had no
+				// source_url (no `origin` remote on the published repo);
+				// commit-entry.yaml treats an empty value as "no source"
+				// (add-entry --source="" records no `source` child).
+				"source_url": req.SourceURL,
 				// S8 — pure passthrough, empty when the author didn't supply
 				// one; commit-entry.yaml treats an empty value as "no bundle"
 				// (pre-S8/manual-recovery behavior, unchanged).

@@ -107,6 +107,12 @@ proc formatProvenance(p: Provenance, indent: string): string =
     result.add(indent & "    registry \"" & kdlEscapeString(p.registry) & "\"\n")
     result.add(indent & "    repository \"" & kdlEscapeString(p.repository) & "\"\n")
     result.add(indent & "    digest \"" & kdlEscapeString(p.digest) & "\"\n")
+    if p.source.len > 0:
+      # Optional source git repo this OCI artifact was published from
+      # (milpa `publish --output`'s `source_url`, threaded through
+      # `add-entry --source`). Omitted when absent — same discipline as
+      # rekor/bundle above (no hollow field on the 2600+ existing entries).
+      result.add(indent & "    source (url)\"" & kdlEscapeString(p.source) & "\"\n")
   result.add(indent & "}\n")
 
 proc formatRequires(r: OrderedTable[string, string], indent: string): string =
@@ -194,6 +200,7 @@ const
     # union of all variant fields — strict-kind enforcement happens
     # post-discrimination
     "kind", "url", "ref", "commit_sha", "registry", "repository", "digest",
+    "source",
   ]
 
 # Bridge helpers — the canonical typed↔DOM escape-hatch pattern. The
@@ -237,6 +244,7 @@ proc parseProvenance(doc: KdlDoc, node: KdlNode): Result[Provenance, IdxError] =
       registry:   node.childText("registry"),
       repository: node.childText("repository"),
       digest:     node.childText("digest"),
+      source:     node.childText("source"),
     ))
   else:
     let anchor = node.child("kind")

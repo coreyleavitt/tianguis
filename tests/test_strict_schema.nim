@@ -45,6 +45,57 @@ package "x" {
     check parsed.isErr
     check parsed.getErr.code == iecUnknownNode
 
+  test "source is an accepted provenance child (not rejected as unknown)":
+    let src = """
+schema_version 1
+package "x" {
+    namespace "ns"
+    upstream "https://x"
+    version "0.1.0" {
+        content_hash "sha256:a"
+        provenance {
+            kind "oci"
+            registry "ghcr.io"
+            repository "x/y"
+            digest "sha256:b"
+            source (url)"https://github.com/x/y.git"
+        }
+        attestation "author-signed"
+        signed_by "https://github.com/x"
+        published_at "2026-01-01T00:00:00Z"
+    }
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isOk
+    check parsed.get.packages[0].versions[0].provenances[0].source ==
+      "https://github.com/x/y.git"
+
+  test "unrelated unknown child inside oci provenance is still rejected with IDX-NODE-UNKNOWN":
+    let src = """
+schema_version 1
+package "x" {
+    namespace "ns"
+    upstream "https://x"
+    version "0.1.0" {
+        content_hash "sha256:a"
+        provenance {
+            kind "oci"
+            registry "ghcr.io"
+            repository "x/y"
+            digest "sha256:b"
+            bogus "y"
+        }
+        attestation "author-signed"
+        signed_by "https://github.com/x"
+        published_at "2026-01-01T00:00:00Z"
+    }
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isErr
+    check parsed.getErr.code == iecUnknownNode
+
   test "unknown child node in rekor block rejected with IDX-NODE-UNKNOWN":
     let src = """
 schema_version 1

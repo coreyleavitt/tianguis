@@ -58,6 +58,12 @@ type
     ## `bundlePin` (both-or-neither, post-epoch admission is atomic) — see
     ## the exit-4 check in `cmdAddEntry`.
     entryStatementPath*:  string
+    ## Source git repo URL this OCI artifact was published from (milpa
+    ## `publish --output`'s `source_url` field, threaded via the composite
+    ## action + dispatch + commit-entry.yaml's `--source` flag). Empty
+    ## string == not supplied; recorded as `Provenance.source` (also empty)
+    ## on the oci provenance, matching the empty-string-absent convention.
+    sourceUrl*: string
 
   ## AddEntryDriver — injectable I/O for testability. Real impl pulls
   ## the OCI artifact via oras and computes content_hash via the
@@ -249,6 +255,7 @@ proc cmdAddEntry*(projectDir: string, args: AddEntryArgs, driver: AddEntryDriver
         registry:  ociRegistry(args.ociRef),
         repository: ociRepository(args.ociRef),
         digest:    ociDigest(args.ociRef),
+        source:    args.sourceUrl,
       )],
       # Author-signed durable Rekor pointer. Recorded only when the workflow
       # captured at least one field; an all-empty trio leaves rekor = none so

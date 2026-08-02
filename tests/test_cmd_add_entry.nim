@@ -545,6 +545,63 @@ suite "cli add-entry":
       check code == 5
       check readFile(tmp / "index.kdl") == originalBytes
 
+  # ---------------------------------------------------------------------------
+  # sourceUrl (SOURCE git repo this OCI artifact was published from) —
+  # threaded from milpa `publish --output`'s `source_url` via `--source`.
+  # ---------------------------------------------------------------------------
+
+  test "sourceUrl sets Provenance.source on the oci provenance":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let driver = FakeAddDriver(
+        expectedRef: "ghcr.io/coreyleavitt/nkdl@sha256:01c9ee",
+        contentHash: "sha256:dd907474",
+        commitSha:   "",
+      )
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "nkdl", version: "v0.1.0",
+          ociRef: "ghcr.io/coreyleavitt/nkdl@sha256:01c9ee",
+          upstream: "https://github.com/coreyleavitt/nkdl",
+          signedBy: "https://github.com/coreyleavitt/tianguis/.github/workflows/publish.yaml@refs/heads/main",
+          publishedAt: "2026-06-08T01:18:24Z",
+          sourceUrl: "https://github.com/coreyleavitt/nkdl.git",
+        ),
+        driver = driver,
+      )
+      check code == 0
+      let kdlText = readFile(tmp / "index.kdl")
+      check "source (url)\"https://github.com/coreyleavitt/nkdl.git\"" in kdlText
+      let parsed = parseKdl(kdlText)
+      check parsed.isOk
+      let prov = parsed.get.packages[0].versions[0].provenances[0]
+      check prov.kind == pkOci
+      check prov.source == "https://github.com/coreyleavitt/nkdl.git"
+
+  test "no --source supplied: Provenance.source is empty, no source node emitted":
+    withTempProject(tmp):
+      writeFile(tmp / "index.kdl", "schema_version 1\n")
+      let driver = FakeAddDriver(
+        expectedRef: "ghcr.io/x/y@sha256:abc",
+        contentHash: "sha256:zzz", commitSha: "",
+      )
+      let code = cmdAddEntry(
+        projectDir = tmp,
+        args = AddEntryArgs(
+          name: "y", version: "1.0.0", ociRef: "ghcr.io/x/y@sha256:abc",
+          upstream: "https://github.com/x/y",
+          signedBy: "https://github.com/x/y/.github/workflows/publish.yaml@refs/heads/main",
+          # sourceUrl deliberately omitted
+        ),
+        driver = driver,
+      )
+      check code == 0
+      check "source" notin readFile(tmp / "index.kdl")
+      let parsed = parseKdl(readFile(tmp / "index.kdl"))
+      check parsed.isOk
+      check parsed.get.packages[0].versions[0].provenances[0].source == ""
+
   test "pull failure refuses to commit (exit 3)":
     withTempProject(tmp):
       writeFile(tmp / "index.kdl", "schema_version 1\n")

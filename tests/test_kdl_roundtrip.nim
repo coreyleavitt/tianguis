@@ -139,6 +139,66 @@ suite "kdl roundtrip":
     check parsed.isOk
     check parsed.get == original
 
+  # ---------------------------------------------------------------------------
+  # OCI provenance source (source git repo this artifact was published from)
+  # ---------------------------------------------------------------------------
+
+  test "oci provenance with source round-trips through KDL":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "nkdl", namespace: "github.com/coreyleavitt",
+        upstream: "https://github.com/coreyleavitt/nkdl",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:dd907474",
+          attestation: "author-signed",
+          signedBy: "https://github.com/coreyleavitt",
+          publishedAt: "2026-06-08T01:18:24Z",
+          provenances: @[Provenance(
+            kind: pkOci,
+            registry: "ghcr.io",
+            repository: "coreyleavitt/nkdl",
+            digest: "sha256:fedcba",
+            source: "https://github.com/coreyleavitt/nkdl.git",
+          )],
+        )],
+      )],
+    )
+    let serialized = formatKdl(original)
+    check "source (url)\"https://github.com/coreyleavitt/nkdl.git\"" in serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.packages[0].versions[0].provenances[0].source ==
+      "https://github.com/coreyleavitt/nkdl.git"
+
+  test "oci provenance without source stays absent (empty string, no source node emitted)":
+    let original = Index(
+      schemaVersion: 1,
+      packages: @[Package(
+        name: "nkdl", namespace: "github.com/coreyleavitt",
+        upstream: "https://github.com/coreyleavitt/nkdl",
+        versions: @[Version(
+          version: "0.1.0", contentHash: "sha256:dd907474",
+          attestation: "milpa-vendored", signedBy: "milpa-bot",
+          publishedAt: "2026-06-08T01:18:24Z",
+          provenances: @[Provenance(
+            kind: pkOci,
+            registry: "ghcr.io",
+            repository: "coreyleavitt/nkdl",
+            digest: "sha256:fedcba",
+            # source deliberately omitted -> ""
+          )],
+        )],
+      )],
+    )
+    let serialized = formatKdl(original)
+    check "source" notin serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.packages[0].versions[0].provenances[0].source == ""
+
   test "one-package one-version round-trips through KDL":
     let original = Index(
       schemaVersion: 1,

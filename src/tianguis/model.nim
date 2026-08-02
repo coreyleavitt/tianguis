@@ -46,6 +46,10 @@ type
       registry*:   string
       repository*: string
       digest*:     string
+      source*:     string       ## optional source git repo URL this OCI
+        ## artifact was published from (milpa `publish --output`'s
+        ## `source_url`). Empty string == absent, matching git's optional
+        ## `commitSha*` convention above.
 
   Version* = object
     version*:          string         ## semver-shaped version identifier
@@ -108,7 +112,8 @@ proc `==`*(a, b: Provenance): bool =
   of pkGit:
     a.url == b.url and a.gitRef == b.gitRef and a.commitSha == b.commitSha
   of pkOci:
-    a.registry == b.registry and a.repository == b.repository and a.digest == b.digest
+    a.registry == b.registry and a.repository == b.repository and
+      a.digest == b.digest and a.source == b.source
 
 proc `==`*(a, b: Version): bool =
   a.version == b.version and

@@ -134,6 +134,12 @@ outputs:
   content-hash:
     description: "The published tree's content_hash (dag-sha256:<hex>), from milpa publish's receipt."
     value: ${{ steps.receipt.outputs.content-hash }}
+  source-url:
+    description: >-
+      The SOURCE git repo this artifact was published from (milpa publish's
+      receipt `source_url` field), or empty when the published repo has no
+      `origin` remote configured.
+    value: ${{ steps.receipt.outputs.source-url }}
   entry-bundle-b64:
     description: >-
       The signed Sigstore Bundle (BUNDLE_0_3 JSON) over the §1 in-toto
@@ -326,6 +332,11 @@ runs:
         set -euo pipefail
         CONTENT_HASH=$(jq -r '.content_hash // empty' "${RUNNER_TEMP}/receipt.json")
         OCI_REF=$(jq -r '.oci_ref // empty' "${RUNNER_TEMP}/receipt.json")
+        # SOURCE_URL is genuinely optional (milpa's PublishOutputRecord
+        # models it as `str | None`, serialized as JSON `null` when the
+        # published repo has no `origin` remote) — no error on absence,
+        # unlike content_hash/oci_ref above.
+        SOURCE_URL=$(jq -r '.source_url // empty' "${RUNNER_TEMP}/receipt.json")
         if [[ -z "$CONTENT_HASH" ]]; then
           echo "::error::milpa publish's receipt has no content_hash (${RUNNER_TEMP}/receipt.json)"
           exit 1
@@ -336,6 +347,7 @@ runs:
         fi
         printf '%s<<%s\n%s\n%s\n' "content-hash" "EOF_CONTENT_HASH" "$CONTENT_HASH" "EOF_CONTENT_HASH" >> "$GITHUB_OUTPUT"
         printf '%s<<%s\n%s\n%s\n' "oci-ref" "EOF_OCI_REF" "$OCI_REF" "EOF_OCI_REF" >> "$GITHUB_OUTPUT"
+        printf '%s<<%s\n%s\n%s\n' "source-url" "EOF_SOURCE_URL" "$SOURCE_URL" "EOF_SOURCE_URL" >> "$GITHUB_OUTPUT"
 
     - name: Compute content_hash, build + sign the §1 statement
       id: mint
@@ -417,6 +429,7 @@ runs:
         PKG_VERSION:  ${{ inputs.version }}
         OCI_REF:      ${{ steps.receipt.outputs.oci-ref }}
         REPO_URL:     https://github.com/${{ github.repository }}
+        SOURCE_URL:   ${{ steps.receipt.outputs.source-url }}
         SIGNED_BY:    ${{ steps.vars.outputs.signed_by }}
         BUNDLE_B64:   ${{ steps.mint.outputs.entry-bundle-b64 }}
         DRY_RUN:      ${{ inputs.dry-run }}
@@ -448,9 +461,9 @@ runs:
         fi
 
         # dispatch/handler.go's PublishRequest field names, exactly:
-        # name, version, oci_ref, provider, repo_url, signed_by,
-        # entry_bundle_b64 (optional), dry_run (optional). Built via
-        # `jq -n` (never string concatenation) so a value containing a
+        # name, version, oci_ref, provider, repo_url, source_url (optional),
+        # signed_by, entry_bundle_b64 (optional), dry_run (optional). Built
+        # via `jq -n` (never string concatenation) so a value containing a
         # `"` can't inject extra JSON fields.
         BODY=$(jq -n \
           --arg name             "$PKG_NAME" \
@@ -458,6 +471,7 @@ runs:
           --arg oci_ref          "$OCI_REF" \
           --arg provider         "github" \
           --arg repo_url         "$REPO_URL" \
+          --arg source_url       "$SOURCE_URL" \
           --arg signed_by        "$SIGNED_BY" \
           --arg entry_bundle_b64 "$BUNDLE_B64" \
           --argjson dry_run      "$DRY_RUN_JSON" \
@@ -467,6 +481,7 @@ runs:
             oci_ref:          $oci_ref,
             provider:         $provider,
             repo_url:         $repo_url,
+            source_url:       $source_url,
             signed_by:        $signed_by,
             entry_bundle_b64: $entry_bundle_b64,
             dry_run:          $dry_run
