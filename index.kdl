@@ -9052,6 +9052,29 @@ package "nkdl" {
         }
     }
 }
+package "proptest" {
+    namespace "github.com/coreyleavitt"
+    upstream (url)"https://github.com/coreyleavitt/proptest"
+    authorized-signer "https://github.com/coreyleavitt/proptest/.github/workflows/tianguis-publish.yaml@refs/heads/main"
+    version "0.1.0" {
+        content_hash "dag-sha256:a394b6e67864311554506a4831f803a6fea599cda0ce7b15a25fb9f5a33a6087"
+        provenance {
+            kind "oci"
+            registry "ghcr.io"
+            repository "coreyleavitt/proptest"
+            digest "sha256:777392710738ca0e862289572741c46340265c70059cd4110fa9cce0f8c15443"
+        }
+        attestation "author-signed"
+        signed_by "https://github.com/coreyleavitt/proptest/.github/workflows/tianguis-publish.yaml@refs/heads/main"
+        published_at "2026-08-04T04:30:23Z"
+        rekor {
+            uuid "108e9186e8c5677afd64e57e2916b9e23afbb71511130472fde6e1589a1a49a5c101913ec6e358d4"
+            log_index "2339027652"
+            integrated_time "1785817745"
+        }
+        bundle sha256="9aac05740e7ec3569bad7a071e7d30f610cf04c8bb04e2aa5dac0e7305c8a562"
+    }
+}
 package "softlink" {
     namespace "github.com/coreyleavitt"
     upstream (url)"https://github.com/coreyleavitt/softlink"
