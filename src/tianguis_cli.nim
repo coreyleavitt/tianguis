@@ -82,33 +82,48 @@ proc usage(): int =
   echo "    exact YYYY-MM-DDTHH:MM:SSZ shape (same as published_at)."
   1
 
-proc parseAddEntryArgs(parser: var OptParser): AddEntryArgs =
-  ## Walk the remaining options; populate AddEntryArgs.
-  for kind, key, val in parser.getopt():
-    case kind
-    of cmdArgument: discard
-    of cmdLongOption:
-      case key
-      of "name":         result.name = val
-      of "version":      result.version = val
-      of "oci-ref":      result.ociRef = val
-      of "upstream":     result.upstream = val
-      of "signed-by":    result.signedBy = val
-      of "published-at": result.publishedAt = val
-      of "rekor-uuid":            result.rekorUuid = val
-      of "rekor-log-index":       result.rekorLogIndex = val
-      of "rekor-integrated-time": result.rekorIntegratedTime = val
-      of "bundle-pin":            result.bundlePin = val
-      of "entry-statement":       result.entryStatementPath = val
-      of "source":                result.sourceUrl = val
-      of "namespace":
-        stderr.writeLine("tianguis add-entry: --namespace is no longer accepted;" &
-          " namespace is derived from --signed-by (P2.1)")
-        quit(4)
-      else:
-        stderr.writeLine("tianguis add-entry: unknown option --" & key)
-    of cmdShortOption: discard
-    of cmdEnd: discard
+proc splitLongOpt(a: string): (string, string) =
+  ## Split a "--key=val" argument into (key, val). Both "--key" (no '=') and
+  ## an explicit empty "--key=" yield an empty val, and the NEXT argument is
+  ## never consumed.
+  ##
+  ## Why not `std/parseopt` here: `parseopt.getopt` looks ahead for a value
+  ## when a long option's value is empty, so a stray `--source=` swallows the
+  ## FOLLOWING `--signed-by=…` as its value — which zeroed out signed_by and
+  ## broke first-package onboarding (the empty `--source=` came from
+  ## commit-entry.yaml when a package had no source URL; that side now omits
+  ## the flag entirely, and this manual split is immune regardless).
+  let body = a[2 .. ^1]                 # caller guarantees the leading "--"
+  let eq = body.find('=')
+  if eq < 0: (body, "")
+  else: (body[0 ..< eq], body[eq + 1 .. ^1])
+
+proc parseAddEntryArgs(args: seq[string]): AddEntryArgs =
+  ## Parse add-entry's long options from the raw argv (manual split — see
+  ## `splitLongOpt`). Non-`--` args (the verb, any positional) are skipped.
+  for a in args:
+    if not a.startsWith("--"):
+      continue
+    let (key, val) = splitLongOpt(a)
+    case key
+    of "name":         result.name = val
+    of "version":      result.version = val
+    of "oci-ref":      result.ociRef = val
+    of "upstream":     result.upstream = val
+    of "signed-by":    result.signedBy = val
+    of "published-at": result.publishedAt = val
+    of "rekor-uuid":            result.rekorUuid = val
+    of "rekor-log-index":       result.rekorLogIndex = val
+    of "rekor-integrated-time": result.rekorIntegratedTime = val
+    of "bundle-pin":            result.bundlePin = val
+    of "entry-statement":       result.entryStatementPath = val
+    of "source":                result.sourceUrl = val
+    of "namespace":
+      stderr.writeLine("tianguis add-entry: --namespace is no longer accepted;" &
+        " namespace is derived from --signed-by (P2.1)")
+      quit(4)
+    else:
+      stderr.writeLine("tianguis add-entry: unknown option --" & key)
 
 proc parseAttestIndexStatementArgs(parser: var OptParser): AttestIndexStatementArgs =
   ## Walk the remaining options; populate AttestIndexStatementArgs.
@@ -221,15 +236,9 @@ proc main(): int =
       return usage()
     return cmdShow(showUrl)
   of "add-entry":
-    # Re-parse for the subcommand's options (parseopt was consumed above).
-    var sub = initOptParser()
-    discard sub  # skip the verb itself
-    var saw_add = false
-    for kind, key, val in sub.getopt():
-      if kind == cmdArgument and key == "add-entry":
-        saw_add = true
-        break
-    let args = parseAddEntryArgs(sub)
+    # Parse the subcommand's long options straight from the raw argv (manual
+    # split — never parseopt's lookahead, which an empty `--key=` abuses).
+    let args = parseAddEntryArgs(commandLineParams())
     return cmdAddEntry(
       projectDir = getCurrentDir(),
       args = args,

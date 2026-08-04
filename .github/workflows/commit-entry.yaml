@@ -444,18 +444,28 @@ jobs:
           ARG_BUNDLE_PIN:       ${{ steps.entry_statement.outputs.pin }}
           ARG_ENTRY_STATEMENT:  ${{ steps.entry_statement.outputs.pin != '' && 'entry-statement.json' || '' }}
         run: |
-          ./tianguis add-entry \
-            --name="$ARG_NAME" \
-            --version="$ARG_VERSION" \
-            --oci-ref="$ARG_OCI_REF" \
-            --upstream="$ARG_UPSTREAM" \
-            --source="$ARG_SOURCE_URL" \
-            --signed-by="$ARG_SIGNED_BY" \
-            --rekor-uuid="$ARG_REKOR_UUID" \
-            --rekor-log-index="$ARG_REKOR_LOG_INDEX" \
-            --rekor-integrated-time="$ARG_REKOR_INTEGRATED_TIME" \
-            --bundle-pin="$ARG_BUNDLE_PIN" \
+          # Build the argv as an array (each element is exactly one arg — the
+          # same injection-safety discipline as the "$ARG" expansions above).
+          add_args=(
+            --name="$ARG_NAME"
+            --version="$ARG_VERSION"
+            --oci-ref="$ARG_OCI_REF"
+            --upstream="$ARG_UPSTREAM"
+            --signed-by="$ARG_SIGNED_BY"
+            --rekor-uuid="$ARG_REKOR_UUID"
+            --rekor-log-index="$ARG_REKOR_LOG_INDEX"
+            --rekor-integrated-time="$ARG_REKOR_INTEGRATED_TIME"
+            --bundle-pin="$ARG_BUNDLE_PIN"
             --entry-statement="$ARG_ENTRY_STATEMENT"
+          )
+          # Only pass --source when non-empty. An empty `--source=` makes Nim's
+          # parseopt treat the value as "missing" and SWALLOW the next flag
+          # (`--signed-by=…`) as its value — which zeroed out signed_by and
+          # broke first-package onboarding. Omitting it records no `source`
+          # child, exactly as an empty value was meant to. (tianguis_cli.nim's
+          # parser is also hardened against this footgun as defense-in-depth.)
+          [ -n "$ARG_SOURCE_URL" ] && add_args+=(--source="$ARG_SOURCE_URL")
+          ./tianguis add-entry "${add_args[@]}"
 
       - name: Regenerate index.json
         run: ./tianguis project
