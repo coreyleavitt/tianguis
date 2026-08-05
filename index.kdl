@@ -9129,6 +9129,29 @@ package "softlink" {
         bundle sha256="6ca658bbe26e7d68959ae16ef8518d2c55006e468730dc72af6035984ded2d36"
     }
 }
+package "z3" {
+    namespace "github.com/coreyleavitt"
+    upstream (url)"https://github.com/coreyleavitt/nim-z3"
+    authorized-signer "https://github.com/coreyleavitt/nim-z3/.github/workflows/tianguis-publish.yaml@refs/tags/v2.2.0"
+    version "2.2.0" {
+        content_hash "dag-sha256:4173e70c46920490d982f0fedefb34d6ac044f2e2063463482fb33b0e606d727"
+        provenance {
+            kind "oci"
+            registry "ghcr.io"
+            repository "coreyleavitt/nim-z3"
+            digest "sha256:ecc8cf0a0b51f943befa64ff7f9eb7550aaa7c2a792e1357d07adabc78fc45c7"
+        }
+        attestation "author-signed"
+        signed_by "https://github.com/coreyleavitt/nim-z3/.github/workflows/tianguis-publish.yaml@refs/tags/v2.2.0"
+        published_at "2026-08-05T09:24:11Z"
+        rekor {
+            uuid "108e9186e8c5677a12c1b7018fc57bdd7d95dac91d507ceef89aa2c30c6e0da21bcc9186b2efbb77"
+            log_index "2343403863"
+            integrated_time "1785921776"
+        }
+        bundle sha256="b5b4dfc9ce2d16f0206c46600840e06268ba350f7c8194cb50006e31100d4dcf"
+    }
+}
 package "pipe" {
     namespace "github.com/cosmictoast"
     upstream (url)"https://github.com/CosmicToast/pipe"
