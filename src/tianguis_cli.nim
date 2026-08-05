@@ -13,6 +13,7 @@ import std/[os, parseopt, strutils]
 import tianguis/cli
 import tianguis/cmd_migrate
 import tianguis/cmd_set_attestation_epoch
+import tianguis/cmd_set_epoch_commitment
 import tianguis/vendor/[addentry, realdriver]
 
 proc usage(): int =
@@ -80,6 +81,20 @@ proc usage(): int =
   echo "    would make any EXISTING entry violate the gate (pinless/unattested entry"
   echo "    whose published_at >= epoch) — backfill those first. --epoch must be the"
   echo "    exact YYYY-MM-DDTHH:MM:SSZ shape (same as published_at)."
+  echo "  show-preepoch-set   print the current pre-epoch set S (every namespace/name/"
+  echo "    version/content_hash identity in index.kdl) and its commitment C as JSON"
+  echo "    ({\"identities\":[...],\"commitment\":\"<C>\"}); read-only (S-EpochCommitment)"
+  echo "  set-epoch-commitment [--execute]  arm the D-Watermark pre-epoch set commitment"
+  echo "    (milpa rfc-attestation-v1-normative.md S-EpochCommitment). Default (no"
+  echo "    --execute): dry run — enumerate S from index.kdl, compute C, print the diff,"
+  echo "    write nothing. --execute: APPEND-ONCE guard (refuses if"
+  echo "    attestation-epoch-commitment is already set), then write C to index.kdl."
+  echo "    See .github/workflows/attest-epoch-commitment.yaml for the full arming"
+  echo "    sequence (sidecar must be signed+pushed before/atomically with this)."
+  echo "  attest-epoch-commitment-statement  print the in-toto statement JSON for the"
+  echo "    pre-epoch set commitment (S-EpochCommitment); --commitment=<C, 64-hex>"
+  echo "    --signed-by=<...> (single source of truth for the bytes"
+  echo "    scripts/sign_statement.py signs into the .epoch-commitment sidecar)"
   1
 
 proc splitLongOpt(a: string): (string, string) =
@@ -136,6 +151,20 @@ proc parseAttestIndexStatementArgs(parser: var OptParser): AttestIndexStatementA
       of "signed-by":     result.signedBy = val
       else:
         stderr.writeLine("tianguis attest-index-statement: unknown option --" & key)
+    of cmdShortOption: discard
+    of cmdEnd: discard
+
+proc parseAttestEpochCommitmentStatementArgs(parser: var OptParser): AttestEpochCommitmentStatementArgs =
+  ## Walk the remaining options; populate AttestEpochCommitmentStatementArgs.
+  for kind, key, val in parser.getopt():
+    case kind
+    of cmdArgument: discard
+    of cmdLongOption:
+      case key
+      of "commitment": result.commitment = val
+      of "signed-by":  result.signedBy = val
+      else:
+        stderr.writeLine("tianguis attest-epoch-commitment-statement: unknown option --" & key)
     of cmdShortOption: discard
     of cmdEnd: discard
 
@@ -254,6 +283,15 @@ proc main(): int =
     var sub = initOptParser()
     let args = parseAttestIndexStatementArgs(sub)
     return cmdAttestIndexStatement(args)
+  of "attest-epoch-commitment-statement":
+    # Re-parse for the subcommand's options (parseopt was consumed above).
+    var sub = initOptParser()
+    let args = parseAttestEpochCommitmentStatementArgs(sub)
+    return cmdAttestEpochCommitmentStatement(args)
+  of "show-preepoch-set":
+    return cmdShowPreepochSet(getCurrentDir())
+  of "set-epoch-commitment":
+    return cmdSetEpochCommitment(getCurrentDir(), execute = execute)
   of "derive-namespace":
     # Re-parse for the subcommand's options (parseopt was consumed above).
     var sub = initOptParser()

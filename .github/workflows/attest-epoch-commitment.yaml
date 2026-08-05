@@ -1,0 +1,218 @@
+name: attest-epoch-commitment
+
+# Manual, human-dispatched workflow that arms the D-Watermark pre-epoch set
+# commitment (milpa docs/rfc-attestation-v1-normative.md §6 slice
+# S-EpochCommitment; spec registry-protocol.md §3.4.8/§3.4.9) — the
+# tianguis-side cross-repo prerequisite milpa's S-EpochCommitment consumer
+# already implements (impls/python/milpa/epoch_commitment.py,
+# impls/rust/crates/milpa-core/src/epoch_commitment.rs).
+#
+# This is a ONE-SHOT, deliberately manual operation (workflow_dispatch only —
+# never a cron, never triggered by another workflow's push): arming is an
+# append-once registry-wide decision, not a routine maintenance pass. A
+# maintainer runs it exactly once (per registry) from the Actions tab.
+#
+# WHY A REUSABLE-STYLE `workflow_call`-ELIGIBLE JOB NAME (not inlined, mirrors
+# attest-index.yaml): the OIDC token's `job_workflow_ref` records the path of
+# THIS workflow file, giving the signed `.epoch-commitment` sidecar a stable
+# Fulcio cert SubjectAltName —
+# `https://github.com/coreyleavitt/tianguis/.github/workflows/attest-epoch-commitment.yaml@refs/heads/main`
+# — which is EXACTLY what milpa's `epoch_commitment.py`/`epoch_commitment.rs`
+# `DEFAULT_REARM_SIGNER` constant already hardcodes as the expected re-arm
+# signer identity (D15: "a DEDICATED re-arm signer identity, distinct from
+# the whole-index signer"). The workflow file's PATH is therefore
+# load-bearing, not cosmetic — renaming this file changes the signer identity
+# milpa expects and breaks verification for every consumer.
+#
+# Sequencing (byte-for-byte what cmd_set_epoch_commitment.nim's module
+# doc requires, spec §3.4.9): enumerate S + compute C -> sign the commitment
+# statement -> commit+push the sidecar FIRST -> only then arm
+# attestation-epoch-commitment on index.kdl -> commit+push index.kdl ->
+# re-sign index.kdl.bundle (the whole-index bundle is now stale the moment
+# index.kdl changes, same invariant vendor.yaml/commit-entry.yaml already
+# maintain). This ordering means a consumer can never observe an armed
+# pointer with no corresponding verifiable sidecar at the derived URL.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: >-
+          Type "arm" to confirm — this is an append-once, registry-wide
+          operation and cannot be undone or re-run with a different S.
+        required: true
+
+permissions:
+  contents: write   # commit + push index.kdl.epoch-commitment, index.kdl, index.json
+  id-token: write    # sigstore keyless: fetch Fulcio cert under THIS workflow's OIDC identity
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require explicit confirmation
+        run: |
+          if [[ "${{ github.event.inputs.confirm }}" != "arm" ]]; then
+            echo "::error::confirm input must be exactly 'arm' — refusing to run an append-once registry-wide arming without explicit confirmation"
+            exit 1
+          fi
+
+  attest-epoch-commitment:
+    needs: guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Configure git auth for private deps
+        env:
+          PAT: ${{ secrets.TIANGUIS_GIT_READ_PAT }}
+        run: |
+          git config --global url."https://x-access-token:${PAT}@github.com/".insteadOf "https://github.com/"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://x-access-token:${PAT}@github.com/".insteadOf "ssh://git@github.com/"
+
+      - name: Clone milpa
+        run: git clone --depth 1 https://github.com/coreyleavitt/milpa.git .milpa-tool
+
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: "2.2.0"
+
+      - name: Set up uv (for milpa)
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: false
+
+      - name: Install milpa deps
+        working-directory: .milpa-tool/impls/python
+        run: uv sync
+
+      - name: Expose milpa on PATH
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          cat > "$HOME/.local/bin/milpa" <<'SH'
+          #!/usr/bin/env bash
+          exec uv run --project "$GITHUB_WORKSPACE/.milpa-tool/impls/python" python -m milpa "$@"
+          SH
+          chmod +x "$HOME/.local/bin/milpa"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch deps via milpa
+        run: uv run --project .milpa-tool/impls/python python -m milpa fetch
+
+      - name: Build tianguis CLI
+        run: nim c -d:release -d:ssl -o:tianguis src/tianguis_cli.nim
+
+      - name: Refuse to run if already armed
+        run: |
+          if grep -q '^attestation-epoch-commitment ' index.kdl; then
+            echo "::error::attestation-epoch-commitment is already set on index.kdl; it is append-once and this workflow must not run again"
+            exit 1
+          fi
+
+      - name: Set up Python (for sigstore signing)
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install sigstore
+        run: pip install -r scripts/requirements.txt
+
+      # Enumerate S (every namespace/name/version/content_hash identity
+      # currently in index.kdl — the "grandfather-all" F-op) and compute C —
+      # the SAME pure construction cmd_set_epoch_commitment.nim's --execute
+      # path will independently recompute below, so what gets signed here
+      # and what gets armed later are guaranteed to agree.
+      - name: Enumerate the pre-epoch set S and compute its commitment C
+        run: ./tianguis show-preepoch-set > preepoch-set.json
+
+      - name: Extract C and build the commitment sidecar
+        run: |
+          commitment=$(jq -r '.commitment' preepoch-set.json)
+          echo "commitment=$commitment" >> "$GITHUB_ENV"
+          echo "arming commitment C=$commitment over $(jq '.identities | length' preepoch-set.json) identities"
+
+          ./tianguis attest-epoch-commitment-statement \
+            --commitment="$commitment" \
+            --signed-by="https://github.com/coreyleavitt/tianguis (attest-epoch-commitment workflow, GH-OIDC)" \
+            | python3 scripts/sign_statement.py > commitment-bundle.json.new
+          mv commitment-bundle.json.new commitment-bundle.json
+
+          # Sidecar wire shape (spec §3.4.9): {"identities": [...], "bundle": {...}}
+          # — the "commitment" field in preepoch-set.json is a convenience for
+          # THIS step only and is never carried into the sidecar itself
+          # (milpa's parse_sidecar_payload does not expect it).
+          jq -n --slurpfile ids preepoch-set.json --slurpfile bundle commitment-bundle.json \
+            '{identities: $ids[0].identities, bundle: $bundle[0]}' \
+            > index.kdl.epoch-commitment.new
+          mv index.kdl.epoch-commitment.new index.kdl.epoch-commitment
+
+      - name: Commit + push the commitment sidecar
+        run: |
+          git add index.kdl.epoch-commitment
+          if git diff --cached --quiet; then
+            echo "::error::index.kdl.epoch-commitment unchanged — nothing to arm (this should not happen on a first run)"
+            exit 1
+          fi
+          git config user.name "milpa-bot"
+          git config user.email "milpa-bot@users.noreply.github.com"
+          git commit -m "chore(attest-epoch-commitment): sign pre-epoch set commitment sidecar"
+          pushed=false
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin main && git push; then
+              pushed=true; break
+            fi
+            echo "push attempt $i failed; will retry"
+            sleep $((i * 2))
+          done
+          if [[ "$pushed" != true ]]; then
+            echo "::error::sidecar push failed after 3 attempts — aborting before arming the index pointer"
+            exit 1
+          fi
+
+      # Only now — after the sidecar is durably committed — arm the pointer.
+      # Sequencing matters: a crash between the sidecar push above and this
+      # step leaves index.kdl un-armed (Unarmed, harmless, re-run this
+      # workflow); the reverse ordering would leave an armed pointer with no
+      # verifiable sidecar (ArmingInvalid for every consumer) until fixed.
+      - name: Arm attestation-epoch-commitment on index.kdl
+        run: ./tianguis set-epoch-commitment --execute
+
+      - name: Keep index.json in parity
+        run: ./tianguis project
+
+      - name: Commit + push index.kdl / index.json
+        id: commit
+        run: |
+          git add index.kdl index.json
+          if git diff --cached --quiet; then
+            echo "::error::index.kdl unchanged after set-epoch-commitment --execute — this should not happen"
+            exit 1
+          fi
+          git commit -m "chore(attest-epoch-commitment): arm pre-epoch set commitment C=${commitment}"
+          pushed=false
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin main && git push; then
+              pushed=true; break
+            fi
+            echo "push attempt $i failed; will retry"
+            sleep $((i * 2))
+          done
+          if [[ "$pushed" != true ]]; then
+            echo "::error::index.kdl push failed after 3 attempts — the sidecar is live but the pointer is NOT armed; re-run 'tianguis set-epoch-commitment --execute' manually once main is unblocked"
+            exit 1
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+  # Re-sign the whole-index bundle: index.kdl changed above, so
+  # index.kdl.bundle's subject digest is now stale (same invariant
+  # vendor.yaml/commit-entry.yaml maintain on every index.kdl mutation).
+  attest-index:
+    needs: attest-epoch-commitment
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/attest-index.yaml

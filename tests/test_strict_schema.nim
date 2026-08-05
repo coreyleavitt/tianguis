@@ -250,6 +250,36 @@ package "libp2p" {
     check parsed.isErr
     check parsed.getErr.code == iecUnknownNode
 
+  test "root attestation-epoch-commitment node is accepted (not rejected as unknown)":
+    let src = """
+schema_version 1
+attestation-epoch-commitment "5555555555555555555555555555555555555555555555555555555555555555"
+package "chronos" {
+    namespace "coreyleavitt"
+    upstream (url)"https://example.com/chronos"
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isOk
+    check parsed.get.attestationEpochCommitment.isSome
+    check parsed.get.attestationEpochCommitment.get ==
+      "5555555555555555555555555555555555555555555555555555555555555555"
+
+  test "attestation-epoch and attestation-epoch-commitment coexist without collision in strict schema":
+    let src = """
+schema_version 1
+attestation-epoch "2026-07-01T00:00:00Z"
+attestation-epoch-commitment "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+package "chronos" {
+    namespace "coreyleavitt"
+    upstream (url)"https://example.com/chronos"
+}
+"""
+    let parsed = parseKdl(src)
+    check parsed.isOk
+    check parsed.get.attestationEpoch.isSome
+    check parsed.get.attestationEpochCommitment.isSome
+
   test "a genuinely unknown root node is still rejected with IDX-NODE-UNKNOWN":
     let src = """
 schema_version 1
@@ -273,6 +303,14 @@ suite "json strict schema":
   test "valid empty index parses without error":
     let parsed = parseJson("""{"schema_version":1,"packages":[]}""")
     check parsed.isOk
+
+  test "root attestation_epoch_commitment key is accepted (not rejected as unknown)":
+    let parsed = parseJson("""
+      {"schema_version":1,
+       "attestation_epoch_commitment":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+       "packages":[]}""")
+    check parsed.isOk
+    check parsed.get.attestationEpochCommitment.isSome
 
   # #16 — nested strict-schema parity with KDL: unknown keys inside package,
   # version, provenance, and rekor objects are rejected (not silently ignored).

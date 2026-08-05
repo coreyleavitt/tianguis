@@ -180,6 +180,13 @@ proc formatKdl*(idx: Index): string =
     # parses this exact node name at the document root (rfc-attestation-
     # delivery S2). Absent when the ratchet has never been set.
     result.add("attestation-epoch \"" & kdlEscapeString(canon.attestationEpoch.get) & "\"\n")
+  if canon.attestationEpochCommitment.isSome:
+    # D-Watermark pre-epoch set commitment `C` (milpa `epoch_commitment.py`/
+    # `epoch_commitment.rs` parse this exact node name at the document root
+    # — see model.nim's field doc). Distinct, append-once sibling of
+    # `attestation-epoch` above; absent until armed.
+    result.add("attestation-epoch-commitment \"" &
+      kdlEscapeString(canon.attestationEpochCommitment.get) & "\"\n")
   for pkg in canon.packages:
     result.add(formatPackage(pkg))
 
@@ -188,7 +195,8 @@ proc formatKdl*(idx: Index): string =
 # ---------------------------------------------------------------------------
 
 const
-  TopLevelNodes  = ["schema_version", "attestation-epoch", "package"]
+  TopLevelNodes  = ["schema_version", "attestation-epoch",
+                    "attestation-epoch-commitment", "package"]
   PackageChildren = ["namespace", "upstream", "authorized-signer", "version"]
   VersionChildren = [
     "content_hash", "requires", "provenance",
@@ -374,6 +382,9 @@ proc parseKdl*(s: string): Result[Index, IdxError] =
     of "attestation-epoch":
       let epoch = node.argStr(0)
       if epoch.isSome: idx.attestationEpoch = epoch
+    of "attestation-epoch-commitment":
+      let commitment = node.argStr(0)
+      if commitment.isSome: idx.attestationEpochCommitment = commitment
     of "package":
       let pr = parsePackage(doc, node)
       if pr.isErr: return err[Index, IdxError](pr.getErr)

@@ -104,6 +104,10 @@ proc formatJson*(idx: Index): string =
   # delivery S2.
   if canon.attestationEpoch.isSome:
     node["attestation_epoch"] = %canon.attestationEpoch.get
+  # D-Watermark pre-epoch set commitment — mirrors `attestation_epoch`'s
+  # "absent = not present" convention (S-EpochCommitment, model.nim).
+  if canon.attestationEpochCommitment.isSome:
+    node["attestation_epoch_commitment"] = %canon.attestationEpochCommitment.get
   $node
 
 # ---------------------------------------------------------------------------
@@ -191,7 +195,8 @@ proc packageFromJson(node: JsonNode): Package =
 # ---------------------------------------------------------------------------
 
 const
-  TopLevelKeys       = ["schema_version", "attestation_epoch", "packages"]
+  TopLevelKeys       = ["schema_version", "attestation_epoch",
+                        "attestation_epoch_commitment", "packages"]
   JsonPackageKeys    = ["name", "namespace", "upstream", "authorized_signer", "versions"]
   JsonVersionKeys    = ["version", "content_hash", "requires", "provenances",
                         "attestation", "signed_by", "published_at", "rekor",
@@ -269,10 +274,15 @@ proc parseJson*(s: string): Result[Index, IdxError] =
   let aeNode = node{"attestation_epoch"}
   if aeNode != nil and aeNode.kind == JString:
     attestationEpoch = some(aeNode.getStr(""))
+  var attestationEpochCommitment = none(string)
+  let aecNode = node{"attestation_epoch_commitment"}
+  if aecNode != nil and aecNode.kind == JString:
+    attestationEpochCommitment = some(aecNode.getStr(""))
   var packages: seq[Package] = @[]
   let pkgsNode = node{"packages"}
   if pkgsNode != nil and pkgsNode.kind == JArray:
     for item in pkgsNode:
       packages.add(packageFromJson(item))
   ok[Index, IdxError](Index(schemaVersion: sv, attestationEpoch: attestationEpoch,
+                            attestationEpochCommitment: attestationEpochCommitment,
                             packages: packages))

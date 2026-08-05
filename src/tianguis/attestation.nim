@@ -143,6 +143,51 @@ proc buildIndexStatement*(digestSha256, signedBy: string): string =
 
   $statement
 
+proc buildEpochCommitmentStatement*(commitmentDigest, signedBy: string): string =
+  ## Build the canonical in-toto Statement JSON for the D-Watermark
+  ## pre-epoch set commitment `C` (milpa `docs/rfc-attestation-v1-normative.md`
+  ## §6 S-EpochCommitment; spec `registry-protocol.md` §3.4.8/§3.4.9) — the
+  ## payload that gets DSSE-enveloped and signed into the `.epoch-commitment`
+  ## sidecar, analogous to `buildIndexStatement`'s whole-index counterpart.
+  ##
+  ## Subject binding is the ONE load-bearing byte-format contract here,
+  ## exactly as `buildIndexStatement` documents for the whole-index case:
+  ## milpa's verifier (`epoch_commitment.py::evaluate_epoch_commitment`,
+  ## mirrored in Rust) passes `canonical_preimage(S)` — NOT the raw
+  ## commitment digest bytes — as the composed verifier's `index_bytes`
+  ## parameter and relies on that verifier's existing
+  ## `sha256(index_bytes) == DSSE_subject_digest` check (the same check
+  ## `index_trust.py` already performs for the whole-index bundle). Because
+  ## `sha256(canonical_preimage(S)) == C` by construction, `subject[0].digest
+  ## .sha256` here MUST be `C` itself — the caller's already-computed
+  ## `preepoch_commitment.commitmentDigest(S)`, the bare 64-hex digest, no
+  ## scheme prefix — never a re-hash of `commitmentDigest` and never the raw
+  ## `S` bytes. `subject[0].name` is never inspected by milpa's verifier (RFC
+  ## §6: predicate/subject-name contents are never inspected beyond the
+  ## digest), so it is a fixed, human-readable marker rather than a derived
+  ## coordinate — mirrors milpa's own minting-workflow convention for naming
+  ## this subject.
+  var subject = newJObject()
+  subject["name"] = %"milpa-preepoch-set-commitment"
+  var digest = newJObject()
+  digest["sha256"] = %commitmentDigest
+  subject["digest"] = digest
+
+  var predicate = newJObject()
+  predicate["attestation_kind"] = %"preepoch-set-commitment"
+  predicate["signed_by"] = %signedBy
+
+  var subjects = newJArray()
+  subjects.add(subject)
+
+  var statement = newJObject()
+  statement["_type"] = %"https://in-toto.io/Statement/v1"
+  statement["subject"] = subjects
+  statement["predicateType"] = %"https://tianguis.dev/attestation/epoch-commitment/v1"
+  statement["predicate"] = predicate
+
+  $statement
+
 proc extractStatementSubject*(statementJson: string): Result[StatementSubject, string] =
   ## Parse an in-toto Statement JSON — either this module's own
   ## `buildEntryStatement` output, or (S8) the byte-identical statement a CI

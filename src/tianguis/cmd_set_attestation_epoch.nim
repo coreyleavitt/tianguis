@@ -100,6 +100,7 @@ proc findEpochViolations*(idx: Index, epoch: string): seq[EpochViolation] =
   let candidateIdx = Index(
     schemaVersion:    idx.schemaVersion,
     attestationEpoch: some(epoch),
+    attestationEpochCommitment: idx.attestationEpochCommitment,
     packages:         idx.packages,
   )
   for pkg in idx.packages:

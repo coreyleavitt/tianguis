@@ -98,6 +98,22 @@ type
         ## the ratchet is first set. Wire name is `attestation-epoch` at the
         ## KDL document root — milpa's `index_ratchet_seam._raw_attestation_epoch`
         ## parses this exact name; do not rename.
+    attestationEpochCommitment*: Option[string]  ## D-Watermark pre-epoch set
+        ## commitment `C` (milpa `docs/rfc-attestation-v1-normative.md` §6
+        ## S-EpochCommitment, spec `registry-protocol.md` §3.4.8/§3.4.9): a
+        ## 64-char lowercase-hex sha256 digest over the canonically-encoded,
+        ## sorted-and-deduped set `S` of every `(namespace, name, version,
+        ## content_hash)` identity present in the index at arming time
+        ## (`preepoch_commitment.nim`). A **NEW, separate** root field from
+        ## `attestationEpoch` above — deliberately distinct rather than
+        ## re-typing that field's shape, so an already-set-once
+        ## `attestation-epoch` timestamp is never mutated (spec §3.4.8: doing
+        ## so would trip milpa's `TNG-INDEX-ROOT-MUTATED` for every consumer
+        ## with an established baseline). Wire name is
+        ## `attestation-epoch-commitment` at the KDL document root; append-once
+        ## (not set-once — spec §3.5.1's distinct `Append-once` order kind).
+        ## `none` until a maintainer arms it via `tianguis set-epoch-commitment
+        ## --execute` (`cmd_set_epoch_commitment.nim`).
     packages*:          seq[Package]
 
 # ---------------------------------------------------------------------------
@@ -135,6 +151,7 @@ proc `==`*(a, b: Package): bool =
 proc `==`*(a, b: Index): bool =
   a.schemaVersion == b.schemaVersion and
     a.attestationEpoch == b.attestationEpoch and
+    a.attestationEpochCommitment == b.attestationEpochCommitment and
     a.packages == b.packages
 
 # ---------------------------------------------------------------------------
@@ -189,4 +206,5 @@ proc canonicalize*(idx: Index): Index =
     packages[i].versions = sortedVersions
   packages.sort(proc(a, b: Package): int = cmp((a.namespace, a.name), (b.namespace, b.name)))
   Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch,
+        attestationEpochCommitment: idx.attestationEpochCommitment,
         packages: packages)

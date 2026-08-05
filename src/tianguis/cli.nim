@@ -6,10 +6,17 @@
 ## regenerate index.json after editing index.kdl.
 
 import std/[os, times]
+# `except parseJson`: json_io.nim (below) defines its OWN
+# `parseJson*(s: string): Result[Index, IdxError]`; importing std/json's
+# `parseJson` unqualified here too would make every call site ambiguous.
+# Nothing in this file parses raw JSON (only builds it, in
+# `showPreepochSetResult`), so excluding it is a clean, permanent fix.
+import std/json except parseJson
 import ./kdl_io
 import ./json_io
 import ./namespace
 import ./attestation
+import ./preepoch_commitment
 import ./vendor/[denylist, orchestrate, driver, candidates, merge]
 
 type
@@ -97,6 +104,52 @@ proc cmdAttestIndexStatement*(args: AttestIndexStatementArgs): int =
     stderr.writeLine("tianguis: attest-index-statement: " & r.stderr)
   r.code
 
+type
+  AttestEpochCommitmentStatementArgs* = object
+    ## Args for `tianguis attest-epoch-commitment-statement` — the
+    ## D-Watermark pre-epoch set commitment counterpart to
+    ## `attest-index-statement` (milpa `docs/rfc-attestation-v1-normative.md`
+    ## §6 S-EpochCommitment). Like `attest-index-statement`, this command
+    ## does no filesystem I/O — the caller (the minting workflow) has
+    ## already enumerated `S` and computed `C` itself (via `tianguis
+    ## show-preepoch-set`), so this stays pure like its sibling.
+    commitment*: string  ## `C`: 64-char lowercase-hex sha256 digest
+    signedBy*:   string
+
+proc attestEpochCommitmentStatementResult*(
+    args: AttestEpochCommitmentStatementArgs
+): tuple[code: int, stdout, stderr: string] =
+  ## Pure core for `tianguis attest-epoch-commitment-statement`.
+  ## Returns (exit code, stdout text, stderr text) without any I/O side
+  ## effects. `cmdAttestEpochCommitmentStatement` wraps this with actual
+  ## echo/writeLine.
+  ##
+  ## The single source-of-truth CLI entry point for the epoch-commitment
+  ## in-toto statement bytes: delegates to `buildEpochCommitmentStatement`
+  ## (attestation.nim), so `scripts/sign_statement.py` (the same CI-only
+  ## signing seam the per-entry and whole-index paths use) never re-derives
+  ## the statement in Python.
+  if args.commitment.len == 0 or args.signedBy.len == 0:
+    return (code: 4, stdout: "", stderr:
+      "missing required argument(s); need --commitment --signed-by")
+  if args.commitment.len != 64:
+    return (code: 4, stdout: "", stderr:
+      "--commitment must be a 64-char lowercase-hex sha256 digest, got: '" &
+        args.commitment & "'")
+  let stmt = buildEpochCommitmentStatement(args.commitment, args.signedBy)
+  (code: 0, stdout: stmt, stderr: "")
+
+proc cmdAttestEpochCommitmentStatement*(args: AttestEpochCommitmentStatementArgs): int =
+  ## `tianguis attest-epoch-commitment-statement`: print the epoch-commitment
+  ## in-toto Statement JSON to stdout, or a clear error to stderr with a
+  ## non-zero exit code.
+  let r = attestEpochCommitmentStatementResult(args)
+  if r.code == 0:
+    echo r.stdout
+  else:
+    stderr.writeLine("tianguis: attest-epoch-commitment-statement: " & r.stderr)
+  r.code
+
 proc deriveNamespaceResult*(signedBy: string): tuple[code: int, stdout, stderr: string] =
   ## Pure core for `tianguis derive-namespace --signed-by=<url-or-SAN>`.
   ## Returns (exit code, stdout text, stderr text) without any I/O side
@@ -152,6 +205,54 @@ proc cmdShow*(url: string): int =
     echo r.stdout
   else:
     stderr.writeLine("tianguis show: " & r.stderr)
+  r.code
+
+proc showPreepochSetResult*(projectDir: string): tuple[code: int, stdout, stderr: string] =
+  ## Thin I/O core for `tianguis show-preepoch-set`: read index.kdl,
+  ## enumerate the current pre-epoch set `S` (grandfather-all — every
+  ## `(namespace, name, version, content_hash)` identity present in the
+  ## index at call time, milpa RFC §6 S-EpochCommitment's F-op), and print
+  ## it plus the resulting commitment `C` as JSON to stdout.
+  ##
+  ## Dual-purpose (single source of truth — no duplicate enumeration logic):
+  ##   1. Human dry-run/diff — `cmd_set_epoch_commitment.cmdSetEpochCommitment`'s
+  ##      default (non-`--execute`) mode renders this SAME result.
+  ##   2. Machine payload for the minting workflow (`attest-epoch-commitment.
+  ##      yaml`) — the printed `identities` array is combined with the
+  ##      signed Sigstore bundle (`attest-epoch-commitment-statement` piped
+  ##      into `scripts/sign_statement.py`) to build the final
+  ##      `.epoch-commitment` sidecar (spec §3.4.9).
+  ##
+  ## Output shape: `{"identities": [...], "commitment": "<C>"}` — the
+  ## `identities` array is already canonically sorted+deduped
+  ## (`preepoch_commitment.identitiesToJson`), so `commitment` is always
+  ## `commitmentDigest` of exactly the printed `identities` array — a
+  ## consumer never needs to re-sort before recomputing `C` to check it.
+  let kdlPath = projectDir / "index.kdl"
+  if not fileExists(kdlPath):
+    return (code: 1, stdout: "", stderr: kdlPath & " not found")
+  let parsed = parseKdl(readFile(kdlPath))
+  if parsed.isErr:
+    let e = parsed.getErr
+    return (code: 1, stdout: "", stderr: kdlPath & ": " & $e.code & ": " & e.message)
+  let idx = parsed.get
+  let s = enumerateCurrentSet(idx)
+  let c = commitmentDigest(s)
+  let node = %*{
+    "identities": identitiesToJson(s),
+    "commitment": c,
+  }
+  (code: 0, stdout: $node, stderr: "")
+
+proc cmdShowPreepochSet*(projectDir: string): int =
+  ## `tianguis show-preepoch-set`: print the current pre-epoch set `S` and
+  ## its commitment `C` as JSON to stdout, or a clear error to stderr with a
+  ## non-zero exit code. Read-only — never mutates index.kdl.
+  let r = showPreepochSetResult(projectDir)
+  if r.code == 0:
+    echo r.stdout
+  else:
+    stderr.writeLine("tianguis: show-preepoch-set: " & r.stderr)
   r.code
 
 proc cmdProject*(projectDir: string, check: bool): int =

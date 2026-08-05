@@ -523,6 +523,58 @@ suite "kdl roundtrip":
     check parsed.get.attestationEpoch.isNone
 
   # ---------------------------------------------------------------------------
+  # Root-level attestation-epoch-commitment (D-Watermark pre-epoch set
+  # commitment C — milpa rfc-attestation-v1-normative.md S-EpochCommitment).
+  # A NEW, distinct root field from attestation-epoch above.
+  # ---------------------------------------------------------------------------
+
+  test "attestation-epoch-commitment round-trips through KDL":
+    let c = "5".repeat(64)
+    let original = Index(
+      schemaVersion: 1,
+      attestationEpochCommitment: some(c),
+      packages: @[],
+    )
+    let serialized = formatKdl(original)
+    check ("attestation-epoch-commitment \"" & c & "\"") in serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.attestationEpochCommitment.isSome
+    check parsed.get.attestationEpochCommitment.get == c
+
+  test "attestation-epoch-commitment absent does NOT emit the node":
+    let original = Index(
+      schemaVersion: 1,
+      attestationEpochCommitment: none(string),
+      packages: @[],
+    )
+    let serialized = formatKdl(original)
+    check "attestation-epoch-commitment" notin serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get.attestationEpochCommitment.isNone
+
+  test "attestation-epoch and attestation-epoch-commitment coexist independently":
+    ## D16: the two root fields are siblings, not a re-typed single field —
+    ## arming one must never disturb the other.
+    let c = "7".repeat(64)
+    let original = Index(
+      schemaVersion: 1,
+      attestationEpoch: some("2026-07-01T00:00:00Z"),
+      attestationEpochCommitment: some(c),
+      packages: @[],
+    )
+    let serialized = formatKdl(original)
+    check "attestation-epoch \"2026-07-01T00:00:00Z\"" in serialized
+    check ("attestation-epoch-commitment \"" & c & "\"") in serialized
+    let parsed = parseKdl(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.attestationEpoch.get == "2026-07-01T00:00:00Z"
+    check parsed.get.attestationEpochCommitment.get == c
+
+  # ---------------------------------------------------------------------------
   # Package-level authorized-signer (rfc-attestation-delivery S8 Layer 3 —
   # per-package signer-continuity ratchet, tianguis#42)
   # ---------------------------------------------------------------------------

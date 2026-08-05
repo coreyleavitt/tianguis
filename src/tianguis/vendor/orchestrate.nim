@@ -377,7 +377,7 @@ proc applyBackfillPins*(idx: Index, pins: seq[BundlePin]): tuple[index: Index, o
     packages[pkgIdx].versions[verIdx].bundlePin = some(p.pin)
     outcomes.add(BackfillOutcome(kind: bokPinned, namespace: c.namespace, packageName: c.name, version: c.version))
   (
-    index: Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch, packages: packages),
+    index: Index(schemaVersion: idx.schemaVersion, attestationEpoch: idx.attestationEpoch, attestationEpochCommitment: idx.attestationEpochCommitment, packages: packages),
     outcomes: outcomes,
   )
 

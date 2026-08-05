@@ -191,6 +191,53 @@ suite "json roundtrip":
     check parsed.get.attestationEpoch.isNone
 
   # ---------------------------------------------------------------------------
+  # Root-level attestation_epoch_commitment (D-Watermark pre-epoch set
+  # commitment C — milpa rfc-attestation-v1-normative.md S-EpochCommitment).
+  # A NEW, distinct root field from attestation_epoch above.
+  # ---------------------------------------------------------------------------
+
+  test "attestation-epoch-commitment round-trips through JSON":
+    let c = "5".repeat(64)
+    let original = Index(
+      schemaVersion: 1,
+      attestationEpochCommitment: some(c),
+      packages: @[],
+    )
+    let serialized = formatJson(original)
+    check "attestation_epoch_commitment" in serialized
+    let parsed = parseJson(serialized)
+    check parsed.isOk
+    check parsed.get == original
+    check parsed.get.attestationEpochCommitment.get == c
+
+  test "attestation-epoch-commitment absent emits no attestation_epoch_commitment key in JSON":
+    let original = Index(
+      schemaVersion: 1,
+      attestationEpochCommitment: none(string),
+      packages: @[],
+    )
+    let serialized = formatJson(original)
+    check "attestation_epoch_commitment" notin serialized
+    let parsed = parseJson(serialized)
+    check parsed.isOk
+    check parsed.get.attestationEpochCommitment.isNone
+
+  test "attestation_epoch and attestation_epoch_commitment coexist independently in JSON":
+    let c = "7".repeat(64)
+    let original = Index(
+      schemaVersion: 1,
+      attestationEpoch: some("2026-07-01T00:00:00Z"),
+      attestationEpochCommitment: some(c),
+      packages: @[],
+    )
+    let serialized = formatJson(original)
+    check "\"attestation_epoch\":\"2026-07-01T00:00:00Z\"" in serialized
+    check ("\"attestation_epoch_commitment\":\"" & c & "\"") in serialized
+    let parsed = parseJson(serialized)
+    check parsed.isOk
+    check parsed.get == original
+
+  # ---------------------------------------------------------------------------
   # Package-level authorized_signer (rfc-attestation-delivery S8 Layer 3 —
   # per-package signer-continuity ratchet, tianguis#42)
   # ---------------------------------------------------------------------------
