@@ -36,6 +36,11 @@ name: attest-index
 
 on:
   workflow_call:
+  # Manual recovery lever: re-sign the CURRENT index.kdl on main into
+  # index.kdl.bundle. Use this whenever the bundle has drifted from the index
+  # (a caller failed to re-attest, a race left it stale) so consumers stop
+  # hitting TNG-INDEX-DIGEST-MISMATCH under index-trust "strict".
+  workflow_dispatch:
 
 permissions:
   contents: write   # commit + push index.kdl.bundle

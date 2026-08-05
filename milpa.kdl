@@ -10,3 +10,12 @@ deps {
     nkdl git=(url)"ssh://git@github.com/coreyleavitt/nkdl.git" ref="v0.1.0"
     nimcrypto git=(url)"https://github.com/cheatfate/nimcrypto.git" ref="master"
 }
+
+// The registry's own build is the trust ROOT, not a consumer: it must not
+// gate on the production index it is in the middle of (re)generating — that
+// is a deadlock under `index-trust "strict"` (milpa's v1 default), because
+// every tianguis workflow runs `milpa fetch` for its tooling, and a strict
+// check against a momentarily-stale index.kdl.bundle fails BEFORE
+// attest-index can re-sign it. All tianguis deps are git-pinned; the index is
+// never consulted here. `off` is correct, not a workaround.
+index-trust "off"
