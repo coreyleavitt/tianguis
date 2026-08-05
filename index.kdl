@@ -9092,6 +9092,24 @@ package "softlink" {
     namespace "github.com/coreyleavitt"
     upstream (url)"https://github.com/coreyleavitt/softlink"
     authorized-signer "https://github.com/coreyleavitt/softlink/.github/workflows/tianguis-publish.yaml@refs/heads/main"
+    version "0.11.1" {
+        content_hash "dag-sha256:2f1a4cfba684ff907927d09b504bae854d5d41253344bd5d5e72aa16a74fa764"
+        provenance {
+            kind "oci"
+            registry "ghcr.io"
+            repository "coreyleavitt/softlink"
+            digest "sha256:9abec348f3f3ee0c8ac4f10dee1ce1cafa1dd354d5e20d96d719d483ec7b38b4"
+        }
+        attestation "author-signed"
+        signed_by "https://github.com/coreyleavitt/softlink/.github/workflows/tianguis-publish.yaml@refs/heads/main"
+        published_at "2026-08-05T02:46:54Z"
+        rekor {
+            uuid "108e9186e8c5677a4f5c530d41fe80a1b7e3d2000062fa563180c7d18812963655f785b3119e192a"
+            log_index "2341990582"
+            integrated_time "1785897949"
+        }
+        bundle sha256="220edfdabd9fcb49f4746fbba100a59e0ace08f874f19f5c714c30e21feb237c"
+    }
     version "0.11.0" {
         content_hash "dag-sha256:8ffc81bb57721da6871853d5c158c3db50935c72064715ffc6fc0536401b6417"
         provenance {
