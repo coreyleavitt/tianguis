@@ -9221,6 +9221,29 @@ package "spotify" {
         bundle sha256="08905697e80c3d68b412283881010d979e980f697c33d265b19d2af38c19086b"
     }
 }
+package "nelli" {
+    namespace "github.com/coreyleavitt"
+    upstream (url)"https://github.com/coreyleavitt/nelli"
+    authorized-signer "https://github.com/coreyleavitt/nelli/.github/workflows/tianguis-publish.yaml@refs/tags/v0.3.5"
+    version "0.3.5" {
+        content_hash "dag-sha256:559eb84106b9acc91d4ec8d44552a8215741f23e78ac22d8ffc681c3a3b1a3e0"
+        provenance {
+            kind "oci"
+            registry "ghcr.io"
+            repository "coreyleavitt/nelli"
+            digest "sha256:8b66dd94081eb9b2562c074dc1169acad30b9f9a6b015901fbbd1c4fea2fe866"
+        }
+        attestation "author-signed"
+        signed_by "https://github.com/coreyleavitt/nelli/.github/workflows/tianguis-publish.yaml@refs/tags/v0.3.5"
+        published_at "2026-08-14T20:23:20Z"
+        rekor {
+            uuid "108e9186e8c5677abbe84375302973fa4a099cc3341a33f9e7d9bc4e47005186024fb5272a3a54bb"
+            log_index "2468794554"
+            integrated_time "1786738935"
+        }
+        bundle sha256="590b906926ccedc37770d2ac7f63090a2cea5c361e44b6b32050e10fc09f7cf1"
+    }
+}
 package "nkdl" {
     namespace "github.com/coreyleavitt"
     upstream (url)"https://github.com/coreyleavitt/nkdl"
