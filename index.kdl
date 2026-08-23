@@ -25191,6 +25191,19 @@ package "mmcif" {
 package "pgxcrown" {
     namespace "github.com/luisacosta828"
     upstream (url)"https://github.com/luisacosta828/pgxcrown"
+    version "0.17.0" {
+        content_hash "dag-sha256:e0a6ac53c6ff3264ca975fb70cd1b0f45ca644cf809f1dbfb084ba8abf73c1bc"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/luisacosta828/pgxcrown"
+            ref "v0.17.0"
+            commit_sha "4b771e4620d0c58ddbb6bfcc9efab9e8978c954c"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-08-23T06:40:13Z"
+        bundle sha256="535bca5b79f03dd76cee7edf4361678578e795c411c207af0672f95ee2ecb090"
+    }
     version "0.16.0" {
         content_hash "dag-sha256:94ed1badee797e8d9ac9adfb3952302f7160117326f8f0f5ab0601384309be9f"
         provenance {
@@ -28638,6 +28651,23 @@ package "uing" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
         bundle sha256="d6da13f518f0c59247a4e4274a27e9e06442ad8f67954df92048808f5fc0d22a"
+    }
+}
+package "easyargs" {
+    namespace "github.com/nervecenter"
+    upstream (url)"https://github.com/nervecenter/easyargs"
+    version "0.0.0+commit-d30f101" {
+        content_hash "dag-sha256:4710fae664dcced7e7f2140a45051e8e12871ac1f75ec294145df2bdc8500510"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/nervecenter/easyargs"
+            ref "HEAD"
+            commit_sha "d30f101b19ea804bfa9a2cb7f999a3d77f4a22b9"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-08-23T06:40:13Z"
+        bundle sha256="14f912f242a2fd95c56a60972519901d2525de79c7e7bf5afe2c603da108c17a"
     }
 }
 package "nimgnuplot" {
@@ -33751,6 +33781,19 @@ package "impeller" {
 package "kapsis" {
     namespace "github.com/openpeeps"
     upstream (url)"https://github.com/openpeeps/kapsis"
+    version "0.4.7" {
+        content_hash "dag-sha256:8c884b4adc758bfa2937b72ed640341c66198e9a53f641773beaf9f028e000b0"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/openpeeps/kapsis"
+            ref "0.4.7"
+            commit_sha "87856e98537ba7fff14dc69ec62bda6392748417"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-08-23T06:40:13Z"
+        bundle sha256="f6bbdc5321d010b45b604cd1deb0566a49f02c13cef6b5dcc084b0d45b250ce4"
+    }
     version "0.4.6" {
         content_hash "dag-sha256:9628b4b172384efbdd5ed6daedfd42008430bed2484fa45e29a046be9f631cb0"
         provenance {
