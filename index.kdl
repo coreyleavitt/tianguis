@@ -15802,6 +15802,19 @@ package "reni" {
         published_at "2026-09-11T10:43:25Z"
         bundle sha256="1a179506c87e6bfad0c34e9ab49dc7cadf476c1fdd56418d81c16b2b83f1e7df"
     }
+    version "0.0.0+commit-e8c609c" {
+        content_hash "dag-sha256:3d7418b389ccaa7fa60b6ccfb402f6bcb61a8472056efa21b7a7d1ec62bf72a4"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/fox0430/reni"
+            ref "HEAD"
+            commit_sha "e8c609c7ecc558586473d3aa6ed27be5fbbca33a"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-09-17T11:05:54Z"
+        bundle sha256="a2c7df5227dd0d7212e130a4ad867103519420016fbfd79246ba3c154abd392c"
+    }
     version "0.0.0+commit-cfa262b" {
         content_hash "dag-sha256:13a815dbb6026343c4aef0337d209ef4457f3eb6c4d3fff39e49c9a2f24bb15a"
         provenance {
@@ -19873,6 +19886,19 @@ package "holo_json" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-09-14T11:58:43Z"
         bundle sha256="b8c4cd6bb22bb68c18814af8e5ebeaf8ab62d33bbdf6e75b681b9f58c7bf37ca"
+    }
+    version "0.0.0+commit-2dea6ef" {
+        content_hash "dag-sha256:88b4d2210a5e2c4b1ce6354efa92ed8b0b587eb7b7efea257072926e6173170f"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/holo-nim/holo-json"
+            ref "HEAD"
+            commit_sha "2dea6ef83fea6d2e01f686dc9152d331e0dbc4c4"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-09-17T11:05:54Z"
+        bundle sha256="6ee66f3a7a026e6c12cd3631d6733d7fbb82f3166ee0ead8984aa920dd0035ae"
     }
 }
 package "holo_match" {
@@ -47068,6 +47094,19 @@ package "keccak_tiny" {
 package "leopard" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-leopard"
+    version "0.1.2" {
+        content_hash "dag-sha256:3c925333b3e5f4e658d1ee2e21b6d941ed20f1aea0ecf0fdf54ed7fc02e0f6ee"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-leopard"
+            ref "v0.1.2"
+            commit_sha "0eabb4d4b82e4febd9318f9b9d56e7b154f09a1e"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-09-17T11:05:54Z"
+        bundle sha256="5c42f3e17d82703a6192a432374d6392cc9154ce48e5e44e0c6bc5f588bf74cc"
+    }
     version "0.1.0" {
         content_hash "dag-sha256:cd6608aa82c5214c74bc82c3fe33201fb76970dae1c1adc2970c2c942a651beb"
         provenance {
@@ -53801,6 +53840,19 @@ package "intops" {
 package "libp2p" {
     namespace "github.com/vacp2p"
     upstream (url)"https://github.com/vacp2p/nim-libp2p"
+    version "2.3.2" {
+        content_hash "dag-sha256:73bc3fb6f7cf363284e0fdc8017b08c28c7204e9d622d332c7d7a262afab51d2"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/vacp2p/nim-libp2p"
+            ref "v2.3.2"
+            commit_sha "49fc8d9d63d4d4b68333f3e7d0e05c9f8a3b4fa4"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-09-17T11:05:54Z"
+        bundle sha256="c360a73c12a1400dd710ba3b5f9ce1f61bd7e5bdabb0defe5fb39f58275ff861"
+    }
     version "2.3.1" {
         content_hash "dag-sha256:7f4077f8c25c54de0f8b6551aa484a1b46866357eeb04876019507e19ba758eb"
         provenance {
