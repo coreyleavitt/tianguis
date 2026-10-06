@@ -8796,6 +8796,19 @@ package "td" {
 package "threecode" {
     namespace "github.com/capocasa"
     upstream (url)"https://github.com/capocasa/3code"
+    version "0.8.1" {
+        content_hash "dag-sha256:e1e34f7f09cc097f9229c271473c902685df7e8907390eb8851de8a9e2a544c4"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/capocasa/3code"
+            ref "0.8.1"
+            commit_sha "d531ef47028b335b23aeb8efbf8552743e6f5166"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="58e6bda2bda3161d5eee3e7f6451617b235479ec6dc2a93b8447758318612763"
+    }
     version "0.8.0" {
         content_hash "dag-sha256:2fd6d8473acd9aab6a16f58db8198149cc3549dbbf42b7fb4613d023c2a40257"
         provenance {
@@ -12861,6 +12874,19 @@ package "macosutils" {
 package "merenda" {
     namespace "github.com/elcritch"
     upstream (url)"https://github.com/elcritch/merenda"
+    version "0.25.6" {
+        content_hash "dag-sha256:bac3bae17af4156e0cdd35fe5daf9cecc65564db6fde41b38d7effcd4a1a4b76"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/elcritch/merenda"
+            ref "v0.25.6"
+            commit_sha "02e63088730a15f4740a971734ee5375cc4c3443"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="5928619193852bd01536d738d7b9805add85cad802bef540861c0a37dc58a500"
+    }
     version "0.25.5" {
         content_hash "dag-sha256:84ea995b8772824daa2d8fbbdf8ca0802481ded06934c6ac77ebc339bfcf3287"
         provenance {
@@ -37592,6 +37618,19 @@ package "chachachat" {
 package "clue" {
     namespace "github.com/openpeeps"
     upstream (url)"https://github.com/openpeeps/clue"
+    version "0.3.3" {
+        content_hash "dag-sha256:47385c3bd262ff09241200a277420866e7b4865b13e1c0c53c663722d33d6097"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/openpeeps/clue"
+            ref "0.3.3"
+            commit_sha "6171dc7b3e7a5ccaf2ccfcbf4ea83a5191203de2"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="1f78a530c875b4842d73faa0c0c9761c1949181e96280d2630555a1e65c4a71d"
+    }
     version "0.3.2" {
         content_hash "dag-sha256:379a2ffc3de10a8a30195abb7ef220d8a31d05d9f6760b955fc5f1866c4aefab"
         provenance {
@@ -37912,6 +37951,19 @@ package "crossdb" {
 package "datpkgr" {
     namespace "github.com/openpeeps"
     upstream (url)"https://github.com/openpeeps/datpkgr"
+    version "0.1.9" {
+        content_hash "dag-sha256:28d48703d2f12f7d630042488eeddc11fe2f66d670411ad4334c7047168b674c"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/openpeeps/datpkgr"
+            ref "0.1.9"
+            commit_sha "623a88eee61de9cc94ed2d3feb38695a8b7062fc"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="3f62970152d467b266d92a7a2dc2cf0e0bf78caeb5234a113b6e7d7d5da4d54c"
+    }
     version "0.1.8" {
         content_hash "dag-sha256:36d88fa86e6e513d41117e9b9fa6cb362399d1a1bfd37e527188efcafde5c64d"
         provenance {
@@ -39587,6 +39639,19 @@ package "pluginkit" {
 package "powpow" {
     namespace "github.com/openpeeps"
     upstream (url)"https://github.com/openpeeps/powpow"
+    version "0.2.2" {
+        content_hash "dag-sha256:06674e57608b9055ea7f4c15f7d587be7ba4e0584b296c22c4a87709a0bb1f6f"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/openpeeps/powpow"
+            ref "0.2.2"
+            commit_sha "695913c0e7794f7ed18a6adf0c134b22dd40f5aa"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="d3a8eab09251377f1577dd398d6ba2cf982d46a50e46fde4ab10052e3f6b7187"
+    }
     version "0.2.1" {
         content_hash "dag-sha256:4d0039f9648fb41f271aa0f645c3d8a38182539204d129969e45ae65e7e0f7a4"
         provenance {
@@ -48691,6 +48756,19 @@ package "beacon_chain" {
 package "bearssl" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-bearssl"
+    version "0.3.0" {
+        content_hash "dag-sha256:b77fed25167117af4392be108c00e4c27af3f1c61a8dbfe1bed47685e3d517a6"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-bearssl"
+            ref "v0.3.0"
+            commit_sha "2c919a5e94768c7b8d977257bef1981ea2f5699c"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="918a9ceaadb7d9554ad2de995fd861460c70ab22966d8568e084e551d2f6d292"
+    }
     version "0.2.14" {
         content_hash "dag-sha256:4a0403d7ff34431a659a354c9ff37a47c932856044359d8f9acf7ed4b20e11ce"
         provenance {
@@ -48841,6 +48919,19 @@ package "blscurve" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-09-04T10:44:39Z"
         bundle sha256="a43c52a6822c9c62321e7391e2757b38837d0106535a210a1ea2612227130381"
+    }
+    version "0.0.0+commit-3bf3402" {
+        content_hash "dag-sha256:dc25e8799e4c5bfb12a8f78885fe63db025af9cef1224863f30f8e43525ca5e4"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-blscurve"
+            ref "HEAD"
+            commit_sha "3bf34027a2eff87e5fe8418bc97f09219452823a"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="d79122b09affb62a4978e3125d479f6212340d0a1e317fa80ed88595084b7ace"
     }
 }
 package "bncurve" {
@@ -49167,6 +49258,19 @@ package "evmc" {
 package "faststreams" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-faststreams"
+    version "0.6.0" {
+        content_hash "dag-sha256:7fed1c220276e8cb6754058f30950964e6ea6d8c5c27cbcf77d33fd4f6dca4dc"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-faststreams"
+            ref "v0.6.0"
+            commit_sha "5bdef9939b483435a61aa91a6422c1a9852127b4"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="496c759f3af354cb1557e81c49c54afe34c8a74ae4ceeceff6c284c424b6a747"
+    }
     version "0.5.2" {
         content_hash "dag-sha256:e05a40974a17e5d9614066e825f06402367817a6d933f0de11c21dd93c280499"
         provenance {
@@ -49240,6 +49344,19 @@ package "graphql" {
 package "httputils" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-http-utils"
+    version "0.6.0" {
+        content_hash "dag-sha256:3027c194f355c2ab56ef9d667b76e76cf4d0f715b88d6bd96e50c19afadcd35a"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-http-utils"
+            ref "v0.6.0"
+            commit_sha "97eafdb8852c52beeedcf49e1c8d16e4b559d331"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="d65f3b7099a6c6dda2943370a30174b1ef9d858f1c53a383df3320bf64069a4a"
+    }
     version "0.5.1" {
         content_hash "dag-sha256:5649536d4539c36d6e4fd638e398beaf83f2678fe40ab95fc4d0db22e657e08b"
         provenance {
@@ -49554,6 +49671,19 @@ package "minilru" {
         published_at "2026-08-25T06:46:57Z"
         bundle sha256="6bd24fe31384ed080d3b97f5dd15859f025d4313b14ff72d7a54a6b9b2107488"
     }
+    version "0.0.0+commit-6869fcf" {
+        content_hash "dag-sha256:50b7dff3f8dbc223e2bf54dca974db7d1ddd3f3f6468ae2e2f622223e6dca094"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-minilru"
+            ref "HEAD"
+            commit_sha "6869fcf686d6681d4c541dd437e10a10f5420722"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="2c0315065838c076279ee3e57735c37858ded8693109683b2328abda660647c6"
+    }
     version "0.0.0+commit-039a037" {
         content_hash "dag-sha256:569c55763d74e25d2eaf1257bc1d3da3c4d7bc6dc1121de6f533b9f9e01c3a7f"
         provenance {
@@ -49571,6 +49701,19 @@ package "minilru" {
 package "nat_traversal" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-nat-traversal"
+    version "0.0.0+commit-ce382b9" {
+        content_hash "dag-sha256:4380d7588419fc7adbe23974c77a0114401ba24b33e5da3e9d388b1083d02ee9"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-nat-traversal"
+            ref "HEAD"
+            commit_sha "ce382b961215e31aa7eba0388c55c73b2bdb920f"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="3173be90aaa923fb80a0df2b87414b60b1c8a583fe0a6e870ee962fdf39c4706"
+    }
     version "0.0.0+commit-a3d0312" {
         content_hash "dag-sha256:2907d588e1278fc302fdfe3065c3888262081eaaeec434b55ed35e10312540e3"
         provenance {
@@ -49820,6 +49963,19 @@ package "rocksdb" {
 package "secp256k1" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-secp256k1"
+    version "v0.8.0.8.0" {
+        content_hash "dag-sha256:24aa052586845e0e7ce5a1e01781098001cb1f62033bf312f6369211fd059810"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-secp256k1"
+            ref "v0.8.0.8.0"
+            commit_sha "4e1ccd554777e4f9f790176bcffd8009a75fd2b7"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="81db106a2e73736cdccebb9052c9c5cede2b62dfaa3c4516735b49438a99d3aa"
+    }
     version "v0.7.0.8.0" {
         content_hash "dag-sha256:46713d2202f96cc5c2153f3347adf3eb3ce5ce179d0a858f9a41b2b7e9f72099"
         provenance {
@@ -50304,6 +50460,19 @@ package "ssz_serialization" {
         published_at "2026-08-02T06:57:33Z"
         bundle sha256="686a8829e47efa62249e61b4961f259fd06dbf8be9c0711205dee40d1ef23b5b"
     }
+    version "0.0.0+commit-253a6e7" {
+        content_hash "dag-sha256:3642909f730da9342c79e7935d86dfdee72f870a0bb83b87b5aabc08abf6fafa"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-ssz-serialization"
+            ref "HEAD"
+            commit_sha "253a6e7e4516afafd4d8a5979fb8edd0bf5dc837"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="80ff9af5fdbaa94950081cdaf648e274727f9ab81341e2c507c39d000bfec82e"
+    }
     version "0.0.0+commit-1cc4d87" {
         content_hash "dag-sha256:9874e304f8503c77e2edee912edc05d0763ab5d76472f31e520fb9c954480df2"
         provenance {
@@ -50334,6 +50503,19 @@ package "ssz_serialization" {
 package "stew" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-stew"
+    version "0.6.0" {
+        content_hash "dag-sha256:feda1ff8976e809db043d8fbae5b7c297f3f71efec5ac887d6723daae5310cd9"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-stew"
+            ref "v0.6.0"
+            commit_sha "0e601977e5ac8766dbf39fa53b94f908b9cb4753"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="0c85d7a0311b1b02d3b71852c872bb8155bda49c30dbf7754f8224ff6b731512"
+    }
     version "0.5.2" {
         content_hash "dag-sha256:dafec2b022070018471092a780e2a8753349f0f4d5037011b26aadd427b7173e"
         provenance {
@@ -50450,6 +50632,19 @@ package "taskpools" {
 package "testutils" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-testutils"
+    version "0.9.0" {
+        content_hash "dag-sha256:c5be0cfb1b2305399a6714d0d0848c0bdb82ae65e5e19bd4c37b737f6a3041a2"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-testutils"
+            ref "v0.9.0"
+            commit_sha "4c7252fcd27f72d523e498fba5cf757d101cc3aa"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="92d2178ac017ea461d3cf3efb60765f72a3490b50d2cfbf7ad6de95adb48af47"
+    }
     version "0.8.5" {
         content_hash "dag-sha256:00ea3955c4ce74fed2d52ddf5ea45098060b87d8c4ebb2a145b3b26d705b4de5"
         provenance {
@@ -50540,6 +50735,19 @@ package "ttmath" {
 package "unittest2" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-unittest2"
+    version "0.3.0" {
+        content_hash "dag-sha256:988ff7d2f7feec7c963b36670922307afcda77c6c4fb034d6a8d7e1278f3a1ef"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-unittest2"
+            ref "v0.3.0"
+            commit_sha "19701632b4f287b3012a5e435a9d829b0f66c605"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="de77dfbabcbd7bbe180f98d5d25e40c1caa037bf5b8b2e6dfb8fded69121a457"
+    }
     version "0.2.5" {
         content_hash "dag-sha256:ae4d18560d38e26c73ea229334723d4effcc8fba9ebec1e4a03fcff673586feb"
         provenance {
@@ -50630,6 +50838,19 @@ package "websock" {
 package "zlib" {
     namespace "github.com/status-im"
     upstream (url)"https://github.com/status-im/nim-zlib"
+    version "0.3.0" {
+        content_hash "dag-sha256:68e17a90f382465d052e29a46ad4fadb08bff6f01c2cb04cb660664bb86e5d27"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-zlib"
+            ref "v0.3.0"
+            commit_sha "7b1d6ed291df9fddcbb5cf16c1968c2b8c6e5a90"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="2f4fedbe35ab64020cebba8d2bea877909c3e68757086a430f97b363b652755a"
+    }
     version "0.2.0" {
         content_hash "dag-sha256:ee3ef52fe4f6ecd93df85a08ae741071785196216ea64862b294198c444a12d1"
         provenance {
@@ -50685,6 +50906,19 @@ package "zxcvbn" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
         bundle sha256="3001563e49b63a6af353af9582334f5d41fac5c2a7614485df45b1b15d54e5ca"
+    }
+    version "0.0.0+commit-56491d5" {
+        content_hash "dag-sha256:a776f7ac97d14c85a88cd6c52a5fd9a61c63cee5275a3441f3c7c73a5ac27310"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/status-im/nim-zxcvbn"
+            ref "HEAD"
+            commit_sha "56491d5c7b112e3286f6a02f9ec110419c479872"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="ff39104c9c6d3e7d461d4d2c3da3ed932e19036835151bd315c8abd17330ad64"
     }
 }
 package "glm" {
@@ -52326,6 +52560,23 @@ package "zoominvitr" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-05-26T08:11:36Z"
         bundle sha256="e5c5ea867f2b46cc7f7bcd0e6e2eb077356a9204cc747d676ba1da2d0219f937"
+    }
+}
+package "prx" {
+    namespace "github.com/thebadinteger"
+    upstream (url)"https://github.com/thebadinteger/prx.git"
+    version "0.1.0" {
+        content_hash "dag-sha256:5c425dcd6bbe4e49ce9993bfc1da21647b87750afacbce0687033d15cc785a68"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/thebadinteger/prx.git"
+            ref "0.1.0"
+            commit_sha "f80062993636b5b3aa84865623263cecbc95d682"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="f33bf401a6ca43a47691e20be88e1fdfdb20177691f5b923d1e954c9933955a8"
     }
 }
 package "audiodb" {
@@ -58141,6 +58392,23 @@ package "argument_parser" {
         bundle sha256="d20129e1000a3ad2ffc0820550e07622cb746f055d00b6a6f4b203b34bf321e9"
     }
 }
+package "polyline" {
+    namespace "github.com/xenoglyphiq"
+    upstream (url)"https://github.com/Xenoglyphiq/polyline-nim"
+    version "0.1.0" {
+        content_hash "dag-sha256:42eeb1065af5762ad5b6b3e251cf02604dbe6f826009da7054a9728df57e6649"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/Xenoglyphiq/polyline-nim"
+            ref "v0.1.0"
+            commit_sha "dd0cd2ea32fa48ac410eb04438aa453e2bce18ef"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="11ecd1868de07597ee8faecc5123a5c6e2ad870bdef88d200e84bcd84ea6867b"
+    }
+}
 package "nimdenter" {
     namespace "github.com/xigoi"
     upstream (url)"https://github.com/xigoi/nimdenter"
@@ -59174,6 +59442,19 @@ package "jsbind" {
 package "jwt" {
     namespace "github.com/yglukhov"
     upstream (url)"https://github.com/yglukhov/nim-jwt.git"
+    version "0.0.0+commit-b93c7c0" {
+        content_hash "dag-sha256:e53e3779f63c1e1ccc529be8f093b8aff4949809d8908f39bfb5ad9438472656"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/yglukhov/nim-jwt.git"
+            ref "HEAD"
+            commit_sha "b93c7c0235e14946fb13a9603045fe9ca41c0ba0"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-06T12:52:28Z"
+        bundle sha256="e6cc14aea4bbf7d75d40d0a636d8fcffee1ac4612d177bc872ea3a8a638a9691"
+    }
     version "0.0.0+commit-710fd31" {
         content_hash "dag-sha256:f93f00939bfc4c298012e1668b61176ac46bd16c7bab405538435da2dedaebc0"
         provenance {
