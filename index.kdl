@@ -12887,6 +12887,19 @@ package "macosutils" {
 package "merenda" {
     namespace "github.com/elcritch"
     upstream (url)"https://github.com/elcritch/merenda"
+    version "0.25.8" {
+        content_hash "dag-sha256:e898e7d201b05b96fd4bc403ca5f26e450d472114d0881f57f4ab7cb454a7926"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/elcritch/merenda"
+            ref "v0.25.8"
+            commit_sha "5b0f5eb59aa0b1e471ceb77077f3f5bfd18bd01d"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-09T12:41:06Z"
+        bundle sha256="4d4c2610d0da915a82597e689446e9e036357cca0cc88df3d299dd92ba8d83db"
+    }
     version "0.25.7" {
         content_hash "dag-sha256:4c024f0a78daf9852cdf5ee2b749ea151c60fe436aebd42d982a17c98b352808"
         provenance {
@@ -27394,6 +27407,19 @@ package "nimlm" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-10-08T12:55:15Z"
         bundle sha256="c882f66392ebaa80792602497322746e79872f50193f09e8c3862e6a8936f3f5"
+    }
+    version "0.0.0+commit-7cce484" {
+        content_hash "dag-sha256:9bfab8cf965da12e2e57d2ba4df7ae9947adf9ce49c603e3175e242b542fc69f"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/lipunila-sonaliwan-fr/nim.llm"
+            ref "HEAD"
+            commit_sha "7cce4841439b6bfc4d52d9a5ec45c0f84b925d4e"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-10-09T12:41:06Z"
+        bundle sha256="24fe985b7b7f5130207603c90448c4773acad9d72699a7ed28179de473f27793"
     }
 }
 package "nimql" {
