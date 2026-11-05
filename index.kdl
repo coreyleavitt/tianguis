@@ -14196,6 +14196,19 @@ package "sdfy" {
 package "sigils" {
     namespace "github.com/elcritch"
     upstream (url)"https://github.com/elcritch/sigils"
+    version "0.34.0" {
+        content_hash "dag-sha256:a69b629a914f77a7c4e0a784dbec6d6479f84fa7607ebb1fef689db13e845809"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/elcritch/sigils"
+            ref "v0.34.0"
+            commit_sha "5190b389ef7448adfc591924d80ad3a971e3487b"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-05T14:06:37Z"
+        bundle sha256="60a4f9c49fab51c171789e253352d3b48d0dc562e040f2f0a344f1d801e75b77"
+    }
     version "0.33.0" {
         content_hash "dag-sha256:abe9d4bcc0a2c08a240a8ec0993e25b40d91ed776b78c93e9005bceca8586668"
         provenance {
@@ -17318,6 +17331,19 @@ package "async_postgres" {
 package "celina" {
     namespace "github.com/fox0430"
     upstream (url)"https://github.com/fox0430/celina"
+    version "0.15.0" {
+        content_hash "dag-sha256:dfac48a3ee2017b8f4b4edd08cbdca2e0f5451d3523a60cbe77b77bc9f176e3e"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/fox0430/celina"
+            ref "v0.15.0"
+            commit_sha "0b9df5c5ac58b81710bfbb30803049a16dd791b2"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-05T14:06:37Z"
+        bundle sha256="a8301156a8112e8578ceff643ba97500a73d1590279014f214d4dbf8524291e5"
+    }
     version "0.14.0" {
         content_hash "dag-sha256:56f9e963142794088c81c094f8c7447d988b2f0a47f962d5dc41e56bae36d2ac"
         provenance {
@@ -18861,6 +18887,19 @@ package "gene" {
 package "businessdays" {
     namespace "github.com/gek2k"
     upstream (url)"https://github.com/GeK2K/businessdays"
+    version "0.0.0+commit-d43f6ac" {
+        content_hash "dag-sha256:71dd81e3c8a1fa018a9fad9b38dcac15dbdb6b6d1123f3b4fa8f90d399e8bfae"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/GeK2K/businessdays"
+            ref "HEAD"
+            commit_sha "d43f6ac7d3d244d899b5ad164f73bb78042803a4"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-05T14:06:37Z"
+        bundle sha256="bf3494ced7b567e29b5e6376bcf74973f410c5f8acde6037c5ca4e65ab83a430"
+    }
     version "0.0.0+commit-baab31b" {
         content_hash "dag-sha256:7f5cd824d62f57457f1313dc7878d13d326d96dbaedd95378d22ff4801f24acb"
         provenance {
@@ -39951,6 +39990,19 @@ package "bro" {
 package "carne" {
     namespace "github.com/openpeeps"
     upstream (url)"https://github.com/openpeeps/carne"
+    version "0.1.0" {
+        content_hash "dag-sha256:0f45514bb52c7755049e4c73e5865e83fe3035a1e08e67fa87aed25ba4e81b73"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/openpeeps/carne"
+            ref "0.1.0"
+            commit_sha "dd53183f291282bbdf00675a3578e3346e064394"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-05T14:06:37Z"
+        bundle sha256="03d42090be203c330962d8ac9047a78bf7371adb1485e3923ae3b5cb8e4dbfe7"
+    }
     version "0.0.0+commit-ea77e37" {
         content_hash "dag-sha256:8bb6f0592b12359822675047286e7a4a25a1cb981148027c1a28442af21ccee9"
         provenance {
