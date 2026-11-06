@@ -30521,6 +30521,19 @@ package "batchsend" {
 package "nimview" {
     namespace "github.com/marcomq"
     upstream (url)"https://github.com/marcomq/nimview"
+    version "0.4.3" {
+        content_hash "dag-sha256:d8a2411ec6d502ab984ebc5a54615d010bdb5695a0f9ac1d7cb8066e40b7c5d4"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/marcomq/nimview"
+            ref "0.4.3"
+            commit_sha "6858d0950de23a516091c62d5881ac41956466e9"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-06T13:49:45Z"
+        bundle sha256="184a790729f63226d1cc0f0701d07a85048d4cc60fb0c801d632c4b1a6c7313f"
+    }
     version "0.4.2" {
         content_hash "sha256:3123502b01c3b63ecf971372768519cf078acafb8ca9ea7035ae39681d61ce8c"
         provenance {
@@ -36500,6 +36513,19 @@ package "openh264" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-09-27T11:31:29Z"
         bundle sha256="5364ab447c00d31457947de63263bd627fe64fc6f26916b1149403030d9cf088"
+    }
+    version "0.0.0+commit-79bdf57" {
+        content_hash "dag-sha256:e57c41336bf04c283c49146d07b84a6a5622051ead008bfa152b638cac4713b7"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/nimbase/openh264-nim"
+            ref "HEAD"
+            commit_sha "79bdf573cc69b56d80cb23fe913dc87d8634aa5e"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-06T13:49:45Z"
+        bundle sha256="8c150905c77f264ac5c28c0fc0bdb6f5fec1e1dd44b431e43df30dbe854fb345"
     }
 }
 package "paddle" {
@@ -62632,6 +62658,19 @@ package "nimeverything" {
 package "llvnim" {
     namespace "github.com/xlebore3o4ka"
     upstream (url)"https://github.com/xlebore3o4ka/llvnim23"
+    version "1.0.0" {
+        content_hash "dag-sha256:25d809372f0f61b228e37eb9cc36aa9c195a59e9806442169ef7e8b4ebe3c9af"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/xlebore3o4ka/llvnim23"
+            ref "v1.0.0"
+            commit_sha "68242eebdadbf1808f670dd8738a194a790e50e1"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-06T13:49:45Z"
+        bundle sha256="a3df2b6b2cd333b383cb6730651bc660803f83ed73f995cce647a5ec49ef8394"
+    }
     version "0.8.0" {
         content_hash "dag-sha256:20ce0962da4f875cd2aaabf08d3f6cac010568310a445cf6a5112824fa035e59"
         provenance {
