@@ -7736,6 +7736,19 @@ package "nio" {
 package "procs" {
     namespace "github.com/c-blake"
     upstream (url)"https://github.com/c-blake/procs"
+    version "0.8.15" {
+        content_hash "dag-sha256:8f0b21e01838a851bac72880e4d2860272a05f5d5a55cd2721a38a976309c099"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/c-blake/procs"
+            ref "0.8.15"
+            commit_sha "f416f141e51c5809ea279d4717e01d9a56e76c1d"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-11T13:40:20Z"
+        bundle sha256="606c3c1e014267d5355a55fe8a63b57ba721e3140268b82628b06c4fd7e99b83"
+    }
     version "0.8.14" {
         content_hash "dag-sha256:0be1ccb9dff5a2ec759663b26ec221100d4ef29b216eda836b9127b366629530"
         provenance {
@@ -18170,6 +18183,19 @@ package "mersal" {
 package "ned" {
     namespace "github.com/foxoman"
     upstream (url)"https://github.com/foxoman/ned"
+    version "6.43.1" {
+        content_hash "dag-sha256:e5c662add355194b25fd403415e92e3d109267e9eab5d57b3484ea99230ebc1b"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/foxoman/ned"
+            ref "v6.43.1"
+            commit_sha "b13d6a2a5b35b53b57e5686cc576b8578c8130a5"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-11T13:40:20Z"
+        bundle sha256="9f33b15be1e65167c68d6684f220048663057262705cf2c5e802762c2f6f062b"
+    }
     version "6.43.0" {
         content_hash "dag-sha256:24039c091178b59dcdef0d684e5b32724d8f40912884d96ec2746f06dbacb199"
         provenance {
@@ -18234,6 +18260,19 @@ package "pwnedpass" {
 package "retroui" {
     namespace "github.com/foxoman"
     upstream (url)"https://github.com/foxoman/retroui"
+    version "0.38.0" {
+        content_hash "dag-sha256:29de396a2dd82036a6866718b92e44799f94b0cbacde60c5fced5b55a69aebb2"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/foxoman/retroui"
+            ref "v0.38.0"
+            commit_sha "50aa048821378c8ac24a1cf1db3c5992e7636edb"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-11T13:40:20Z"
+        bundle sha256="06cede6787ae40d37f020d628b3c67f46db81f8054c55908484de554b5248ce0"
+    }
     version "0.36.0" {
         content_hash "dag-sha256:e04726c9b26c3aeda5d44d29a9b466aee0b6dd2a7a79c4b8c38672462157aab8"
         provenance {
@@ -36240,6 +36279,19 @@ package "impeller" {
 package "javascriptcore" {
     namespace "github.com/nimbase"
     upstream (url)"https://github.com/nimbase/javascriptcore-nim"
+    version "0.1.0" {
+        content_hash "dag-sha256:5e49753e41295ac9d04e859cf08ac6185388afd7019d08bde0fc8985b2b1a422"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/nimbase/javascriptcore-nim"
+            ref "0.1.0"
+            commit_sha "e6287ce1a8a4c963fdc99267deae768115b09487"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-11T13:40:20Z"
+        bundle sha256="fb77b8040186cce0d95dfe9f115ce1a50d775f641e373c88416bcbb8886e79ff"
+    }
     version "0.0.0+commit-e6287ce" {
         content_hash "dag-sha256:5e49753e41295ac9d04e859cf08ac6185388afd7019d08bde0fc8985b2b1a422"
         provenance {
@@ -56341,6 +56393,40 @@ package "torim" {
         bundle sha256="2cd122afb490e1c065c90b36f08c0734ea778b54995d4a0d0506116aae40a1ef"
     }
 }
+package "smsgora" {
+    namespace "github.com/tekservixhq"
+    upstream (url)"https://github.com/TekservixHQ/smsgora-nim"
+    version "1.0.0" {
+        content_hash "dag-sha256:5d0111462337905e2bf3b9e692c0efec255dd72dc24ccafd6486130c69e32bc7"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/TekservixHQ/smsgora-nim"
+            ref "v1.0.0"
+            commit_sha "dff6f7d1bcf385c68e4750e461752d77cdfe6b60"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-11T13:40:20Z"
+        bundle sha256="eca2571e97183d8fe41eff6e77b31f12ab84032a764a71e90f261a1c7e76cd81"
+    }
+}
+package "waservix" {
+    namespace "github.com/tekservixhq"
+    upstream (url)"https://github.com/TekservixHQ/waservix-nim"
+    version "1.0.0" {
+        content_hash "dag-sha256:f66086a5fd99ec1f4435f2406f168356c907bf03f4701e827fbdfd9ba5fb3ac1"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/TekservixHQ/waservix-nim"
+            ref "v1.0.0"
+            commit_sha "bbf5014c64c1f8e24aed07468553dd00ce82a259"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-11T13:40:20Z"
+        bundle sha256="3ef313fbcb3abf1bf949ff639715e655eed0b3b153b4715bed2195b5ba40f8e1"
+    }
+}
 package "gzfast" {
     namespace "github.com/telatin"
     upstream (url)"https://github.com/telatin/gzfast"
@@ -61254,6 +61340,19 @@ package "logfmt" {
         signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
         published_at "2026-11-08T12:56:53Z"
         bundle sha256="e1707546e1d7ebf4c78d5748c022e153f33e273737f0b42e150dbff4c64feb87"
+    }
+    version "0.0.0+commit-847e44c" {
+        content_hash "dag-sha256:239772508cabd002a93784ae65c9be99502d8908122cc2cbc58f161062aaacf3"
+        provenance {
+            kind "git"
+            url (url)"https://github.com/Uyuz-ux/logfmt"
+            ref "HEAD"
+            commit_sha "847e44c83a4c68017477510200f4a9f43e679696"
+        }
+        attestation "milpa-vendored"
+        signed_by "https://github.com/coreyleavitt/tianguis (milpa-bot via GH OIDC)"
+        published_at "2026-11-11T13:40:20Z"
+        bundle sha256="bf6c4ce3226d93790828f52a63f67a1504f8b70caf17e0dfa4b8a153613f736a"
     }
 }
 package "natsort" {
